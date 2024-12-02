@@ -19,7 +19,7 @@ import net.finmath.time.daycount.DayCountConventionFactory;
 
 
 /**
- * Tests for the classes handling Buehle dividends.
+ * Tests for the classes handling Buehler dividends.
  *
  * @author Andreas Grotz
  */
