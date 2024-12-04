@@ -3,12 +3,15 @@ package net.finmath.equities.models;
 import net.finmath.fouriermethod.CharacteristicFunction;
 import net.finmath.integration.RealIntegral;
 import net.finmath.marketdata.model.curves.DiscountCurve;
+import org.apache.commons.math3.Field;
+import org.apache.commons.math3.FieldElement;
 import org.apache.commons.math3.complex.Complex;
 
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
-import j
 import org.apache.commons.math3.ode.nonstiff.ClassicalRungeKuttaFieldIntegrator;
+import org.apache.commons.math3.ode.nonstiff.RungeKuttaFieldIntegrator;
+import org.apache.commons.math3.complex.ComplexField;
 
 public class LNSVQDModel {
 
@@ -40,9 +43,10 @@ public class LNSVQDModel {
 
 	// Calculate the affine-exponential approximation to the characteristic function
 	private void calculateExponentialAffineApproximation(){
-		// Solve PDE
-		ClassicalRungeKuttaFieldIntegrator classicalRungeKuttaFieldIntegrator = new ClassicalRungeKuttaFieldIntegrator<>(Complex);
+		// 1. Describe the field
 
+		// Solve PDE
+		ClassicalRungeKuttaFieldIntegrator classicalRungeKuttaFieldIntegrator = new ClassicalRungeKuttaFieldIntegrator(ComplexField.getInstance(), new RealField(1.));
 		// Function<Double, Comp>
 
 		this.exponentialAffineApproximation = new Function<Double[], Complex>() {
