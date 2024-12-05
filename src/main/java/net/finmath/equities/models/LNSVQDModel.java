@@ -42,11 +42,11 @@ public class LNSVQDModel {
 	}
 
 	// Calculate the affine-exponential approximation to the characteristic function
-	private void calculateExponentialAffineApproximation(){
+	/*private void calculateExponentialAffineApproximation(){
 		// 1. Describe the field
 
 		// Solve PDE
-		ClassicalRungeKuttaFieldIntegrator classicalRungeKuttaFieldIntegrator = new ClassicalRungeKuttaFieldIntegrator(ComplexField.getInstance(), new RealField(1.));
+		ClassicalRungeKuttaFieldIntegrator classicalRungeKuttaFieldIntegrator = new ClassicalRungeKuttaFieldIntegrator(ComplexField.getInstance(), new eTRealField(1.));
 		// Function<Double, Comp>
 
 		this.exponentialAffineApproximation = new Function<Double[], Complex>() {
@@ -55,9 +55,9 @@ public class LNSVQDModel {
 				return null;
 			}
 		};
-	}
+	}*/
 
-	private double getOptionPrice(double strike, double maturity, DiscountCurve discountCurve, EquityForwardStructure convenienceCurve, RealIntegral integrator){
+	/*private double getOptionPrice(double strike, double maturity, DiscountCurve discountCurve, EquityForwardStructure convenienceCurve, RealIntegral integrator){
 
 
 		double discountFactor = discountCurve.getDiscountFactor(maturity);
@@ -87,6 +87,6 @@ public class LNSVQDModel {
 		double optionPrice =  (discountFactor * strike / Math.PI)  * integral;
 
 		return optionPrice;
-	}
+	}*/
 
 }
