@@ -7,6 +7,8 @@ import org.apache.commons.math3.Field;
 import org.apache.commons.math3.FieldElement;
 import org.apache.commons.math3.complex.Complex;
 
+import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
 import org.apache.commons.math3.ode.nonstiff.ClassicalRungeKuttaFieldIntegrator;
@@ -26,6 +28,11 @@ public class LNSVQDModel {
 	private final double beta;
 	private final double epsilon;
 
+	/**
+	 * The ODE-system for the second-order exponential-affine approximation
+	 */
+	private final List<BiFunction<Double, Complex[], Complex>> odeSystem;
+
 	/*
 
 	 */
@@ -39,6 +46,37 @@ public class LNSVQDModel {
 		this.tehta = tehta;
 		this.beta = beta;
 		this.epsilon = epsilon;
+
+		/**
+		 * Create the functions for the exponential-affine approximation; Names like in the paper
+		 */
+		// 1. Matrices
+		Complex[][] M0 = {{}, {}, {}, {}, {}};
+		Complex[][] M1 = {{}, {}, {}, {}, {}};
+		Complex[][] M2 = {{}, {}, {}, {}, {}};
+		Complex[][] M3 = {{}, {}, {}, {}, {}};
+		Complex[][] M4 = {{}, {}, {}, {}, {}};
+
+		Complex[] L0 = {};
+		Complex[] L1 = {};
+		Complex[] L2 = {};
+		Complex[] L3 = {};
+		Complex[] L4 = {};
+
+		Complex L0 = ;
+		Complex L1 = ;
+		Complex L2 = ;
+		Complex L3 = ;
+		Complex L4 = ;
+
+		// 2. Functions
+		BiFunction<Double, Complex[], Complex> A0 = new BiFunction<Double, Complex[], Complex>() {
+			@Override
+			public Complex apply(Double aDouble, Complex[] complexes) {
+				Complex results = new Complex();
+			}
+		}
+
 	}
 
 	// Calculate the affine-exponential approximation to the characteristic function

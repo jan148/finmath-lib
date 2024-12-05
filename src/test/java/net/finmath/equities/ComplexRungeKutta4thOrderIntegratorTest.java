@@ -35,8 +35,11 @@ class ComplexRungeKutta4thOrderIntegratorTest {
 		final Complex[] state = {new Complex(1.0, 0.)};
 		List<BiFunction<Double, Complex[], Complex>> odeSystem = new ArrayList<>();
 		odeSystem.add(ode);
-		final Complex[] stateRK = {new Complex(1.0, 0.)};
-		ComplexRungeKutta4thOrderIntegrator odeRungeKutta = new ComplexRungeKutta4thOrderIntegrator(stateRK, odeSystem);
+		ComplexRungeKutta4thOrderIntegrator odeRungeKutta = new ComplexRungeKutta4thOrderIntegrator(state, odeSystem);
+
+		// TEST; TO DELETE
+		//odeRungeKutta.setState(new Complex[]{new Complex(5.0, 0.)});
+		//System.out.println("State: " + state[0].getReal());
 
 		double t0 = 0.0;
 		double stepSize = 0.01;
