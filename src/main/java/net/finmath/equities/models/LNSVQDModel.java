@@ -158,45 +158,45 @@ public class LNSVQDModel {
 	/**
 	 * We use our Runge-Kutta implementation to calculate the integral
 	 */
-//	private double getCallPrice(double strike, double ttm, DiscountCurve discountCurve, EquityForwardStructure convenienceCurve, RealIntegral integrator){
-//		double discountFactor = discountCurve.getDiscountFactor(maturity);
-//		double convenienceFactor = convenienceCurve.getConvenienceFactor(maturity);
-//		double logMoneyness = Math.log(spot0 / strike) + Math.log(discountFactor - convenienceFactor);
-//
-//		/**
-//		 * We use our Runge-Kutta implementation to calculate the integral
-//		 */
-//		BiFunction<Double, Complex[], Complex> integrand = new BiFunction<Double, Complex[], Complex>() {
-//			@Override
-//			public Complex apply(Double aDouble, Complex[] complexes) {
-//				// 1. Compute the value of the affine-exponential approximation
-//				Complex approxCharFunVal = calculateExponentialAffineApproximation(ttm, complexes);
-//				Complex E2 = approxCharFunVal
-//						.multiply(complexes[0].multiply(X0).add(complexes[1].multiply(I0)));
-//
-//				// 2. Calcuate result
-//				Complex result = (new Complex(-0.5 * logMoneyness, aDouble * logMoneyness)).exp().multiply(1 / (aDouble * aDouble + 0.25)).multiply(E2);
-//				return result;
-//			}
-//		};
-//
-//		/**
-//		 * Integerate
-//		 */
-//		Complex[] state = new Complex[]{new Complex(0., 0.)};
-//		List<BiFunction<Double, Complex[], Complex>> odeSystem = new ArrayList<>();
-//		odeSystem.add(integrand);
-//		ComplexRungeKutta4thOrderIntegrator complexRungeKutta4thOrderIntegrator = new ComplexRungeKutta4thOrderIntegrator(state, odeSystem);
-//		// Choose the end point of the solution path
-//		Complex integral = complexRungeKutta4thOrderIntegrator.getSolutionPath(LNSVQDUtils.createTimeGrid(0., upperBoundForInfiniteIntegral, this.numStepsForInfiniteIntegral))[this.numStepsForInfiniteIntegral][0];
-//
-//		/**
-//		 * Get real part, multiply with factor
-//		 */
-//		double integralReal = integral.getReal();
-//		double optionPrice =  this.spot0 - (discountFactor * strike / Math.PI)  * integralReal;
-//
-//		return optionPrice;
-//	}
+	public double getCallPrice(double strike, double ttm, EquityForwardStructure equityForwardStructure, RealIntegral integrator){
+		double discountFactor = equityForwardStructure.getGrowthDiscountFactor(0, ttm);
+		double convenienceFactor = 0; //TODO: Replace by equityForwardStructure...
+		double logMoneyness = Math.log(spot0 / strike) + Math.log(discountFactor - convenienceFactor);
+
+		/**
+		 * We use our Runge-Kutta implementation to calculate the integral
+		 */
+		BiFunction<Double, Complex[], Complex> integrand = new BiFunction<Double, Complex[], Complex>() {
+			@Override
+			public Complex apply(Double aDouble, Complex[] complexes) {
+				// 1. Compute the value of the affine-exponential approximation
+				Complex approxCharFunVal = calculateExponentialAffineApproximation(ttm, complexes);
+				Complex E2 = approxCharFunVal
+						.multiply(complexes[0].multiply(X0).add(complexes[1].multiply(I0)));
+
+				// 2. Calcuate result
+				Complex result = (new Complex(-0.5 * logMoneyness, aDouble * logMoneyness)).exp().multiply(1 / (aDouble * aDouble + 0.25)).multiply(E2);
+				return result;
+			}
+		};
+
+		/**
+		 * Integerate
+		 */
+		Complex[] state = new Complex[]{new Complex(0., 0.)};
+		List<BiFunction<Double, Complex[], Complex>> odeSystem = new ArrayList<>();
+		odeSystem.add(integrand);
+		ComplexRungeKutta4thOrderIntegrator complexRungeKutta4thOrderIntegrator = new ComplexRungeKutta4thOrderIntegrator(state, odeSystem);
+		// Choose the end point of the solution path
+		Complex integral = complexRungeKutta4thOrderIntegrator.getSolutionPath(LNSVQDUtils.createTimeGrid(0., upperBoundForInfiniteIntegral, this.numStepsForInfiniteIntegral))[this.numStepsForInfiniteIntegral][0];
+
+		/**
+		 * Get real part, multiply with factor
+		 */
+		double integralReal = integral.getReal();
+		double optionPrice =  this.spot0 - (discountFactor * strike / Math.PI)  * integralReal;
+
+		return optionPrice;
+	}
 
 }
