@@ -1,5 +1,6 @@
 package net.finmath.equities;
 
+import net.finmath.equities.models.BuehlerDividendForwardStructure;
 import net.finmath.equities.models.LNSVQDModel;
 import net.finmath.functions.AnalyticFormulas;
 import org.junit.jupiter.api.Test;
@@ -22,6 +23,7 @@ class LNSVQDModelTest {
 	private final double beta = 0;
 	private final double epsilon = 0;
 
+
 	/**
 	 * Models
 	 */
@@ -36,16 +38,21 @@ class LNSVQDModelTest {
 	/**
 	 * Market observables
 	 */
-	double riskFreeRate = 0.05;
+	double riskFreeRate = 0.1;
+	double discountFactor = Math.exp(-riskFreeRate * maturity);
+	double convenienceFcator = 0;
 
 	@Test
 	void getCallPrice() {
-		// Implement forward structure
+		//TODO: Implement forward structure
 
 		// Get option values
 		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot0, riskFreeRate, sigma0, maturity, strike, true);
-		double lnsvqdOptionValue = lnsvqdModel.getCallPrice(strike, maturity, )
+		double lnsvqdOptionValue = lnsvqdModel.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
 
+		// Print
+		System.out.println("Call oprion price BS: \t" + bsOptionValue);
+		System.out.println("Call oprion price LNSVQD: \t" + lnsvqdOptionValue);
 	}
 
 
