@@ -3,6 +3,7 @@ package net.finmath.equities;
 import net.finmath.equities.models.BuehlerDividendForwardStructure;
 import net.finmath.equities.models.LNSVQDModel;
 import net.finmath.functions.AnalyticFormulas;
+import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,9 +39,21 @@ class LNSVQDModelTest {
 	/**
 	 * Market observables
 	 */
-	double riskFreeRate = 0.1;
+	double riskFreeRate = 0.05;
 	double discountFactor = Math.exp(-riskFreeRate * maturity);
 	double convenienceFcator = 0;
+
+	@Test
+	void calculateExponentialAffineApproximation() {
+		double y = 1;
+		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
+		Complex exponentialAffineApproximationOdeValue = lnsvqdModel.calculateExponentialAffineApproximation(maturity, charFuncArgs);
+		Complex exponentialAffineApproximationAnalyticalValue = (charFuncArgs[0].multiply(-lnsvqdModel.getX0())
+				.add(charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1]).multiply(0.5 * maturity).multiply(Math.pow(lnsvqdModel.getY0(), 2))))
+				.exp();
+		System.out.println("Analytical exponential-affine approximation value at " + maturity + ": " + exponentialAffineApproximationAnalyticalValue);
+		System.out.println("ODE-based exponential-affine approximation value at " + maturity + ": " + exponentialAffineApproximationOdeValue);
+	}
 
 	@Test
 	void getCallPrice() {

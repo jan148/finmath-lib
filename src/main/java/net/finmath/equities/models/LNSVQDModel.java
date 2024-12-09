@@ -33,6 +33,19 @@ public class LNSVQDModel {
 	private final double kappa2;
 	private final double theta;
 	private final double beta;
+
+	public double getX0() {
+		return X0;
+	}
+
+	public double getY0() {
+		return Y0;
+	}
+
+	public double getI0() {
+		return I0;
+	}
+
 	private final double epsilon;
 	private final double totalInstVar;
 
@@ -52,21 +65,21 @@ public class LNSVQDModel {
 		this.totalInstVar = beta * beta + epsilon * epsilon;
 
 		this.X0 = Math.log(this.spot0);
-		this.Y0 = this.sigma0 - this.theta;
+		this.Y0 = sigma0 - theta;
 		this.I0 = I0;
 
 	}
 
 	// Calculate the affine-exponential approximation to the characteristic function
-	private Complex calculateExponentialAffineApproximation(Double ttm, Complex[] charFuncArgs){
+	public Complex calculateExponentialAffineApproximation(Double ttm, Complex[] charFuncArgs){
 		/**
 		 * Create the functions for the exponential-affine approximation; Names like in the paper
 		 */
 		// Some constants
 		Complex complex0 = Complex.ZERO;
 		Complex totalInstVar = new Complex(this.totalInstVar, 0);
-		Complex mixedDeg3 = new Complex(this.theta * this.totalInstVar);
-		Complex mixedDeg4 = new Complex(Math.pow(this.theta, 2) * this.totalInstVar);
+		Complex mixedDeg3 = new Complex(this.theta * this.totalInstVar, 0);
+		Complex mixedDeg4 = new Complex(Math.pow(this.theta, 2) * this.totalInstVar, 0);
 
 		// 1. Matrices
 		Complex[][] M0 = {{complex0, complex0, complex0, complex0, complex0},
@@ -76,13 +89,13 @@ public class LNSVQDModel {
 				{complex0, complex0, complex0, complex0, complex0}};
 
 		Complex[][] M1 = {{complex0, complex0, complex0, complex0, complex0},
-				{complex0, totalInstVar.multiply(theta), mixedDeg4, complex0, complex0},
+				{complex0, mixedDeg3, mixedDeg4, complex0, complex0},
 				{complex0, mixedDeg4, complex0, complex0, complex0},
 				{complex0, complex0, complex0, complex0, complex0},
 				{complex0, complex0, complex0, complex0, complex0}};
 
 		Complex[][] M2 = {{complex0, complex0, complex0, complex0, complex0},
-				{complex0, totalInstVar, mixedDeg3.multiply(2), mixedDeg4.multiply(3 / 2), complex0},
+				{complex0, totalInstVar.multiply(1 / 2), mixedDeg3.multiply(2), mixedDeg4.multiply(3 / 2), complex0},
 				{complex0, mixedDeg3.multiply(2), mixedDeg4.multiply(2), complex0, complex0},
 				{complex0, mixedDeg4.multiply(3 / 2), complex0, complex0, complex0},
 				{complex0, complex0, complex0, complex0, complex0}};
@@ -95,29 +108,29 @@ public class LNSVQDModel {
 
 		Complex[][] M4 = {{complex0, complex0, complex0, complex0, complex0},
 				{complex0, complex0, complex0, totalInstVar.multiply(3 / 2), mixedDeg3.multiply(4)},
-				{complex0, complex0, totalInstVar.multiply(2), mixedDeg3.multiply(4), mixedDeg4.multiply(4)},
-				{complex0, totalInstVar.multiply(3 / 2), mixedDeg3.multiply(4), mixedDeg4.multiply(9 / 2), complex0},
-				{complex0, mixedDeg3.multiply(3), mixedDeg4.multiply(4), complex0, complex0}};
+				{complex0, complex0, totalInstVar.multiply(2), mixedDeg3.multiply(6), mixedDeg4.multiply(4)},
+				{complex0, totalInstVar.multiply(3 / 2), mixedDeg3.multiply(6), mixedDeg4.multiply(9 / 2), complex0},
+				{complex0, mixedDeg3.multiply(4), mixedDeg4.multiply(4), complex0, complex0}};
 
 		// 2. Vectors
 		Complex L01 = complex0;
 		Complex L02 = charFuncArgs[0].multiply(-Math.pow(theta, 2) * beta);
-		Complex L03 = complex0;
+		Complex L03 = mixedDeg4;
 		Complex L04 = complex0;
 		Complex L05 = complex0;
 		Complex[] L0 = {L01, L02, L03, L04, L05};
 
 		Complex L11 = complex0;
-		Complex L12 = charFuncArgs[0].multiply(-theta * beta).add(-kappa1 - kappa2 * theta).multiply(2);
-		Complex L13 = mixedDeg3.subtract(charFuncArgs[0].multiply(-Math.pow(theta, 2) * beta)).multiply(2);
+		Complex L12 = charFuncArgs[0].multiply(-theta * beta * 2).subtract(kappa1 + kappa2 * theta);
+		Complex L13 = mixedDeg3.subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(2);
 		Complex L14 = mixedDeg4.multiply(3);
 		Complex L15 = complex0;
 		Complex[] L1 = {L11, L12, L13, L14, L15};
 
 		Complex L21 = complex0;
-		Complex L22 = charFuncArgs[0].multiply(beta).subtract(kappa2);
+		Complex L22 = charFuncArgs[0].multiply(-beta).subtract(kappa2);
 		Complex L23 = totalInstVar.subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(theta * beta).multiply(4));
-		Complex L24 = totalInstVar.multiply(2).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(2);
+		Complex L24 = totalInstVar.multiply(-2).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(3); // q = -p = -1
 		Complex L25 = mixedDeg4.multiply(6);
 		Complex[] L2 = {L21, L22, L23, L24, L25};
 
@@ -132,13 +145,13 @@ public class LNSVQDModel {
 		Complex L42 = complex0;
 		Complex L43 = complex0;
 		Complex L44 = charFuncArgs[0].multiply(beta).add(kappa2).multiply(-3);
-		Complex L45 = totalInstVar.multiply(-3).subtract(-2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(4 * theta * beta)).multiply(2);
+		Complex L45 = totalInstVar.multiply(3).subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(4 * theta * beta)).multiply(2);
 		Complex[] L4 = {L41, L42, L43, L44, L45};
 
 		// 3. Scalars
-		Complex H0 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[2].multiply(2)).multiply(Math.pow(theta, 2) / 2);
-		Complex H1 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[2].multiply(2)).multiply(theta);
-		Complex H2 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[2].multiply(2)).multiply(1 / 2);
+		Complex H0 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(Math.pow(theta, 2) / 2);
+		Complex H1 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(theta);
+		Complex H2 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(1 / 2);
 		Complex H3 = complex0;
 		Complex H4 = complex0;
 
@@ -197,7 +210,6 @@ public class LNSVQDModel {
 		 * Calculate the solution for the A's
 		 */
 		Complex[] state = new Complex[]{new Complex(0., 0.), charFuncArgs[2].multiply(-1), new Complex(0., 0.), new Complex(0., 0.), new Complex(0., 0.)};
-
 		// Solve ODE for A^{(k)}'s
 		ComplexRungeKutta4thOrderIntegrator complexRungeKutta4thOrderIntegrator = new ComplexRungeKutta4thOrderIntegrator(state, odeSystem);
 		// Choose the end point of the solution path
@@ -206,13 +218,13 @@ public class LNSVQDModel {
 		/**
 		 * Calculate the solution for the A's
 		 */
-		Complex result = (charFuncArgs[0].multiply(-this.X0)
-				.add(charFuncArgs[1].multiply(-this.I0))
+		Complex result = (charFuncArgs[0].multiply(-X0)
+				.add(charFuncArgs[1].multiply(-I0))
 				.add(A[0])
-				.add(A[1].multiply(this.Y0))
-				.add(A[2].multiply(Math.pow(this.Y0, 2)))
-				.add(A[3].multiply(Math.pow(this.Y0, 3)))
-				.add(A[4].multiply(Math.pow(this.Y0, 4))))
+				.add(A[1].multiply(Y0))
+				.add(A[2].multiply(Math.pow(Y0, 2)))
+				.add(A[3].multiply(Math.pow(Y0, 3)))
+				.add(A[4].multiply(Math.pow(Y0, 4))))
 				.exp();
 
 		return result;
@@ -235,10 +247,10 @@ public class LNSVQDModel {
 				// 1. Compute the value of the affine-exponential approximation
 				Complex approxCharFuncVal = calculateExponentialAffineApproximation(ttm, charFuncArgs);
 				Complex E2 = approxCharFuncVal
-						.multiply(charFuncArgs[0].multiply(X0).add(charFuncArgs[1].multiply(I0)).exp());
+						.multiply(charFuncArgs[0].multiply(X0).add(charFuncArgs[1].multiply(I0).exp()));
 
-				// 2. Calcuate result
-				Complex result = (new Complex(-0.5 * logMoneyness, aDouble * logMoneyness)).exp().multiply(1 / (aDouble * aDouble + 0.25)).multiply(E2);
+				// 2. Calculate result
+				Complex result = new Complex(0.5, -aDouble).multiply(logMoneyness).exp().multiply(1 / (aDouble * aDouble + 0.25)).multiply(E2);
 				return result;
 			}
 		};
@@ -251,13 +263,13 @@ public class LNSVQDModel {
 		odeSystem.add(integrand);
 		ComplexRungeKutta4thOrderIntegrator complexRungeKutta4thOrderIntegrator = new ComplexRungeKutta4thOrderIntegrator(state, odeSystem);
 		// Choose the end point of the solution path
-		Complex integral = complexRungeKutta4thOrderIntegrator.getSolutionPath(LNSVQDUtils.createTimeGrid(0., upperBoundForInfiniteIntegral, this.numStepsForInfiniteIntegral))[this.numStepsForInfiniteIntegral][0];
+		Complex integral = complexRungeKutta4thOrderIntegrator.getSolutionPath(LNSVQDUtils.createTimeGrid(0, upperBoundForInfiniteIntegral, this.numStepsForInfiniteIntegral))[this.numStepsForInfiniteIntegral][0];
 
 		/**
 		 * Get real part, multiply with factor
 		 */
 		double integralReal = integral.getReal();
-		double optionPrice =  this.spot0 - (discountFactor * strike / Math.PI)  * integralReal;
+		double optionPrice =  spot0 - (discountFactor * strike / Math.PI) * integralReal;
 
 		return optionPrice;
 	}
