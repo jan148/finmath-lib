@@ -34,18 +34,6 @@ public class LNSVQDModel {
 	private final double theta;
 	private final double beta;
 
-	public double getX0() {
-		return X0;
-	}
-
-	public double getY0() {
-		return Y0;
-	}
-
-	public double getI0() {
-		return I0;
-	}
-
 	private final double epsilon;
 	private final double totalInstVar;
 
@@ -68,6 +56,18 @@ public class LNSVQDModel {
 		this.Y0 = sigma0 - theta;
 		this.I0 = I0;
 
+	}
+
+	public double getX0() {
+		return X0;
+	}
+
+	public double getY0() {
+		return Y0;
+	}
+
+	public double getI0() {
+		return I0;
 	}
 
 	// Calculate the affine-exponential approximation to the characteristic function
@@ -95,9 +95,9 @@ public class LNSVQDModel {
 				{complex0, complex0, complex0, complex0, complex0}};
 
 		Complex[][] M2 = {{complex0, complex0, complex0, complex0, complex0},
-				{complex0, totalInstVar.multiply(1 / 2), mixedDeg3.multiply(2), mixedDeg4.multiply(3 / 2), complex0},
+				{complex0, totalInstVar.multiply(1. / 2), mixedDeg3.multiply(2), mixedDeg4.multiply(3. / 2), complex0},
 				{complex0, mixedDeg3.multiply(2), mixedDeg4.multiply(2), complex0, complex0},
-				{complex0, mixedDeg4.multiply(3 / 2), complex0, complex0, complex0},
+				{complex0, mixedDeg4.multiply(3. / 2), complex0, complex0, complex0},
 				{complex0, complex0, complex0, complex0, complex0}};
 
 		Complex[][] M3 = {{complex0, complex0, complex0, complex0, complex0},
@@ -107,9 +107,9 @@ public class LNSVQDModel {
 				{complex0, mixedDeg4.multiply(2), complex0, complex0, complex0}};
 
 		Complex[][] M4 = {{complex0, complex0, complex0, complex0, complex0},
-				{complex0, complex0, complex0, totalInstVar.multiply(3 / 2), mixedDeg3.multiply(4)},
+				{complex0, complex0, complex0, totalInstVar.multiply(3. / 2), mixedDeg3.multiply(4)},
 				{complex0, complex0, totalInstVar.multiply(2), mixedDeg3.multiply(6), mixedDeg4.multiply(4)},
-				{complex0, totalInstVar.multiply(3 / 2), mixedDeg3.multiply(6), mixedDeg4.multiply(9 / 2), complex0},
+				{complex0, totalInstVar.multiply(3. / 2), mixedDeg3.multiply(6), mixedDeg4.multiply(9. / 2), complex0},
 				{complex0, mixedDeg3.multiply(4), mixedDeg4.multiply(4), complex0, complex0}};
 
 		// 2. Vectors
@@ -151,7 +151,7 @@ public class LNSVQDModel {
 		// 3. Scalars
 		Complex H0 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(Math.pow(theta, 2) / 2);
 		Complex H1 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(theta);
-		Complex H2 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(1 / 2);
+		Complex H2 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(0.5);
 		Complex H3 = complex0;
 		Complex H4 = complex0;
 

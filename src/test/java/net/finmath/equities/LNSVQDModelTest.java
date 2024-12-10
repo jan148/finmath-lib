@@ -4,6 +4,7 @@ import net.finmath.equities.models.BuehlerDividendForwardStructure;
 import net.finmath.equities.models.LNSVQDModel;
 import net.finmath.functions.AnalyticFormulas;
 import org.apache.commons.math3.complex.Complex;
+import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -43,16 +44,24 @@ class LNSVQDModelTest {
 	double discountFactor = Math.exp(-riskFreeRate * maturity);
 	double convenienceFcator = 0;
 
+	/**
+	 * Tolerance level
+	 */
+	private final double delta =  10E-3;
+
 	@Test
 	void calculateExponentialAffineApproximation() {
-		double y = 1;
+		double y = 1.;
 		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
-		Complex exponentialAffineApproximationOdeValue = lnsvqdModel.calculateExponentialAffineApproximation(maturity, charFuncArgs);
 		Complex exponentialAffineApproximationAnalyticalValue = (charFuncArgs[0].multiply(-lnsvqdModel.getX0())
-				.add(charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1]).multiply(0.5 * maturity).multiply(Math.pow(lnsvqdModel.getY0(), 2))))
+				.add(charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(0.5 * maturity).multiply(Math.pow(lnsvqdModel.getY0(), 2))))
 				.exp();
+		Complex exponentialAffineApproximationOdeValue = lnsvqdModel.calculateExponentialAffineApproximation(maturity, charFuncArgs);
 		System.out.println("Analytical exponential-affine approximation value at " + maturity + ": " + exponentialAffineApproximationAnalyticalValue);
 		System.out.println("ODE-based exponential-affine approximation value at " + maturity + ": " + exponentialAffineApproximationOdeValue);
+
+		Assert.assertEquals(exponentialAffineApproximationAnalyticalValue.getReal(), exponentialAffineApproximationOdeValue.getReal(), delta);
+		Assert.assertEquals(exponentialAffineApproximationAnalyticalValue.getImaginary(), exponentialAffineApproximationOdeValue.getImaginary(), delta);
 	}
 
 	@Test
@@ -66,6 +75,8 @@ class LNSVQDModelTest {
 		// Print
 		System.out.println("Call oprion price BS: \t" + bsOptionValue);
 		System.out.println("Call oprion price LNSVQD: \t" + lnsvqdOptionValue);
+
+		Assert.assertEquals(bsOptionValue, lnsvqdOptionValue, delta);
 	}
 
 
