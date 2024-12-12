@@ -35,7 +35,7 @@ class LNSVQDModelTest {
 	 * Option params
 	 */
 	double strike = 1;
-	double maturity = 1;
+	double maturity = 1. / 12;
 
 	/**
 	 * Market observables
@@ -66,8 +66,19 @@ class LNSVQDModelTest {
 
 	@Test
 	void getCallPrice() {
-		//TODO: Implement forward structure
+		// Get option values
+		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot0, riskFreeRate, sigma0, maturity, strike, true);
+		double lnsvqdOptionValue = lnsvqdModel.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
 
+		// Print
+		System.out.println("Call oprion price BS: \t" + bsOptionValue);
+		System.out.println("Call oprion price LNSVQD: \t" + lnsvqdOptionValue);
+
+		Assert.assertEquals(bsOptionValue, lnsvqdOptionValue, delta);
+	}
+
+	@Test
+	void printODESolution() {
 		// Get option values
 		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot0, riskFreeRate, sigma0, maturity, strike, true);
 		double lnsvqdOptionValue = lnsvqdModel.getCallPrice(strike, maturity, discountFactor, convenienceFcator);

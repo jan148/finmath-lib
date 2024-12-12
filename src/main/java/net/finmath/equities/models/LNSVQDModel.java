@@ -1,14 +1,24 @@
 package net.finmath.equities.models;
 
+import net.finmath.exception.CalculationException;
 import net.finmath.fouriermethod.CharacteristicFunction;
 import net.finmath.integration.RealIntegral;
 import net.finmath.marketdata.model.curves.DiscountCurve;
+import net.finmath.montecarlo.RandomVariableFactory;
+import net.finmath.montecarlo.RandomVariableFromArrayFactory;
+import net.finmath.montecarlo.assetderivativevaluation.models.HestonModel;
+import net.finmath.montecarlo.model.AbstractProcessModel;
+import net.finmath.montecarlo.model.ProcessModel;
+import net.finmath.montecarlo.process.MonteCarloProcess;
+import net.finmath.stochastic.RandomVariable;
+import net.finmath.stochastic.Scalar;
 import org.apache.commons.math3.Field;
 import org.apache.commons.math3.FieldElement;
 import org.apache.commons.math3.complex.Complex;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
@@ -16,7 +26,7 @@ import org.apache.commons.math3.ode.nonstiff.ClassicalRungeKuttaFieldIntegrator;
 import org.apache.commons.math3.ode.nonstiff.RungeKuttaFieldIntegrator;
 import org.apache.commons.math3.complex.ComplexField;
 
-public class LNSVQDModel {
+public class LNSVQDModel extends AbstractProcessModel {
 	/**
 	 * Numerical parameters
 	 */
@@ -38,11 +48,22 @@ public class LNSVQDModel {
 	private final double totalInstVar;
 
 	/**
+	 * Market observables
+	 */
+	private final double riskFreeRate = 0.05;
+
+	/**
 	 * Transformed inital values
 	 */
 	double X0, Y0, I0;
 
-	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
+	/**
+	 * Random variable factory
+	 */
+	private final RandomVariableFactory randomVariableFactory = new RandomVariableFromArrayFactory();
+	private static final RandomVariable ZERO = new Scalar(0.0);
+
+	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, Ran) {
 		this.spot0 = spot0;
 		this.sigma0 = sigma0;
 		this.kappa1 = kappa1;
@@ -69,6 +90,12 @@ public class LNSVQDModel {
 	public double getI0() {
 		return I0;
 	}
+
+	/**
+	 * ***************************************************+
+	 * SECTION 1: Semi-analytical call option price calculation
+	 * ***************************************************+
+	 */
 
 	// Calculate the affine-exponential approximation to the characteristic function
 	public Complex calculateExponentialAffineApproximation(Double ttm, Complex[] charFuncArgs){
@@ -273,5 +300,96 @@ public class LNSVQDModel {
 
 		return optionPrice;
 	}
+
+	/**
+	 * ***************************************************+
+	 * SECTION 2: Simulation
+	 * ***************************************************+
+	 */
+
+	@Override
+	public int getNumberOfComponents() {
+		return 2;
+	}
+
+	@Override
+	public RandomVariable applyStateSpaceTransformInverse(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable randomVariable) {
+		return super.applyStateSpaceTransformInverse(process, timeIndex, componentIndex, randomVariable);
+	}
+
+	/**
+	 * Map from (S, sigma) to (ln(S / M), ln sigma)
+	 */
+	@Override
+	public RandomVariable applyStateSpaceTransform(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable randomVariable, double time) throws CalculationException {
+		if(componentIndex == 0) {
+			return randomVariable.div(getNumeraire(null, time)).log();
+		}
+		else if(componentIndex == 1) {
+			return randomVariable.log();
+		}
+		else {
+			throw new UnsupportedOperationException("Component " + componentIndex + " does not exist.");
+		}
+	}
+
+	@Override
+	public RandomVariable[] getInitialState(MonteCarloProcess process) {
+		RandomVariable[] initialValueVector = new RandomVariable[2];
+		initialValueVector[0] = randomVariableFactory.createRandomVariable(spot0);
+		initialValueVector[1] = randomVariableFactory.createRandomVariable(sigma0);
+		return initialValueVector;
+	}
+
+	@Override
+	public RandomVariable getNumeraire(MonteCarloProcess process, double time) throws CalculationException {
+		return getRandomVariableForConstant(Math.exp(time * riskFreeRate));
+	}
+
+	@Override
+	public RandomVariable[] getDrift(MonteCarloProcess process, int timeIndex, RandomVariable[] realizationAtTimeIndex, RandomVariable[] realizationPredictor) {
+		RandomVariable stochasticVolatility = realizationAtTimeIndex[1];
+		// TODO: Check the following formulas
+		RandomVariable driftAsset = getRandomVariableForConstant(riskFreeRate);
+		RandomVariable driftVolatility = stochasticVolatility.mult(kappa2).add(kappa1).mult(stochasticVolatility.mult(-1).sub(theta));
+		return new RandomVariable[]{driftAsset, driftVolatility};
+	}
+
+	@Override
+	public int getNumberOfFactors() {
+		return 2;
+	}
+
+	@Override
+	public RandomVariable[] getFactorLoading(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable[] realizationAtTimeIndex) {
+		RandomVariable stochasticVolatility = realizationAtTimeIndex[1];
+		final RandomVariable[] factorLoadings = new RandomVariable[2];
+		if(componentIndex == 0) {
+			factorLoadings[0] = stochasticVolatility;
+			factorLoadings[1] = ZERO;
+		}
+		else if(componentIndex == 1) {
+			factorLoadings[0] = stochasticVolatility.mult(beta);
+			factorLoadings[1] = stochasticVolatility.mult(epsilon);
+		}
+		else {
+			throw new UnsupportedOperationException("Component " + componentIndex + " does not exist.");
+		}
+		// Return factor loadings
+		return factorLoadings;
+	}
+
+	@Override
+	public RandomVariable getRandomVariableForConstant(double value) {
+		return randomVariableFactory.createRandomVariable(value);
+	}
+
+	// TODO
+	@Override
+	public ProcessModel getCloneWithModifiedData(Map<String, Object> dataModified) throws CalculationException {
+		return null;
+	}
+
+
 
 }
