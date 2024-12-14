@@ -1,21 +1,26 @@
 package net.finmath.montecarlo.process;
 
 import net.finmath.concurrency.FutureWrapper;
+import net.finmath.equities.models.LNSVQDModel;
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.IndependentIncrements;
 import net.finmath.montecarlo.model.ProcessModel;
 import net.finmath.montecarlo.process.MonteCarloProcess;
 import net.finmath.montecarlo.process.MonteCarloProcessFromProcessModel;
+import net.finmath.rootfinder.NewtonsMethod;
 import net.finmath.stochastic.RandomVariable;
 import net.finmath.time.TimeDiscretization;
 
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 
 public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessModel {
 
 	private final IndependentIncrements stochasticDriver;
+	private final LNSVQDModel lnsvqdModel;
 
 	/*
 	 * The storage of the simulated stochastic process.
@@ -23,14 +28,9 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 	private RandomVariable[][] discreteProcess = null;
 	private transient RandomVariable[] discreteProcessWeights;
 
-	/**
-	 * Create a discretization scheme / a time discrete process.
-	 *
-	 * @param timeDiscretization The time discretization used for the discretization scheme.
-	 * @param model              Set the model used to generate the stochastic process. The model has to implement {@link ProcessModel}.
-	 */
-	public LNSVQDDiscretizationScheme(ProcessModel model, IndependentIncrements stochasticDriver) {
+	public LNSVQDDiscretizationScheme(LNSVQDModel model, IndependentIncrements stochasticDriver) {
 		super(stochasticDriver.getTimeDiscretization(), model);
+		this.lnsvqdModel = model;
 		this.stochasticDriver = stochasticDriver;
 	}
 
@@ -64,9 +64,24 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 		return null;
 	}
 
+	/**
+	 * Copied from EulerSchemeFromProcessModel
+	 */
 	@Override
 	public RandomVariable getProcessValue(int timeIndex, int componentIndex) throws CalculationException {
-		return null;
+		// Thread safe lazy initialization
+		synchronized(this) {
+			if (discreteProcess == null || discreteProcess.length == 0) {
+				doPrecalculateProcess();
+			}
+		}
+
+		if(discreteProcess[timeIndex][componentIndex] == null) {
+			throw new NullPointerException("Generation of process component " + componentIndex + " at time index " + timeIndex + " failed. Likely due to out of memory");
+		}
+
+		// Return value of process
+		return discreteProcess[timeIndex][componentIndex];
 	}
 
 	@Override
@@ -106,12 +121,21 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 			discreteProcess[0][componentIndex] = applyStateSpaceTransform(0, componentIndex, currentState[componentIndex]);
 		}
 
-		/*
-		 * Evolve the process using an Euler scheme.
-		 * The evolution is performed multi-threadded.
-		 * Each component of the vector runs in its own thread.
-		 */
-		// executor = Executors.newCachedThreadPool();
+		// Zeta is part of the volatility discretization scheme
+		Function<Double, RandomVariable> zeta = new Function<Double, RandomVariable>() {
+			@Override
+			public RandomVariable apply(Double aDouble) {
+				return lnsvqdModel.getRandomVariableForConstant(-lnsvqdModel.getKappa1() * lnsvqdModel.getKappa2() * lnsvqdModel.getTheta() - 0.5 * lnsvqdModel.getTotalInstVar()
+						+ lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() * Math.exp(aDouble) - lnsvqdModel.getKappa2()  * Math.exp(aDouble));
+			}
+		};
+
+		Function<Double, RandomVariable> zeta1stDerivative = new Function<Double, RandomVariable>() {
+			@Override
+			public RandomVariable apply(Double aDouble) {
+				return lnsvqdModel.getRandomVariableForConstant(lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() * Math.exp(aDouble) - lnsvqdModel.getKappa2()  * Math.exp(aDouble));
+			}
+		};
 
 		// Evolve process
 		for(int timeIndex2 = 1; timeIndex2 < getTimeDiscretization().getNumberOfTimeSteps() + 1; timeIndex2++) {
@@ -143,18 +167,58 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 					continue;
 				}
 
-				// Apply the transform to move in the value-space of the discretization scheme
+				// Apply the transform to transition into the value-space of the discretization scheme
 				currentState[componentIndex] = applyStateSpaceTransform(timeIndex - 1, componentIndex, discreteProcess[timeIndex - 1][componentIndex]);
-
 				final RandomVariable[] factorLoadings = getFactorLoading(timeIndex - 1, componentIndex, discreteProcess[timeIndex - 1]);
 
-				// Apply drift
-				if(driftOfComponent != null) {
-					currentState[componentIndex] = currentState[componentIndex].addProduct(driftOfComponent, deltaT); // mu DeltaT
+				/**
+				 * Calculate next process value
+				 */
+				// Asset process
+				if(componentIndex == 0 && driftOfComponent != null) {
+					// Apply drift
+					currentState[componentIndex] = currentState[componentIndex].sub(discreteProcess[timeIndex - 1][componentIndex].mult(-0.5 * deltaT));
+					// Apply diffusion
+					currentState[componentIndex] = currentState[componentIndex].addSumProduct(factorLoadings, brownianIncrement);
 				}
 
-				// Apply diffusion
-				currentState[componentIndex] = currentState[componentIndex].addSumProduct(factorLoadings, brownianIncrement); // sigma DeltaW
+				// Volatility process
+				if(componentIndex == 1 && driftOfComponent != null) {
+					double lastVolValue = discreteProcess[timeIndex - 1][componentIndex].doubleValue();
+					// SOLUTION TO FORWARD ODE
+					// 1. Define the function whose root is the new process-value
+					Function<Double, RandomVariable> rootFunction = new Function<Double, RandomVariable>() {
+						@Override
+						public RandomVariable apply(Double aDouble) {
+							return brownianIncrement[0].mult(-lnsvqdModel.getBeta()).sub(brownianIncrement[1].mult(lnsvqdModel.getEpsilon()))
+									.sub(zeta.apply(aDouble).mult(deltaT).add(aDouble)).sub(discreteProcess[timeIndex][1]);
+						}
+					};
+
+					Function<Double, RandomVariable> rootFunctionDerivative = new Function<Double, RandomVariable>() {
+						@Override
+						public RandomVariable apply(Double aDouble) {
+							return zeta1stDerivative.apply(aDouble).mult(deltaT).sub(1);
+						}
+					};
+
+					// 2. Solve for every realization
+					double[] realizationsLastTimePoint = discreteProcess[timeIndex - 1][1].getRealizations();
+					double[] realizationsCurrentTimePoint =  new double[getNumberOfPaths()];
+					for(int j = 0; j < getNumberOfPaths(); j++) {
+						double initialGuess = realizationsLastTimePoint[j]; //TODO: Make better guess
+						NewtonsMethod newtonsMethod = new NewtonsMethod(initialGuess);
+						// Solve
+						while(!newtonsMethod.isDone()) {
+							double value = rootFunction.apply(newtonsMethod.getBestPoint()).getRealizations()[j];
+							double derivative = rootFunctionDerivative.apply(newtonsMethod.getBestPoint()).getRealizations()[j];
+							newtonsMethod.setValueAndDerivative(value, derivative);
+						}
+						realizationsCurrentTimePoint[j] = newtonsMethod.getBestPoint();
+					}
+
+					currentState[componentIndex] = lnsvqdModel.getRandomVariableForArray(realizationsCurrentTimePoint);
+				}
 
 				// Transform the state space to the value space and return it.
 				RandomVariable result = applyStateSpaceTransformInverse(timeIndex, componentIndex, currentState[componentIndex]);
@@ -165,20 +229,16 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 
 			// Fetch results and move to discreteProcess[timeIndex]
 			for(int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
-				try {
-					final RandomVariable discreteProcessAtCurrentTimeIndexAndComponent = discreteProcessAtCurrentTimeIndex.get(componentIndex);
-					if(discreteProcessAtCurrentTimeIndexAndComponent != null) {
-						discreteProcess[timeIndex][componentIndex] = discreteProcessAtCurrentTimeIndexAndComponent.get().cache();
-					} else {
-						discreteProcess[timeIndex][componentIndex] = discreteProcess[timeIndex - 1][componentIndex];
-					}
-				} catch(final InterruptedException | ExecutionException e) {
-					throw new RuntimeException("Euler step failed at time index " + timeIndex + " (time=" + getTime(timeIndex) + "). See cause of this exception for details.", e.getCause());
+				final RandomVariable discreteProcessAtCurrentTimeIndexAndComponent = discreteProcessAtCurrentTimeIndex.get(componentIndex);
+				if(discreteProcessAtCurrentTimeIndexAndComponent != null) {
+					discreteProcess[timeIndex][componentIndex] = discreteProcessAtCurrentTimeIndexAndComponent;
+				} else {
+					discreteProcess[timeIndex][componentIndex] = discreteProcess[timeIndex - 1][componentIndex];
 				}
 			}
 			// Set Monte-Carlo weights
 			discreteProcessWeights[timeIndex] = discreteProcessWeights[timeIndex - 1];
 		}
-		// Something else
 	}
+
 }

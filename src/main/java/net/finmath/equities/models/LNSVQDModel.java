@@ -42,6 +42,11 @@ public class LNSVQDModel extends AbstractProcessModel {
 	private final double kappa1;
 	private final double kappa2;
 	private final double theta;
+
+	public double getTotalInstVar() {
+		return totalInstVar;
+	}
+
 	private final double beta;
 
 	private final double epsilon;
@@ -63,7 +68,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	private final RandomVariableFactory randomVariableFactory = new RandomVariableFromArrayFactory();
 	private static final RandomVariable ZERO = new Scalar(0.0);
 
-	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, Ran) {
+	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
 		this.spot0 = spot0;
 		this.sigma0 = sigma0;
 		this.kappa1 = kappa1;
@@ -77,6 +82,34 @@ public class LNSVQDModel extends AbstractProcessModel {
 		this.Y0 = sigma0 - theta;
 		this.I0 = I0;
 
+	}
+
+	public double getSpot0() {
+		return spot0;
+	}
+
+	public double getSigma0() {
+		return sigma0;
+	}
+
+	public double getKappa1() {
+		return kappa1;
+	}
+
+	public double getKappa2() {
+		return kappa2;
+	}
+
+	public double getTheta() {
+		return theta;
+	}
+
+	public double getBeta() {
+		return beta;
+	}
+
+	public double getEpsilon() {
+		return epsilon;
 	}
 
 	public double getX0() {
@@ -312,16 +345,12 @@ public class LNSVQDModel extends AbstractProcessModel {
 		return 2;
 	}
 
-	@Override
-	public RandomVariable applyStateSpaceTransformInverse(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable randomVariable) {
-		return super.applyStateSpaceTransformInverse(process, timeIndex, componentIndex, randomVariable);
-	}
-
 	/**
 	 * Map from (S, sigma) to (ln(S / M), ln sigma)
 	 */
 	@Override
-	public RandomVariable applyStateSpaceTransform(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable randomVariable, double time) throws CalculationException {
+	public RandomVariable applyStateSpaceTransform(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable randomVariable) {
+		double time = process.getTime(timeIndex);
 		if(componentIndex == 0) {
 			return randomVariable.div(getNumeraire(null, time)).log();
 		}
@@ -333,6 +362,24 @@ public class LNSVQDModel extends AbstractProcessModel {
 		}
 	}
 
+	/**
+	 * Map from (ln(S / M), ln sigma) to (S, sigma)
+	 */
+	@Override
+	public RandomVariable applyStateSpaceTransformInverse(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable randomVariable) {
+		double time = process.getTime(timeIndex);
+		if(componentIndex == 0) {
+			return randomVariable.exp().mult(getNumeraire(null, time));
+		}
+		else if(componentIndex == 1) {
+			return randomVariable.exp();
+		}
+		else {
+			throw new UnsupportedOperationException("Component " + componentIndex + " does not exist.");
+		}
+	}
+
+
 	@Override
 	public RandomVariable[] getInitialState(MonteCarloProcess process) {
 		RandomVariable[] initialValueVector = new RandomVariable[2];
@@ -342,7 +389,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	}
 
 	@Override
-	public RandomVariable getNumeraire(MonteCarloProcess process, double time) throws CalculationException {
+	public RandomVariable getNumeraire(MonteCarloProcess process, double time) {
 		return getRandomVariableForConstant(Math.exp(time * riskFreeRate));
 	}
 
@@ -382,6 +429,10 @@ public class LNSVQDModel extends AbstractProcessModel {
 	@Override
 	public RandomVariable getRandomVariableForConstant(double value) {
 		return randomVariableFactory.createRandomVariable(value);
+	}
+
+	public RandomVariable getRandomVariableForArray(double[] values) {
+		return randomVariableFactory.createRandomVariable(values);
 	}
 
 	// TODO
