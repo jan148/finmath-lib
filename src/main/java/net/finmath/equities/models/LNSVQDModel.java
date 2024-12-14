@@ -351,8 +351,9 @@ public class LNSVQDModel extends AbstractProcessModel {
 	@Override
 	public RandomVariable applyStateSpaceTransform(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable randomVariable) {
 		double time = process.getTime(timeIndex);
+		RandomVariable numeraire = getRandomVariableForConstant(Math.exp(time * riskFreeRate));
 		if(componentIndex == 0) {
-			return randomVariable.div(getNumeraire(null, time)).log();
+			return randomVariable.div(numeraire).log();
 		}
 		else if(componentIndex == 1) {
 			return randomVariable.log();
@@ -368,8 +369,9 @@ public class LNSVQDModel extends AbstractProcessModel {
 	@Override
 	public RandomVariable applyStateSpaceTransformInverse(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable randomVariable) {
 		double time = process.getTime(timeIndex);
+		RandomVariable numeraire = getRandomVariableForConstant(Math.exp(time * riskFreeRate));
 		if(componentIndex == 0) {
-			return randomVariable.exp().mult(getNumeraire(null, time));
+			return randomVariable.exp().mult(numeraire);
 		}
 		else if(componentIndex == 1) {
 			return randomVariable.exp();
@@ -432,7 +434,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	}
 
 	public RandomVariable getRandomVariableForArray(double[] values) {
-		return randomVariableFactory.createRandomVariable(values);
+		return randomVariableFactory.createRandomVariable(-1, values);
 	}
 
 	// TODO
@@ -440,7 +442,5 @@ public class LNSVQDModel extends AbstractProcessModel {
 	public ProcessModel getCloneWithModifiedData(Map<String, Object> dataModified) throws CalculationException {
 		return null;
 	}
-
-
 
 }
