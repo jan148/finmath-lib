@@ -15,7 +15,7 @@ public class LNSVQDDiscretizationSchemeTest {
 	/**
 	 * Simulation parameters
 	 */
-	int numberOfPaths = 1000;
+	int numberOfPaths = 250;
 	int seed = 3107;
 
 	/**
@@ -23,10 +23,10 @@ public class LNSVQDDiscretizationSchemeTest {
 	 */
 	private final double spot0 = 1;
 	private final double sigma0 = 0.5;
-	private final double kappa1 = 0;
-	private final double kappa2 = 0;
-	private final double theta = 0;
-	private final double beta = 0;
+	private final double kappa1 = 0.1;
+	private final double kappa2 = 0.;
+	private final double theta = 0.8;
+	private final double beta = 0.2;
 	private final double epsilon = 0;
 
 
@@ -51,7 +51,7 @@ public class LNSVQDDiscretizationSchemeTest {
 	/**
 	 * Time discretization
 	 */
-	double[] timeGrid = LNSVQDUtils.createTimeGrid(0, 10, 20);
+	double[] timeGrid = LNSVQDUtils.createTimeGrid(0, 1, 20);
 	TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
 
 	/**
@@ -62,7 +62,7 @@ public class LNSVQDDiscretizationSchemeTest {
 	/**
 	 * Tolerance level
 	 */
-	private final double delta =  10E-3;
+	private final double delta = 10E-3;
 
 	@Test
 	public void doPrecalculateProcess() throws CalculationException {
@@ -77,10 +77,25 @@ public class LNSVQDDiscretizationSchemeTest {
 		}*/
 
 		LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdModel, brownianMotion);
-		System.out.println(lnsvqdDiscretizationScheme.getProcessValue(0, 1));
+		// System.out.println(lnsvqdDiscretizationScheme.getProcessValue(0, 1));
+
+		for(int l = 0; l < lnsvqdModel.getNumberOfComponents(); l++) {
+			System.out.print("Time\t");
+			for(int j = 0; j < numberOfPaths; j++) {
+				System.out.print("Realization " + j + "\t");
+			}
+			for(int k = 0; k < timeDiscretization.getNumberOfTimes(); k++) {
+				System.out.print("\n" + timeDiscretization.getTime(k) + "\t");
+				for(int j = 0; j < numberOfPaths; j++) {
+					System.out.print(lnsvqdDiscretizationScheme.getProcessValue(k, l).get(j) + "\t");
+				}
+			}
+			System.out.print("\n\n");
+		}
+
 
 	}
 
-
-
 }
+
+

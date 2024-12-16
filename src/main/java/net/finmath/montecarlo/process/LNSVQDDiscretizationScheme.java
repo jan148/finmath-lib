@@ -105,7 +105,6 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 		}
 
 		final int numberOfPaths = this.getNumberOfPaths();
-		final int numberOfFactors = this.getNumberOfFactors();
 		final int numberOfComponents = this.getNumberOfComponents();
 
 		// Allocate Memory
@@ -148,10 +147,10 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 				final RandomVariable driftOfComponent = drift[componentIndex];
 
 				// Check if the component process has stopped to evolve
-				if(driftOfComponent == null) {
+				/*if(driftOfComponent == null) {
 					discreteProcessAtCurrentTimeIndex.add(componentIndex, null);
 					continue;
-				}
+				}*/
 
 				// Apply the transform to transition into the value-space of the discretization scheme
 				currentState[componentIndex] = applyStateSpaceTransform(timeIndex - 1, componentIndex, discreteProcess[timeIndex - 1][componentIndex]);
@@ -169,7 +168,7 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 				}
 
 				// Volatility process
-				if(componentIndex == 1 && driftOfComponent != null) {
+				if(componentIndex == 1) { /* && driftOfComponent != null*/
 					// SOLUTION TO FORWARD ODE
 					// 1. Define the function whose root is the new process-value
 					Function<RandomVariable, RandomVariable> rootFunction = new Function<RandomVariable, RandomVariable>() {
@@ -213,15 +212,14 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 						realizationsCurrentTimePoint[j] = newtonsMethod.getBestPoint();
 					}
 					currentState[componentIndex] = lnsvqdModel.getRandomVariableForArray(realizationsCurrentTimePoint);
-				} // End componentIndex-loop
-
+				}
 				// Transform the state space to the value space and return it.
 				currentState[componentIndex] = applyStateSpaceTransformInverse(timeIndex, componentIndex, currentState[componentIndex]);
 				RandomVariable result = currentState[componentIndex];
 
 				// The following line will add the result of the calculation to the vector discreteProcessAtCurrentTimeIndex
 				discreteProcessAtCurrentTimeIndex.add(componentIndex, result);
-			}
+			} // End componentIndex-loop
 
 			// Fetch results and move to discreteProcess[timeIndex]
 			for(int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
@@ -234,9 +232,6 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 			}
 			// Set Monte-Carlo weights
 			discreteProcessWeights[timeIndex] = discreteProcessWeights[timeIndex - 1];
-
-			// DELETE
-			System.out.println(discreteProcess[timeIndex][0].getAverage());
 		}
 	}
 
