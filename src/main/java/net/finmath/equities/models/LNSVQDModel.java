@@ -55,7 +55,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	/**
 	 * Market observables
 	 */
-	private final double riskFreeRate = 0.05;
+	private final double riskFreeRate = 0.00;
 
 	/**
 	 * Transformed inital values
@@ -67,6 +67,25 @@ public class LNSVQDModel extends AbstractProcessModel {
 	 */
 	private final RandomVariableFactory randomVariableFactory = new RandomVariableFromArrayFactory();
 	private static final RandomVariable ZERO = new Scalar(0.0);
+
+	/**
+	 * Functions used for the discretization scheme of the LNSVQD model
+	 */
+	public Function<RandomVariable, RandomVariable> zeta = new Function<RandomVariable, RandomVariable>() {
+		@Override
+		public RandomVariable apply(RandomVariable randomVariable) {
+			return randomVariable.mult(-1).exp().mult(getKappa1() * getTheta()).sub(randomVariable.mult(-1).exp().mult(getKappa2()))
+					.add(-getKappa1() + getKappa2() * getTheta() - 0.5 * getTotalInstVar());
+		}
+
+	};
+
+	public Function<RandomVariable, RandomVariable> zeta1stDerivative = new Function<RandomVariable, RandomVariable>() {
+		@Override
+		public RandomVariable apply(RandomVariable randomVariable) {
+			return randomVariable.mult(-1).exp().mult(getKappa1() * getTheta()).mult(-1).sub(randomVariable.mult(-1).exp().mult(getKappa2()));
+		}
+	};
 
 	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
 		this.spot0 = spot0;
@@ -351,9 +370,8 @@ public class LNSVQDModel extends AbstractProcessModel {
 	@Override
 	public RandomVariable applyStateSpaceTransform(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable randomVariable) {
 		double time = process.getTime(timeIndex);
-		RandomVariable numeraire = getRandomVariableForConstant(Math.exp(time * riskFreeRate));
 		if(componentIndex == 0) {
-			return randomVariable.div(numeraire).log();
+			return randomVariable.div(getNumeraire(null, time)).log();
 		}
 		else if(componentIndex == 1) {
 			return randomVariable.log();
@@ -369,9 +387,8 @@ public class LNSVQDModel extends AbstractProcessModel {
 	@Override
 	public RandomVariable applyStateSpaceTransformInverse(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable randomVariable) {
 		double time = process.getTime(timeIndex);
-		RandomVariable numeraire = getRandomVariableForConstant(Math.exp(time * riskFreeRate));
 		if(componentIndex == 0) {
-			return randomVariable.exp().mult(numeraire);
+			return randomVariable.exp().mult(getNumeraire(null, time));
 		}
 		else if(componentIndex == 1) {
 			return randomVariable.exp();
@@ -380,7 +397,6 @@ public class LNSVQDModel extends AbstractProcessModel {
 			throw new UnsupportedOperationException("Component " + componentIndex + " does not exist.");
 		}
 	}
-
 
 	@Override
 	public RandomVariable[] getInitialState(MonteCarloProcess process) {
@@ -395,13 +411,21 @@ public class LNSVQDModel extends AbstractProcessModel {
 		return getRandomVariableForConstant(Math.exp(time * riskFreeRate));
 	}
 
+	/**
+	 * @param realizationAtTimeIndex: Realizations of (S, \sigma), i.e. of the original process
+	 * @return The drift of the transformed process, i.e. the one used for the MC-discretization scheme;
+	 *
+	 * NOTE: We only define the scheme for the asset process; The implicit scheme for the volatility process is defined
+	 * in the class repsonsible for the discretization scheme
+	 */
 	@Override
 	public RandomVariable[] getDrift(MonteCarloProcess process, int timeIndex, RandomVariable[] realizationAtTimeIndex, RandomVariable[] realizationPredictor) {
 		RandomVariable stochasticVolatility = realizationAtTimeIndex[1];
+		// RandomVariable lnStochasticVolatility = applyStateSpaceTransform(process, timeIndex, 1, realizationAtTimeIndex[1]);
 		// TODO: Check the following formulas
-		RandomVariable driftAsset = getRandomVariableForConstant(riskFreeRate);
-		RandomVariable driftVolatility = stochasticVolatility.mult(kappa2).add(kappa1).mult(stochasticVolatility.mult(-1).sub(theta));
-		return new RandomVariable[]{driftAsset, driftVolatility};
+		RandomVariable driftAsset = stochasticVolatility.pow(2).mult(-0.5);
+		// RandomVariable driftVolatility = zeta.apply(lnStochasticVolatility);
+		return new RandomVariable[]{driftAsset, ZERO};
 	}
 
 	@Override
@@ -409,6 +433,9 @@ public class LNSVQDModel extends AbstractProcessModel {
 		return 2;
 	}
 
+	/**
+	 * @return The factor loadings of the transformed process, i.e. the one used for the MC-discretization scheme
+	 */
 	@Override
 	public RandomVariable[] getFactorLoading(MonteCarloProcess process, int timeIndex, int componentIndex, RandomVariable[] realizationAtTimeIndex) {
 		RandomVariable stochasticVolatility = realizationAtTimeIndex[1];
@@ -418,8 +445,8 @@ public class LNSVQDModel extends AbstractProcessModel {
 			factorLoadings[1] = ZERO;
 		}
 		else if(componentIndex == 1) {
-			factorLoadings[0] = stochasticVolatility.mult(beta);
-			factorLoadings[1] = stochasticVolatility.mult(epsilon);
+			factorLoadings[0] = getRandomVariableForConstant(getBeta());
+			factorLoadings[1] = getRandomVariableForConstant(getEpsilon());
 		}
 		else {
 			throw new UnsupportedOperationException("Component " + componentIndex + " does not exist.");

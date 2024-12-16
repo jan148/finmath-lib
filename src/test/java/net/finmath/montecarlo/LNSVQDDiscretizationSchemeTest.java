@@ -77,7 +77,7 @@ public class LNSVQDDiscretizationSchemeTest {
 		}*/
 
 		LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdModel, brownianMotion);
-		System.out.println(lnsvqdDiscretizationScheme.getProcessValue(1, 0));
+		System.out.println(lnsvqdDiscretizationScheme.getProcessValue(0, 1));
 
 	}
 
