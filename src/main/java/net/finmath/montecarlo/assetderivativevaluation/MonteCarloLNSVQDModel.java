@@ -1,6 +1,6 @@
 package net.finmath.montecarlo.assetderivativevaluation;
 
-import net.finmath.equities.models.LNSVQDModel;
+import net.finmath.equities.models.LNSVQD.LNSVQDModel;
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.assetderivativevaluation.models.MertonModel;
 import net.finmath.montecarlo.process.LNSVQDDiscretizationScheme;

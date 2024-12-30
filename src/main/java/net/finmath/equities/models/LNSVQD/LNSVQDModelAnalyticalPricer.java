@@ -1,15 +1,10 @@
-package net.finmath.equities.models;
+package net.finmath.equities.models.LNSVQD;
 
-import net.finmath.montecarlo.RandomVariableFactory;
-import net.finmath.montecarlo.RandomVariableFromArrayFactory;
-import net.finmath.stochastic.RandomVariable;
-import net.finmath.stochastic.Scalar;
 import org.apache.commons.math3.complex.Complex;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	/**

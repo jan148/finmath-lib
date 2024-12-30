@@ -1,8 +1,8 @@
 package net.finmath.equities;
 
-import net.finmath.equities.models.LNSVQDModel;
-import net.finmath.equities.models.LNSVQDModelAnalyticalPricer;
-import net.finmath.equities.models.LNSVQDUtils;
+import net.finmath.equities.models.LNSVQD.LNSVQDModel;
+import net.finmath.equities.models.LNSVQD.LNSVQDModelAnalyticalPricer;
+import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import net.finmath.exception.CalculationException;
 import net.finmath.functions.AnalyticFormulas;
 import net.finmath.montecarlo.BrownianMotionFromMersenneRandomNumbers;

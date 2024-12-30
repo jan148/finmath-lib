@@ -1,4 +1,4 @@
-package net.finmath.equities.models;
+package net.finmath.equities.models.LNSVQD;
 
 import org.apache.commons.math3.complex.Complex;
 

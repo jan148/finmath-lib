@@ -1,18 +1,13 @@
 package net.finmath.equities;
 
-import net.finmath.equities.models.ComplexRungeKutta4thOrderIntegrator;
+import net.finmath.equities.models.LNSVQD.ComplexRungeKutta4thOrderIntegrator;
 import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.DoubleStream;
-import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class ComplexRungeKutta4thOrderIntegratorTest {
 

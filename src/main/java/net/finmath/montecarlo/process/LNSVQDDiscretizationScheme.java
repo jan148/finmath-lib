@@ -1,6 +1,6 @@
 package net.finmath.montecarlo.process;
 
-import net.finmath.equities.models.LNSVQDModel;
+import net.finmath.equities.models.LNSVQD.LNSVQDModel;
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.IndependentIncrements;
 import net.finmath.montecarlo.model.ProcessModel;

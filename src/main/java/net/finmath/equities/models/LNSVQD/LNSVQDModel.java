@@ -1,4 +1,4 @@
-package net.finmath.equities.models;
+package net.finmath.equities.models.LNSVQD;
 
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.RandomVariableFactory;
@@ -148,7 +148,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	 * Condition 1 in Theorem 3.7: κ2 ≥ beta.
  	 */
 	private void checkMartingalityOfDiscountedAssetProcess() {
-		if(!(kappa2 >= beta)) {
+		if(kappa2 < beta) {
 			throw new IllegalStateException("κ2 < beta. Martingale condition violated!");
 		}
 	}
