@@ -1,28 +1,25 @@
 package net.finmath.montecarlo.process;
 
-import net.finmath.concurrency.FutureWrapper;
-import net.finmath.equities.models.LNSVQDModel;
+import net.finmath.equities.models.LNSVQDModelAnalyticalPricer;
+import net.finmath.equities.models.LNSVQDSimulationModel;
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.IndependentIncrements;
+import net.finmath.montecarlo.assetderivativevaluation.AssetModelMonteCarloSimulationModel;
+import net.finmath.montecarlo.assetderivativevaluation.MonteCarloAssetModel;
 import net.finmath.montecarlo.model.ProcessModel;
-import net.finmath.montecarlo.process.MonteCarloProcess;
-import net.finmath.montecarlo.process.MonteCarloProcessFromProcessModel;
 import net.finmath.rootfinder.NewtonsMethod;
 import net.finmath.stochastic.RandomVariable;
 import net.finmath.stochastic.Scalar;
-import net.finmath.time.TimeDiscretization;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.*;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessModel {
 
 	private final IndependentIncrements stochasticDriver;
-	private final LNSVQDModel lnsvqdModel;
+	private final LNSVQDSimulationModel lnsvqdModel;
 
 	/*
 	 * The storage of the simulated stochastic process.
@@ -30,12 +27,16 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 	private RandomVariable[][] discreteProcess = null;
 	private transient RandomVariable[] discreteProcessWeights;
 
-	public LNSVQDDiscretizationScheme(LNSVQDModel model, IndependentIncrements stochasticDriver) {
+	public LNSVQDDiscretizationScheme(LNSVQDSimulationModel model, IndependentIncrements stochasticDriver) {
 		super(stochasticDriver.getTimeDiscretization(), model);
 		this.lnsvqdModel = model;
 		this.stochasticDriver = stochasticDriver;
 	}
 
+	@Override
+	public LNSVQDSimulationModel getModel() {
+		return this.lnsvqdModel;
+	}
 	@Override
 	public int getNumberOfPaths() {
 		return stochasticDriver.getNumberOfPaths();
@@ -175,7 +176,7 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 						@Override
 						public RandomVariable apply(RandomVariable randomVariable) {
 							return brownianIncrement[0].mult(-lnsvqdModel.getBeta()).sub(brownianIncrement[1].mult(lnsvqdModel.getEpsilon()))
-									.sub(lnsvqdModel.zeta.apply(randomVariable).mult(deltaT).sub(discreteProcess[timeIndex - 1][1]).add(randomVariable));
+									.sub(lnsvqdModel.zeta.apply(randomVariable).mult(deltaT)).sub(currentState[componentIndex]).add(randomVariable);
 						}
 					};
 
@@ -197,7 +198,7 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 					double[] realizationsCurrentTimePoint =  new double[getNumberOfPaths()];
 					for(int j = 0; j < getNumberOfPaths(); j++) {
 						double initialGuess = realizationsLastTimePoint[j]; //TODO: Make better guess
-						NewtonsMethod newtonsMethod = new NewtonsMethod(initialGuess);
+						NewtonsMethod newtonsMethod = new NewtonsMethod(0);
 						// Solve
 						/*while(!newtonsMethod.isDone()) {
 							double value = rootFunction.apply(lnsvqdModel.getRandomVariableForConstant(newtonsMethod.getBestPoint())).get(0); //.getRealizations()[j];
@@ -205,8 +206,9 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 							newtonsMethod.setValueAndDerivative(value, derivative);
 						}*/
 						for(int k = 0; k < 100; k++) {
-							double value = rootFunction.apply(lnsvqdModel.getRandomVariableForConstant(newtonsMethod.getBestPoint())).get(0); //.getRealizations()[j];
-							double derivative = rootFunctionDerivative.apply(lnsvqdModel.getRandomVariableForConstant(newtonsMethod.getBestPoint())).get(0); //getRealizations()[j];
+							// RandomVariable func = rootFunction.apply(lnsvqdModel.getRandomVariableForConstant(newtonsMethod.getNextPoint()));
+							double value = rootFunction.apply(lnsvqdModel.getRandomVariableForConstant(newtonsMethod.getNextPoint())).get(j); //.getRealizations()[j];
+							double derivative = rootFunctionDerivative.apply(lnsvqdModel.getRandomVariableForConstant(newtonsMethod.getNextPoint())).get(j); //getRealizations()[j];
 							newtonsMethod.setValueAndDerivative(value, derivative);
 						}
 						realizationsCurrentTimePoint[j] = newtonsMethod.getBestPoint();
