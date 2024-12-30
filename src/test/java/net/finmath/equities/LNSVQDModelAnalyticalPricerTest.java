@@ -1,7 +1,7 @@
 package net.finmath.equities;
 
+import net.finmath.equities.models.LNSVQDModel;
 import net.finmath.equities.models.LNSVQDModelAnalyticalPricer;
-import net.finmath.equities.models.LNSVQDSimulationModel;
 import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.exception.CalculationException;
 import net.finmath.functions.AnalyticFormulas;
@@ -11,15 +11,11 @@ import net.finmath.montecarlo.RandomVariableFromArrayFactory;
 import net.finmath.montecarlo.assetderivativevaluation.MonteCarloLNSVQDModel;
 import net.finmath.montecarlo.assetderivativevaluation.products.EuropeanOption;
 import net.finmath.montecarlo.process.LNSVQDDiscretizationScheme;
-import net.finmath.stochastic.RandomVariable;
-import net.finmath.stochastic.Scalar;
 import net.finmath.time.TimeDiscretization;
 import net.finmath.time.TimeDiscretizationFromArray;
 import org.apache.commons.math3.complex.Complex;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
-
-import java.util.function.Function;
 
 /**
  * This test
@@ -30,45 +26,46 @@ class LNSVQDModelAnalyticalPricerTest {
 	/**
 	 * Simulation parameters
 	 */
-	int numberOfPaths = 26;
-	int seed = 3107;
+	int numberOfPaths = 1500;
+	int seed = 5609;
 
 	/**
 	 * Model params
 	 */
 	private final double spot0 = 1;
 	private final double sigma0 = 0.5;
-	private final double kappa1 = 0.2;
-	private final double kappa2 = 0.4;
-	private final double theta = 0.5;
-	private final double beta = 0;
-	private final double epsilon = 0;
-
+	// Value as in paper
+	private final double kappa1 = 2.21;
+	// Value as in paper
+	private final double kappa2 = 2.18; // 2.18
+	private final double theta = 0.4;
+	private final double beta = 0.4;
+	private final double epsilon = 0.6;
 
 	/**
 	 * Models
 	 */
+	LNSVQDModel lnsvqdSimulationModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
 	LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
-	LNSVQDSimulationModel lnsvqdSimulationModel = new LNSVQDSimulationModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
 
 	/**
 	 * Option params and option
 	 */
 	double strike = 1;
-	double maturity = 1. / 12;
+	double maturity = 1.;
 	EuropeanOption europeanOption = new EuropeanOption(maturity, strike, 1, 0);
 
 	/**
 	 * Market observables
 	 */
-	double riskFreeRate = 0.05;
+	double riskFreeRate = lnsvqdSimulationModel.getRiskFreeRate();
 	double discountFactor = Math.exp(-riskFreeRate * maturity);
 	double convenienceFcator = 0;
 
 	/**
 	 * Time discretization
 	 */
-	double[] timeGrid = LNSVQDUtils.createTimeGrid(0, 5, 100);
+	double[] timeGrid = LNSVQDUtils.createTimeGrid(0, 1, 100);
 	TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
 
 	/**
@@ -138,19 +135,22 @@ class LNSVQDModelAnalyticalPricerTest {
 		// 1. Create the Monte-Carlo Process
 		BrownianMotionFromMersenneRandomNumbers brownianMotion = new BrownianMotionFromMersenneRandomNumbers(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
 		LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdSimulationModel, brownianMotion);
+
 		/**
 		 * NOTE: MonteCarloLNSVQDModel glues together a discretization scheme and a model (e.g. Euler + Heston (terrible idea!));
 		 * In our case, the LNSVQD discretization scheme already has an instance of AbstractProcessModel (LNSVQDSimulationModel);
-		 * Hence, the model is already "glued" to its discretization scheme and so the AssetMonteCarloSimulationModel
-		 * is more of a wrapper; However, we still create a new instance of it to be consistent with the finmath-framework
+		 * Hence, the model is already "glued" to its discretization scheme and the AssetMonteCarloSimulationModel
+		 * is a wrapper; However, we still create a new instance of it in order to be consistent with the finmath-framework
 		 */
 		MonteCarloLNSVQDModel monteCarloLNSVQDModel = new MonteCarloLNSVQDModel(lnsvqdDiscretizationScheme, seed);
 
 		// Get option values
+		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot0, riskFreeRate, sigma0, maturity, strike, true); // Only valid if volatility is constant!
 		double analyticalOptionPrice = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
 		double simulatedOptionPrice = europeanOption.getValue(monteCarloLNSVQDModel);
 
 		// Print
+		System.out.println("BS option price: \t" + bsOptionValue);
 		System.out.println("Semi-analytical option price: \t" + analyticalOptionPrice);
 		System.out.println("Simulated option price: \t" + simulatedOptionPrice);
 

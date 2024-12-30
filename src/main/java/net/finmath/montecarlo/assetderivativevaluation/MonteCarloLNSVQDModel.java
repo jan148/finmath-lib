@@ -1,13 +1,8 @@
 package net.finmath.montecarlo.assetderivativevaluation;
 
-import net.finmath.equities.models.LNSVQDSimulationModel;
+import net.finmath.equities.models.LNSVQDModel;
 import net.finmath.exception.CalculationException;
-import net.finmath.montecarlo.IndependentIncrements;
-import net.finmath.montecarlo.MertonJumpProcess;
-import net.finmath.montecarlo.RandomVariableFactory;
 import net.finmath.montecarlo.assetderivativevaluation.models.MertonModel;
-import net.finmath.montecarlo.process.EulerSchemeFromProcessModel;
-import net.finmath.montecarlo.process.EulerSchemeFromProcessModel.Scheme;
 import net.finmath.montecarlo.process.LNSVQDDiscretizationScheme;
 import net.finmath.montecarlo.process.MonteCarloProcess;
 import net.finmath.stochastic.RandomVariable;
@@ -44,7 +39,7 @@ import java.util.Map;
  */
 public class MonteCarloLNSVQDModel implements AssetModelMonteCarloSimulationModel {
 
-	private final LNSVQDSimulationModel model;
+	private final LNSVQDModel model;
 	private final MonteCarloProcess process;
 
 	private final double initialValue;

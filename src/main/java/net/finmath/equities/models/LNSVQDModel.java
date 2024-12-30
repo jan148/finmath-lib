@@ -3,61 +3,43 @@ package net.finmath.equities.models;
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.RandomVariableFactory;
 import net.finmath.montecarlo.RandomVariableFromArrayFactory;
-import net.finmath.montecarlo.assetderivativevaluation.MonteCarloAssetModel;
 import net.finmath.montecarlo.model.AbstractProcessModel;
 import net.finmath.montecarlo.model.ProcessModel;
 import net.finmath.montecarlo.process.MonteCarloProcess;
 import net.finmath.stochastic.RandomVariable;
 import net.finmath.stochastic.Scalar;
-import org.apache.commons.math3.complex.Complex;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class LNSVQDSimulationModel extends AbstractProcessModel {
-	/**
-	 * Numerical parameters
-	 */
-	private final int numStepsForODEIntegration = 100;
-	private final int numStepsForInfiniteIntegral = 1000;
-	private final double upperBoundForInfiniteIntegral = numStepsForInfiniteIntegral / 10;
-
+public class LNSVQDModel extends AbstractProcessModel {
 	/**
 	 * Model parameters under the EMM
 	 */
-	private final double spot0;
-	private final double sigma0;
-	private final double kappa1;
-	private final double kappa2;
-	private final double theta;
-
-	public double getTotalInstVar() {
-		return totalInstVar;
-	}
-
-	private final double beta;
-
-	private final double epsilon;
-	private final double totalInstVar;
+	protected final double spot0;
+	protected final double sigma0;
+	protected final double kappa1;
+	protected final double kappa2;
+	protected final double theta;
+	protected final double beta;
+	protected final double epsilon;
+	protected final double totalInstVar;
 
 	/**
 	 * Market observables
 	 */
-	private final double riskFreeRate = 0.00;
+	protected final double riskFreeRate = 0.00;
 
 	/**
 	 * Transformed inital values
 	 */
-	double X0, Y0, I0;
+	protected double X0, Y0, I0;
 
 	/**
 	 * Random variable factory
 	 */
-	private final RandomVariableFactory randomVariableFactory = new RandomVariableFromArrayFactory();
-	private static final RandomVariable ZERO = new Scalar(0.0);
+	protected final RandomVariableFactory randomVariableFactory = new RandomVariableFromArrayFactory();
+	protected static final RandomVariable ZERO = new Scalar(0.0);
 
 	/**
 	 * Functions used for the discretization scheme of the LNSVQD model
@@ -65,7 +47,7 @@ public class LNSVQDSimulationModel extends AbstractProcessModel {
 	public Function<RandomVariable, RandomVariable> zeta = new Function<RandomVariable, RandomVariable>() {
 		@Override
 		public RandomVariable apply(RandomVariable randomVariable) {
-			return randomVariable.mult(-1).exp().mult(getKappa1() * getTheta()).sub(randomVariable.mult(-1).exp().mult(getKappa2()))
+			return randomVariable.mult(-1).exp().mult(getKappa1() * getTheta()).sub(randomVariable.exp().mult(getKappa2()))
 					.add(-getKappa1() + getKappa2() * getTheta() - 0.5 * getTotalInstVar());
 		}
 
@@ -74,11 +56,14 @@ public class LNSVQDSimulationModel extends AbstractProcessModel {
 	public Function<RandomVariable, RandomVariable> zeta1stDerivative = new Function<RandomVariable, RandomVariable>() {
 		@Override
 		public RandomVariable apply(RandomVariable randomVariable) {
-			return randomVariable.mult(-1).exp().mult(getKappa1() * getTheta()).mult(-1).sub(randomVariable.mult(-1).exp().mult(getKappa2()));
+			return randomVariable.mult(-1).exp().mult(getKappa1() * getTheta()).mult(-1)
+					.sub(randomVariable.exp().mult(getKappa2()));
 		}
 	};
 
-	public LNSVQDSimulationModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
+	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
+		super();
+
 		this.spot0 = spot0;
 		this.sigma0 = sigma0;
 		this.kappa1 = kappa1;
@@ -92,6 +77,8 @@ public class LNSVQDSimulationModel extends AbstractProcessModel {
 		this.Y0 = sigma0 - theta;
 		this.I0 = I0;
 
+		// Perform necessary checks
+		checkMartingalityOfDiscountedAssetProcess();
 	}
 
 	public double getSpot0() {
@@ -132,6 +119,38 @@ public class LNSVQDSimulationModel extends AbstractProcessModel {
 
 	public double getI0() {
 		return I0;
+	}
+
+	public double getTotalInstVar() {
+		return totalInstVar;
+	}
+
+	public double getRiskFreeRate() {
+		return riskFreeRate;
+	}
+
+	/**
+	 * ***************************************************+
+	 * SECTION 1: Check for parameter conditions
+	 * ***************************************************+
+	 */
+
+	/**
+	 * Assumption 3.1: κ1 ≥ 0, κ2 ≥ 0, θ > 0, ϑ ≥ 0.
+	 */
+	private void volatilityProcessParametersCondition() {
+		if(!(kappa1 >= 0 && kappa2 >= 0 && theta > 0 && Math.sqrt(totalInstVar) >= 0)) {
+			throw new IllegalStateException();
+		}
+	}
+
+	/**
+	 * Condition 1 in Theorem 3.7: κ2 ≥ beta.
+ 	 */
+	private void checkMartingalityOfDiscountedAssetProcess() {
+		if(!(kappa2 >= beta)) {
+			throw new IllegalStateException("κ2 < beta. Martingale condition violated!");
+		}
 	}
 
 	/**
@@ -250,6 +269,4 @@ public class LNSVQDSimulationModel extends AbstractProcessModel {
 	public ProcessModel getCloneWithModifiedData(Map<String, Object> dataModified) throws CalculationException {
 		return null;
 	}
-
-
 }

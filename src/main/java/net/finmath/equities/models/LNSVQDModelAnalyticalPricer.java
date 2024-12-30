@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class LNSVQDModelAnalyticalPricer {
+public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	/**
 	 * Numerical parameters
 	 */
@@ -19,113 +19,8 @@ public class LNSVQDModelAnalyticalPricer {
 	private final int numStepsForInfiniteIntegral = 1000;
 	private final double upperBoundForInfiniteIntegral = numStepsForInfiniteIntegral / 10;
 
-	/**
-	 * Model parameters under the EMM
-	 */
-	private final double spot0;
-	private final double sigma0;
-	private final double kappa1;
-	private final double kappa2;
-	private final double theta;
-
-	public double getTotalInstVar() {
-		return totalInstVar;
-	}
-
-	private final double beta;
-
-	private final double epsilon;
-	private final double totalInstVar;
-
-	/**
-	 * Market observables
-	 */
-	private final double riskFreeRate = 0.00;
-
-	/**
-	 * Transformed inital values
-	 */
-	double X0, Y0, I0;
-
-	/**
-	 * Random variable factory
-	 */
-	private final RandomVariableFactory randomVariableFactory = new RandomVariableFromArrayFactory();
-	private static final RandomVariable ZERO = new Scalar(0.0);
-
-	/**
-	 * Functions used for the discretization scheme of the LNSVQD model
-	 */
-	public Function<RandomVariable, RandomVariable> zeta = new Function<RandomVariable, RandomVariable>() {
-		@Override
-		public RandomVariable apply(RandomVariable randomVariable) {
-			return randomVariable.mult(-1).exp().mult(getKappa1() * getTheta()).sub(randomVariable.mult(-1).exp().mult(getKappa2()))
-					.add(-getKappa1() + getKappa2() * getTheta() - 0.5 * getTotalInstVar());
-		}
-
-	};
-
-	public Function<RandomVariable, RandomVariable> zeta1stDerivative = new Function<RandomVariable, RandomVariable>() {
-		@Override
-		public RandomVariable apply(RandomVariable randomVariable) {
-			return randomVariable.mult(-1).exp().mult(getKappa1() * getTheta()).mult(-1).sub(randomVariable.mult(-1).exp().mult(getKappa2()));
-		}
-	};
-
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
-		this.spot0 = spot0;
-		this.sigma0 = sigma0;
-		this.kappa1 = kappa1;
-		this.kappa2 = kappa2;
-		this.theta = theta;
-		this.beta = beta;
-		this.epsilon = epsilon;
-		this.totalInstVar = beta * beta + epsilon * epsilon;
-
-		this.X0 = Math.log(this.spot0);
-		this.Y0 = sigma0 - theta;
-		this.I0 = I0;
-
-	}
-
-	public double getSpot0() {
-		return spot0;
-	}
-
-	public double getSigma0() {
-		return sigma0;
-	}
-
-	public double getKappa1() {
-		return kappa1;
-	}
-
-	public double getKappa2() {
-		return kappa2;
-	}
-
-	public double getTheta() {
-		return theta;
-	}
-
-	public double getBeta() {
-		return beta;
-	}
-
-	public double getEpsilon() {
-		return epsilon;
-	}
-
-	public double getX0() {
-		return X0;
-	}
-
-	public double getY0() {
-		return Y0;
-	}
-
-	public double getI0() {
-		return I0;
+		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
 	}
 
 	/**

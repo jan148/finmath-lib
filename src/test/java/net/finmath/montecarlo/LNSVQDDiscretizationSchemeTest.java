@@ -1,7 +1,6 @@
 package net.finmath.montecarlo;
 
-import net.finmath.equities.models.LNSVQDModelAnalyticalPricer;
-import net.finmath.equities.models.LNSVQDSimulationModel;
+import net.finmath.equities.models.LNSVQDModel;
 import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.process.LNSVQDDiscretizationScheme;
@@ -37,7 +36,7 @@ public class LNSVQDDiscretizationSchemeTest {
 	/**
 	 * Models
 	 */
-	LNSVQDSimulationModel lnsvqdModel = new LNSVQDSimulationModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
+	LNSVQDModel lnsvqdModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
 
 	/**
 	 * Option params
