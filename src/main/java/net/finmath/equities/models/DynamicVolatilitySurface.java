@@ -34,6 +34,9 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 		this.volShift = volShift;
 	}
 
+	public int getNumberOfVolatilityPoints() {
+		return volatilityPoints.size();
+	}
 	public ArrayList<VolatilityPoint> getVolatilityPoints() {
 		return volatilityPoints;
 	}

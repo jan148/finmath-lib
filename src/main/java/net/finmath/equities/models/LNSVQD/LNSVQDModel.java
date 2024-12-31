@@ -12,18 +12,23 @@ import net.finmath.stochastic.Scalar;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * TODO:
+ * 1. Delete the quantitites that are derived from the parameter values create methods for them instead (less error-prone)
+ */
+
 public class LNSVQDModel extends AbstractProcessModel {
 	/**
 	 * Model parameters under the EMM
 	 */
 	protected final double spot0;
 	protected final double sigma0;
-	protected final double kappa1;
-	protected final double kappa2;
-	protected final double theta;
-	protected final double beta;
-	protected final double epsilon;
-	protected final double totalInstVar;
+	protected double kappa1;
+	protected double kappa2;
+	protected double theta;
+	protected double beta;
+	protected double epsilon;
+	protected double totalInstVar;
 
 	/**
 	 * Market observables
@@ -64,6 +69,9 @@ public class LNSVQDModel extends AbstractProcessModel {
 	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
 		super();
 
+		// Perform necessary checks
+		checkMartingalityOfDiscountedAssetProcess(kappa2, beta);
+
 		this.spot0 = spot0;
 		this.sigma0 = sigma0;
 		this.kappa1 = kappa1;
@@ -76,11 +84,13 @@ public class LNSVQDModel extends AbstractProcessModel {
 		this.X0 = Math.log(this.spot0);
 		this.Y0 = sigma0 - theta;
 		this.I0 = I0;
-
-		// Perform necessary checks
-		checkMartingalityOfDiscountedAssetProcess();
 	}
 
+	/**
+	 * ***************************************************+
+	 * Getters
+	 * ***************************************************+
+	 */
 	public double getSpot0() {
 		return spot0;
 	}
@@ -131,6 +141,27 @@ public class LNSVQDModel extends AbstractProcessModel {
 
 	/**
 	 * ***************************************************+
+	 * Setters
+	 * ***************************************************+
+	 */
+	public void setVolatilityParameters(double[] parameterVector) {
+		// Perform necessary checks
+		checkMartingalityOfDiscountedAssetProcess(kappa2, beta);
+
+		this.kappa1 = parameterVector[0];
+		this.kappa2 = parameterVector[1];
+		this.theta = parameterVector[2];
+		this.beta = parameterVector[3];
+		this.epsilon = parameterVector[4];
+		this.totalInstVar = beta * beta + epsilon * epsilon;
+
+		this.X0 = Math.log(this.spot0);
+		this.Y0 = sigma0 - theta;
+		this.I0 = I0;
+	}
+
+	/**
+	 * ***************************************************+
 	 * SECTION 1: Check for parameter conditions
 	 * ***************************************************+
 	 */
@@ -147,7 +178,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	/**
 	 * Condition 1 in Theorem 3.7: κ2 ≥ beta.
  	 */
-	private void checkMartingalityOfDiscountedAssetProcess() {
+	private void checkMartingalityOfDiscountedAssetProcess(double kappa2, double beta) {
 		if(kappa2 < beta) {
 			throw new IllegalStateException("κ2 < beta. Martingale condition violated!");
 		}
