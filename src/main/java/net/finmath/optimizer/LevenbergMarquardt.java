@@ -813,6 +813,7 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 		for (int i = 0; i < parameterCurrent.length; i++) {
 			parameterTest[i] = parameterCurrent[i] + parameterIncrement[i];
 		}
+		double x = 0;
 	}
 
 	/**

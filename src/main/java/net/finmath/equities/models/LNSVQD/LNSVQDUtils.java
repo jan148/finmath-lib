@@ -87,6 +87,11 @@ public class LNSVQDUtils {
 		}
 		return timeGrid;
 	}
+	public static void printArray(double[] array) {
+		for(double element : array) {
+			System.out.println(element);
+		}
+	}
 
 
 }

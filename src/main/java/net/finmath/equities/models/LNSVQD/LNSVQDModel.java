@@ -33,7 +33,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	/**
 	 * Market observables
 	 */
-	protected final double riskFreeRate = 0.00;
+	protected final double riskFreeRate = 0.05;
 
 	/**
 	 * Transformed inital values

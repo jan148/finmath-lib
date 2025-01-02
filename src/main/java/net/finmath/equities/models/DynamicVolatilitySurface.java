@@ -1,8 +1,10 @@
 package net.finmath.equities.models;
 
 import net.finmath.equities.marketdata.VolatilityPoint;
+import net.finmath.functions.AnalyticFormulas;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 
 /**
@@ -14,11 +16,11 @@ import java.util.ArrayList;
 public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolatilitySurface {
 	// TODO: Check that volatility points are sorted by ExpiryDate and Strike
 	private final ArrayList<VolatilityPoint> volatilityPoints;
-
-
-
 	private final ArrayList<LocalDate> volatilityDates = new ArrayList<>();
 	private final ArrayList<Double> strikes = new ArrayList<>();
+	// Prices
+	private final ArrayList<Double> prices = new ArrayList<>();
+	private final LocalDate today;
 	private final double volShift;
 
 	public DynamicVolatilitySurface(ArrayList<VolatilityPoint> volatilityPoints) {
@@ -31,6 +33,7 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 			volatilityDates.add(volatilityPoint.getDate());
 			strikes.add(volatilityPoint.getVolatility());
 		});
+		this.today = volatilityDates.get(0);
 		this.volShift = volShift;
 	}
 
@@ -49,8 +52,30 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 		return strikes;
 	}
 
+	public LocalDate getToday() {
+		return this.today;
+	}
+
 	public double getShift() {
 		return volShift;
+	}
+
+	public ArrayList<Double> getPrices(double initalStockValue, double riskFreeRate) {
+		ArrayList<Double> prices = new ArrayList<>();
+
+		for(VolatilityPoint volatilityPoint : volatilityPoints) {
+			LocalDate date = volatilityPoint.getDate();
+			long period = ChronoUnit.DAYS.between(today, date);
+			double ttm = period / 365.; // TODO: Get the correct denominator
+
+			// Fetch point from the surface
+			double strike = volatilityPoint.getStrike();
+			double empiricalVolatility = volatilityPoint.getVolatility();
+			double price = AnalyticFormulas.blackScholesOptionValue(initalStockValue, riskFreeRate, empiricalVolatility, ttm, strike);
+			prices.add(price);
+		}
+
+		return prices;
 	}
 
 	@Override

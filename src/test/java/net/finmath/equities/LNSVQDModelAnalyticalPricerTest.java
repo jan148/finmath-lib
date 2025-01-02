@@ -76,7 +76,7 @@ class LNSVQDModelAnalyticalPricerTest {
 	/**
 	 * Tolerance level
 	 */
-	private final double delta =  10E-3;
+	private final double delta = 10E-3;
 
 	/**
 	 * ***************************************************+
@@ -155,6 +155,40 @@ class LNSVQDModelAnalyticalPricerTest {
 		System.out.println("Simulated option price: \t" + simulatedOptionPrice);
 
 		Assert.assertEquals(analyticalOptionPrice, simulatedOptionPrice, delta);
+	}
+
+	/**
+	 * ***************************************************+
+	 * SECTION 3: Implied SVI surface
+	 * ***************************************************+
+	 */
+
+	@Test
+	public void outputImpliedSVISurface() {
+		double endTime = 2;
+		int numberOfTimePoints = 10;
+
+		double[] timePoints = LNSVQDUtils.createTimeGrid(0, endTime, numberOfTimePoints - 1);
+		double[] moneynessLevels = LNSVQDUtils.createTimeGrid(0.2, 1.8, 8);
+		// LNSVQDUtils.printArray(moneynessLevels);
+		LNSVQDUtils.printArray(timePoints);
+
+		double[] prices = new double[timePoints.length * moneynessLevels.length];
+
+		for(int k = 0; k < moneynessLevels.length; k++) {
+			System.out.print("\t" + moneynessLevels[k]);
+		}
+		for(int i = 0; i < timePoints.length; i++) {
+			System.out.print("\n");
+			System.out.print(timePoints[i]);
+			for(int j = 0; j < moneynessLevels.length; j++) {
+				double discountFactor = Math.exp(-riskFreeRate * timePoints[i]);
+				double strike = lnsvqdModelAnalyticalPricer.getSpot0() * moneynessLevels[j];
+				double price = lnsvqdModelAnalyticalPricer.getCallPrice(strike, timePoints[i], discountFactor, 0);
+				double impliedVol = AnalyticFormulas.blackScholesOptionImpliedVolatility(lnsvqdModelAnalyticalPricer.getSpot0() / discountFactor, timePoints[i], strike, discountFactor, price);
+				System.out.print("\t" + impliedVol);
+			}
+		}
 	}
 
 }
