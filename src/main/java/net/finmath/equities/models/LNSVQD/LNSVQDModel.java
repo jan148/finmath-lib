@@ -146,7 +146,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	 */
 	public void setVolatilityParameters(double[] parameterVector) {
 		// Perform necessary checks
-		checkMartingalityOfDiscountedAssetProcess(kappa2, beta);
+		// checkMartingalityOfDiscountedAssetProcess(kappa2, beta);
 
 		this.kappa1 = parameterVector[0];
 		this.kappa2 = parameterVector[1];

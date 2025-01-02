@@ -577,8 +577,11 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 					parametersNew[workerParameterIndex] += parameterFiniteDifference;
 
 					// Calculate derivative as (valueUpShift - valueCurrent) / parameterFiniteDifference
+					double funcValShifted = 0;
 					try {
 						setValues(parametersNew, derivative);
+						funcValShifted = derivative[0];
+						//System.out.println("Function value of shifted parameter:\t" + funcValShifted);
 					} catch (final Exception e) {
 						logger.severe("Valuation failed with exeption " + e.getMessage() + "\n" + e.getStackTrace());
 						// We signal an exception to calculate the derivative as NaN
@@ -590,7 +593,11 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 						if(Double.isNaN(derivative[valueIndex])) {
 							derivative[valueIndex] = 0.0;
 						}
+						double myDerivative = (funcValShifted - valueCurrent[0]) / parameterFiniteDifference;
+						//System.out.println("Current value: " + valueCurrent[0]);
+						//System.out.println("Derivative: " + myDerivative);
 					}
+
 					return derivative;
 				}
 			};
@@ -613,6 +620,9 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 				throw new SolverException(e);
 			}
 		}
+
+
+
 	}
 
 	/**
@@ -719,6 +729,15 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 					}
 					logger.fine(logString);
 				}
+				String logString =
+						"Iteration: " + iteration +
+								"\tLambda=" + lambda +
+								"\tError Current (RMS):" + Math.sqrt(errorMeanSquaredCurrent) +
+								"\tError Change:" + errorRootMeanSquaredChange + "\t";
+				for (int i = 0; i < parameterCurrent.length; i++) {
+					logString += "[" + i + "] = " + parameterCurrent[i] + "\t";
+				}
+				System.out.println(logString);
 			}
 		}
 		finally {

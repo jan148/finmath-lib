@@ -16,13 +16,23 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.BiFunction;
 
 public class LNSVQDModelCalibrator {
 
 	// TODO
 	public static double[] calibrate(final double[] initialVolatilityParameters, LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer,
-	                             DynamicVolatilitySurface volatilitySurface) throws SolverException {
+	                             DynamicVolatilitySurface volatilitySurface, int[] parameterIndices) throws SolverException {
+		// Create list of paramters that should be calibrated
+		double[] initialVolatilityParametersToCalibrate = new double[parameterIndices.length];
+		for(int j = 0; j < initialVolatilityParametersToCalibrate.length; j++) {
+			initialVolatilityParametersToCalibrate[j] = initialVolatilityParameters[parameterIndices[j]];
+		}
+
 		double[] calibratedParameters = new double[initialVolatilityParameters.length];
 
 		final double initalStockValue = lnsvqdModelAnalyticalPricer.getSpot0();
@@ -30,22 +40,37 @@ public class LNSVQDModelCalibrator {
 
 		final double[] targetValues = volatilitySurface.getPrices(initalStockValue, riskFreeRate)
 				.stream().mapToDouble(Double::doubleValue).toArray();
-		final int maxIteration = 5;
+		final int maxIteration = 50;
 		final int numberOfThreads = 1;
 
 		final LocalDate calibrationDay = volatilitySurface.getToday();
 
-		LevenbergMarquardt levenbergMarquardt = new LevenbergMarquardt(initialVolatilityParameters, targetValues, maxIteration, numberOfThreads) {
+		/**
+		 * For concurrency: Create executor service
+		 */
+		ExecutorService executorService =  null; //
+
+		/**
+		 * Create optimizer
+		 */
+
+		LevenbergMarquardt levenbergMarquardt = new LevenbergMarquardt(initialVolatilityParametersToCalibrate, targetValues, maxIteration, executorService) {
 			@Override
 			public void setValues(double[] parameters, double[] values) throws SolverException {
+				double[] paramVector = initialVolatilityParameters.clone();
+				for(int j = 0; j < parameterIndices.length; j++) {
+					int index = parameterIndices[j];
+					paramVector[index] = parameters[j];
+				}
+
 				// Set parameters
-				lnsvqdModelAnalyticalPricer.setVolatilityParameters(parameters);
+				lnsvqdModelAnalyticalPricer.setVolatilityParameters(paramVector);
 
 				for(int p = 0; p < volatilitySurface.getNumberOfVolatilityPoints(); p++) {
 					// Get ttm
 					LocalDate date = volatilitySurface.getVolatilityDates().get(p);
 					long period = ChronoUnit.DAYS.between(calibrationDay, date);
-					double ttm = period / 365; // TODO: Get the correct denominator
+					double ttm = period / 365.; // TODO: Get the correct denominator
 
 					double discountFactor = Math.exp(-lnsvqdModelAnalyticalPricer.getRiskFreeRate() * ttm);
 					double conveniceFacor = 0; // TODO: Change later
@@ -61,6 +86,9 @@ public class LNSVQDModelCalibrator {
 				}
 			}
 		};
+
+		// Set lambda
+		levenbergMarquardt.setLambda(0.01);
 
 		// Print some information
 		System.out.println("Calibration started");

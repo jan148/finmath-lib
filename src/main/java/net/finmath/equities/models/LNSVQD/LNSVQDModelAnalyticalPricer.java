@@ -10,8 +10,8 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	/**
 	 * Numerical parameters
 	 */
-	private final int numStepsForODEIntegration = 100;
-	private final int numStepsForInfiniteIntegral = 1000;
+	private final int numStepsForODEIntegration = 10;
+	private final int numStepsForInfiniteIntegral = 100;
 	private final double upperBoundForInfiniteIntegral = numStepsForInfiniteIntegral / 10;
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {

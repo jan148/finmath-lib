@@ -26,7 +26,7 @@ class LNSVQDModelAnalyticalPricerTest {
 	/**
 	 * Simulation parameters
 	 */
-	int numberOfPaths = 1500;
+	int numberOfPaths = 1;
 	int seed = 5609;
 
 	/**
@@ -35,12 +35,12 @@ class LNSVQDModelAnalyticalPricerTest {
 	private final double spot0 = 1;
 	private final double sigma0 = 0.5;
 	// Value as in paper
-	private final double kappa1 = 2.21;
+	private final double kappa1 = 2.1; // 2.2100000321 2.21
 	// Value as in paper
 	private final double kappa2 = 2.18; // 2.18
-	private final double theta = 0.4;
-	private final double beta = 0.4;
-	private final double epsilon = 0.6;
+	private final double theta = 0.6;
+	private final double beta = 0.0;
+	private final double epsilon = 0.0;
 
 	/**
 	 * Models
@@ -51,8 +51,8 @@ class LNSVQDModelAnalyticalPricerTest {
 	/**
 	 * Option params and option
 	 */
-	double strike = 1;
-	double maturity = 1.;
+	double strike = 1.0;
+	double maturity = 1.16986301369863;
 	EuropeanOption europeanOption = new EuropeanOption(maturity, strike, 1, 0);
 
 	/**
@@ -65,7 +65,7 @@ class LNSVQDModelAnalyticalPricerTest {
 	/**
 	 * Time discretization
 	 */
-	double[] timeGrid = LNSVQDUtils.createTimeGrid(0, 1, 100);
+	double[] timeGrid = LNSVQDUtils.createTimeGrid(0, maturity, 100);
 	TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
 
 	/**

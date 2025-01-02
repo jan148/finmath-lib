@@ -23,18 +23,18 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 	private final LocalDate today;
 	private final double volShift;
 
-	public DynamicVolatilitySurface(ArrayList<VolatilityPoint> volatilityPoints) {
-		this(volatilityPoints, 0.0);
-	}
-
-	public DynamicVolatilitySurface(ArrayList<VolatilityPoint> volatilityPoints, double volShift) {
+	public DynamicVolatilitySurface(ArrayList<VolatilityPoint> volatilityPoints, LocalDate today, double volShift) {
 		this.volatilityPoints = volatilityPoints;
 		volatilityPoints.forEach(volatilityPoint -> {
 			volatilityDates.add(volatilityPoint.getDate());
-			strikes.add(volatilityPoint.getVolatility());
+			strikes.add(volatilityPoint.getStrike());
 		});
-		this.today = volatilityDates.get(0);
+		this.today = today;
 		this.volShift = volShift;
+	}
+
+	public DynamicVolatilitySurface(ArrayList<VolatilityPoint> volatilityPoints, LocalDate today) {
+		this(volatilityPoints, today, 0.0);
 	}
 
 	public int getNumberOfVolatilityPoints() {
@@ -81,7 +81,7 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 	@Override
 	public ShiftedVolatilitySurface getShiftedSurface(double shift) {
 		assert volShift == 0.0 : "Surface is already shifted";
-		return new DynamicVolatilitySurface(volatilityPoints, shift);
+		return new DynamicVolatilitySurface(volatilityPoints, today, shift);
 	}
 
 	@Override
