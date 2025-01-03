@@ -127,4 +127,11 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 	@Override
 	public void calibrate(EquityForwardStructure forwardStructure, ArrayList<VolatilityPoint> volaPoints) {}
 
+	public void printVolSurfaceForOutput() {
+		System.out.println("Date \t Strike \t Volatility");
+		for(VolatilityPoint volatilityPoint : volatilityPoints) {
+			System.out.println(volatilityPoint.getDate() + "\t" + volatilityPoint.getStrike() + "\t" + volatilityPoint.getVolatility());
+		}
+	}
+
 }

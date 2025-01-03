@@ -5,6 +5,7 @@ import net.finmath.equities.models.DynamicVolatilitySurface;
 import net.finmath.equities.models.LNSVQD.LNSVQDModel;
 import net.finmath.equities.models.LNSVQD.LNSVQDModelAnalyticalPricer;
 import net.finmath.equities.models.LNSVQD.LNSVQDModelCalibrator;
+import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import net.finmath.equities.models.VolatilitySurface;
 import net.finmath.optimizer.SolverException;
 import org.junit.Test;
@@ -35,8 +36,49 @@ public class LNSVQDModelCalibratorTest {
 	 */
 	LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
 
+	/**
+	 * Create a strikes * ttm - grid
+	 */
+	double[] strikes = LNSVQDUtils.createTimeGrid(0.6 * spot0, 1.4 * spot0, 8);
+	double[] ttms = LNSVQDUtils.createTimeGrid(1 / 12., 2, 23);
+
+	/**
+	 * Other
+	 */
+	LocalDate today = LocalDate.parse("2024-10-18");
+
+	/**
+	 * ***************************************************+
+	 * SECTION 1: Get model-implied vol sufrace
+	 * ***************************************************+
+	 */
 	@Test
-	public void calibrate() throws SolverException {
+	public void printModelImpliedVolSurface() {
+		VolatilityPoint[] volatilityPoints = new VolatilityPoint[strikes.length * ttms.length];
+		for(int i = 0; i < ttms.length; i++) {
+			for(int j = 0; j < strikes.length; j++) {
+				// LocalDate date = 0; // TODO
+				double strike = strikes[j];
+				double price = lnsvqdModelAnalyticalPricer.getCallPrice
+						(strike, ttms[i], Math.exp(-lnsvqdModelAnalyticalPricer.getRiskFreeRate() * ttms[i]), 0); // TODO: Check
+				// volatilityPoints[i * strikes.length + j] = blackScholesOptionImpliedVolatility(...);
+			}
+
+		}
+		DynamicVolatilitySurface dynamicVolatilitySurface = new DynamicVolatilitySurface(volatilityPoints, today);
+
+		dynamicVolatilitySurface.printVolSurfaceForOutput();
+	}
+
+
+
+	/**
+	 * ***************************************************+
+	 * SECTION 2: Calibration test
+	 * ***************************************************+
+	 */
+	@Test
+	public void calibrateTest() throws SolverException {
 		/**
 		 * 1. Create volatility surface
 		 * TODO: Create an interface for excel I/O-functionality

@@ -23,7 +23,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * SECTION 1: Semi-analytical call option price calculation
 	 * ***************************************************+
 	 */
-
 	// Calculate the affine-exponential approximation to the characteristic function
 	public Complex calculateExponentialAffineApproximation(Double ttm, Complex[] charFuncArgs){
 		/**
