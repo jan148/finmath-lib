@@ -40,7 +40,7 @@ public class LNSVQDModelCalibrator {
 
 		final double[] targetValues = volatilitySurface.getPrices(initalStockValue, riskFreeRate)
 				.stream().mapToDouble(Double::doubleValue).toArray();
-		final int maxIteration = 50;
+		final int maxIteration = 60;
 		final int numberOfThreads = 1;
 
 		final LocalDate calibrationDay = volatilitySurface.getToday();
