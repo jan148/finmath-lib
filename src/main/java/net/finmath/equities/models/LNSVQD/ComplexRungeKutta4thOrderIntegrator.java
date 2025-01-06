@@ -36,21 +36,47 @@ public class ComplexRungeKutta4thOrderIntegrator {
 
 	private Complex[] integrateOneStep(double time, double timeStep) {
 		Complex[] newState = this.state.clone();
-		for(int j = 0; j < state.length; j++) {
-			Complex[] overwrittenState = newState.clone();
-			Complex d1 = this.odeSystem.get(j).apply(time, overwrittenState);
 
-			overwrittenState[j] = newState[j].add(d1.multiply(timeStep / 2));
-			Complex d2 = this.odeSystem.get(j).apply(time + (timeStep / 2), overwrittenState);
+		int n = newState.length;
+		Complex[] d1 = new Complex[n];
+		Complex[] d2 = new Complex[n];
+		Complex[] d3 = new Complex[n];
+		Complex[] d4 = new Complex[n];
 
-			overwrittenState[j] = newState[j].add(d2.multiply(timeStep / 2));
-			Complex d3 = this.odeSystem.get(j).apply(time + (timeStep / 2), overwrittenState);
-
-			overwrittenState[j] = newState[j].add(d3.multiply(timeStep / 2));
-			Complex d4 = this.odeSystem.get(j).apply(time + timeStep, overwrittenState);
-
-			newState[j] = newState[j].add((d1.add(d2.multiply(2)).add(d3.multiply(2)).add(d4).multiply(timeStep / 6)));
+		Complex[] overwrittenState = this.state.clone();
+		for(int j = 0; j < n; j++) {
+			d1[j] = odeSystem.get(j).apply(time, overwrittenState);
 		}
+
+		overwrittenState = this.state.clone();
+		for(int j = 0; j < n; j++) {
+			overwrittenState[j] = overwrittenState[j].add(d1[j].multiply(timeStep / 2));
+		}
+		for(int j = 0; j < n; j++) {
+			d2[j] = odeSystem.get(j).apply(time + (timeStep / 2), overwrittenState);
+		}
+
+		overwrittenState = this.state.clone();
+		for(int j = 0; j < n; j++) {
+			overwrittenState[j] = overwrittenState[j].add(d2[j].multiply(timeStep / 2));
+		}
+		for(int j = 0; j < state.length; j++) {
+			d3[j] = odeSystem.get(j).apply(time + (timeStep / 2), overwrittenState);
+		}
+
+		overwrittenState = this.state.clone();
+		for(int j = 0; j < n; j++) {
+			overwrittenState[j] = overwrittenState[j].add(d3[j].multiply(timeStep));
+		}
+		for(int j = 0; j < n; j++) {
+			d4[j] = odeSystem.get(j).apply(time + timeStep, overwrittenState);
+		}
+
+		overwrittenState = this.state.clone();
+		for(int j = 0; j < state.length; j++) {
+			newState[j] = overwrittenState[j].add((d1[j].add(d2[j].multiply(2)).add(d3[j].multiply(2)).add(d4[j]).multiply(timeStep / 6)));
+		}
+
 		return newState;
 	}
 

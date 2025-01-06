@@ -1,7 +1,12 @@
 package net.finmath.equities.models.LNSVQD;
 
+import net.finmath.equities.marketdata.VolatilityPoint;
+import net.finmath.equities.models.DynamicVolatilitySurface;
+import net.finmath.functions.AnalyticFormulas;
+import net.finmath.time.daycount.DayCountConvention;
 import org.apache.commons.math3.complex.Complex;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -10,8 +15,8 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	/**
 	 * Numerical parameters
 	 */
-	private final int numStepsForODEIntegration = 10;
-	private final int numStepsForInfiniteIntegral = 100;
+	public final int numStepsForODEIntegration = 10000;
+	private final int numStepsForInfiniteIntegral = 10000;
 	private final double upperBoundForInfiniteIntegral = numStepsForInfiniteIntegral / 10;
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
@@ -23,13 +28,12 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * SECTION 1: Semi-analytical call option price calculation
 	 * ***************************************************+
 	 */
-	// Calculate the affine-exponential approximation to the characteristic function
-	public Complex calculateExponentialAffineApproximation(Double ttm, Complex[] charFuncArgs){
+	public ArrayList<BiFunction<Double, Complex[], Complex>> getOdeSystem(Complex[] charFuncArgs) {
 		/**
 		 * Create the functions for the exponential-affine approximation; Names like in the paper
 		 */
 		// Some constants
-		Complex complex0 = Complex.ZERO;
+		final Complex complex0 = Complex.ZERO;
 		Complex totalInstVar = new Complex(this.totalInstVar, 0);
 		Complex mixedDeg3 = new Complex(this.theta * this.totalInstVar, 0);
 		Complex mixedDeg4 = new Complex(Math.pow(this.theta, 2) * this.totalInstVar, 0);
@@ -82,7 +86,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 
 		Complex L21 = complex0;
 		Complex L22 = charFuncArgs[0].multiply(-beta).subtract(kappa2);
-		Complex L23 = totalInstVar.subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(theta * beta).multiply(4));
+		Complex L23 = totalInstVar.subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(4 * theta * beta));
 		Complex L24 = totalInstVar.multiply(-2).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(3); // q = -p = -1
 		Complex L25 = mixedDeg4.multiply(6);
 		Complex[] L2 = {L21, L22, L23, L24, L25};
@@ -102,9 +106,9 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		Complex[] L4 = {L41, L42, L43, L44, L45};
 
 		// 3. Scalars
-		Complex H0 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(Math.pow(theta, 2) / 2);
-		Complex H1 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(theta);
-		Complex H2 = charFuncArgs[0].pow(2).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(0.5);
+		Complex H0 = charFuncArgs[0].multiply(charFuncArgs[0]).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(0.5 * Math.pow(theta, 2));
+		Complex H1 = charFuncArgs[0].multiply(charFuncArgs[0]).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(theta);
+		Complex H2 = charFuncArgs[0].multiply(charFuncArgs[0]).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(0.5);
 		Complex H3 = complex0;
 		Complex H4 = complex0;
 
@@ -148,25 +152,37 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				return result;
 			}
 		};
+		ArrayList<BiFunction<Double, Complex[], Complex>> As = new ArrayList<>();
+		As.add(0, A0);
+		As.add(1, A1);
+		As.add(2, A2);
+		As.add(3, A3);
+		As.add(4, A4);
+		return As;
+	}
 
+	public Complex[][] getSolutionPathForODESystem(double ttm, Complex[] charFuncArgs) {
 		/**
 		 * The ODE-system for the second-order exponential-affine approximation
 		 */
-		List<BiFunction<Double, Complex[], Complex>> odeSystem = new ArrayList<>();
-		odeSystem.add(A0);
-		odeSystem.add(A1);
-		odeSystem.add(A2);
-		odeSystem.add(A3);
-		odeSystem.add(A4);
+		List<BiFunction<Double, Complex[], Complex>> odeSystem = getOdeSystem(charFuncArgs);
 
 		/**
 		 * Calculate the solution for the A's
 		 */
-		Complex[] state = new Complex[]{new Complex(0., 0.), charFuncArgs[2].multiply(-1), new Complex(0., 0.), new Complex(0., 0.), new Complex(0., 0.)};
+		Complex[] state = new Complex[]{Complex.ZERO, charFuncArgs[2].multiply(-1), Complex.ZERO, Complex.ZERO, Complex.ZERO};
 		// Solve ODE for A^{(k)}'s
 		ComplexRungeKutta4thOrderIntegrator complexRungeKutta4thOrderIntegrator = new ComplexRungeKutta4thOrderIntegrator(state, odeSystem);
+		Complex[][] solutionPath = complexRungeKutta4thOrderIntegrator.getSolutionPath(LNSVQDUtils.createTimeGrid(0, ttm, this.numStepsForODEIntegration));
+
+		return solutionPath;
+	}
+
+	// Calculate the affine-exponential approximation to the characteristic function
+	public Complex calculateExponentialAffineApproximation(Double ttm, Complex[] charFuncArgs) {
+
 		// Choose the end point of the solution path
-		Complex[] A = complexRungeKutta4thOrderIntegrator.getSolutionPath(LNSVQDUtils.createTimeGrid(0, ttm, this.numStepsForODEIntegration))[this.numStepsForODEIntegration];
+		Complex[] A = getSolutionPathForODESystem(ttm, charFuncArgs)[this.numStepsForODEIntegration];
 
 		/**
 		 * Calculate the solution for the A's
@@ -186,7 +202,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	/**
 	 * We use our Runge-Kutta implementation to calculate the integral
 	 */
-	public double getCallPrice(double strike, double ttm, double discountFactor, double convencienceFactor){
+	public double getCallPrice(double strike, double ttm, double discountFactor, double convencienceFactor) {
 		double logMoneyness = Math.log(spot0 / strike) + (-Math.log(discountFactor) - convencienceFactor);
 
 		/**
@@ -222,9 +238,35 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		 * Get real part, multiply with factor
 		 */
 		double integralReal = integral.getReal();
-		double optionPrice =  spot0 - (discountFactor * strike / Math.PI) * integralReal;
+		double optionPrice = spot0 - (discountFactor * strike / Math.PI) * integralReal;
 
 		return optionPrice;
+	}
+
+	/**
+	 * ***************************************************+
+	 * SECTION 2: Print implied vol surface
+	 * ***************************************************+
+	 */
+	// Method takes an existing volatility surface and creates a model implied vol-surface with the same
+	public DynamicVolatilitySurface getImpliedVolSurface(DynamicVolatilitySurface dynamicVolatilitySurface) {
+		LocalDate today = dynamicVolatilitySurface.getToday();
+		DayCountConvention dayCountConvention = dynamicVolatilitySurface.getDayCountConvention();
+
+		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();
+		for(VolatilityPoint volatilityPoint : dynamicVolatilitySurface.getVolatilityPoints()) {
+			LocalDate maturity = volatilityPoint.getDate();
+			double strike = volatilityPoint.getStrike();
+			double ttm = dayCountConvention.getDaycountFraction(today, maturity);
+			double discountFactor = Math.exp(-riskFreeRate * ttm);
+			double forward = getSpot0() / discountFactor;
+			double price = getCallPrice(strike, ttm, discountFactor, 0);
+			double impliedVol = AnalyticFormulas.blackScholesOptionImpliedVolatility
+					(forward, ttm, strike, discountFactor, price);
+			volatilityPoints.add(new VolatilityPoint(maturity, strike, impliedVol));
+		}
+		DynamicVolatilitySurface modelImpliedVolSurface = new DynamicVolatilitySurface(volatilityPoints, today, dayCountConvention);
+		return modelImpliedVolSurface;
 	}
 
 }

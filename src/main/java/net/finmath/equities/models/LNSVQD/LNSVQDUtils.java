@@ -31,8 +31,8 @@ public class LNSVQDUtils {
 	}
 
 	public static Complex[] matrixVectorMult(Complex[][] A, Complex[]  v) {
-		int rows = A.length; // Number of rows in the matrix
-		int cols = A[0].length; // Number of columns in the matrix
+		int rows = A.length;
+		int cols = A[0].length;
 
 		if (v.length != cols) {
 			throw new IllegalArgumentException("Matrix column count must match vector size");
@@ -40,9 +40,9 @@ public class LNSVQDUtils {
 
 		Complex[] result = new Complex[rows];
 		for (int i = 0; i < rows; i++) {
-			result[i] = new Complex(0, 0); // Start with zero
+			result[i] = new Complex(0, 0);
 			for (int j = 0; j < cols; j++) {
-				result[i] = result[i].add(A[i][j].multiply(v[j])); // Perform dot product
+				result[i] = result[i].add(A[i][j].multiply(v[j]));
 			}
 		}
 		return result;
@@ -52,7 +52,6 @@ public class LNSVQDUtils {
 		if (v.length != w.length) {
 			throw new IllegalArgumentException("Vectors must be of the same length");
 		}
-
 		Complex result = new Complex(0, 0);
 		for (int i = 0; i < v.length; i++) {
 			result = result.add(v[i].multiply(w[i]));

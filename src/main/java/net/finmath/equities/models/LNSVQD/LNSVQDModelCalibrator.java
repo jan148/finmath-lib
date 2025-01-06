@@ -38,7 +38,8 @@ public class LNSVQDModelCalibrator {
 		final double initalStockValue = lnsvqdModelAnalyticalPricer.getSpot0();
 		final double riskFreeRate = lnsvqdModelAnalyticalPricer.getRiskFreeRate();
 
-		final double[] targetValues = volatilitySurface.getPrices(initalStockValue, riskFreeRate)
+		final double[] targetValues = volatilitySurface
+				.getPrices(initalStockValue, riskFreeRate, volatilitySurface.getDayCountConvention())
 				.stream().mapToDouble(Double::doubleValue).toArray();
 		final int maxIteration = 60;
 		final int numberOfThreads = 1;
@@ -48,12 +49,11 @@ public class LNSVQDModelCalibrator {
 		/**
 		 * For concurrency: Create executor service
 		 */
-		ExecutorService executorService =  null; //
+		ExecutorService executorService = null ; // new ForkJoinPool(numberOfThreads)
 
 		/**
 		 * Create optimizer
 		 */
-
 		LevenbergMarquardt levenbergMarquardt = new LevenbergMarquardt(initialVolatilityParametersToCalibrate, targetValues, maxIteration, executorService) {
 			@Override
 			public void setValues(double[] parameters, double[] values) throws SolverException {
@@ -88,7 +88,7 @@ public class LNSVQDModelCalibrator {
 		};
 
 		// Set lambda
-		levenbergMarquardt.setLambda(0.01);
+		levenbergMarquardt.setLambda(0.001);
 
 		// Print some information
 		System.out.println("Calibration started");

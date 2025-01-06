@@ -33,7 +33,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	/**
 	 * Market observables
 	 */
-	protected final double riskFreeRate = 0.05;
+	protected final double riskFreeRate = 0.00;
 
 	/**
 	 * Transformed inital values
@@ -300,4 +300,5 @@ public class LNSVQDModel extends AbstractProcessModel {
 	public ProcessModel getCloneWithModifiedData(Map<String, Object> dataModified) throws CalculationException {
 		return null;
 	}
+
 }

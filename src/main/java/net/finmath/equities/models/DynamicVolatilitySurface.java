@@ -2,6 +2,7 @@ package net.finmath.equities.models;
 
 import net.finmath.equities.marketdata.VolatilityPoint;
 import net.finmath.functions.AnalyticFormulas;
+import net.finmath.time.daycount.DayCountConvention;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -20,21 +21,23 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 	private final ArrayList<Double> strikes = new ArrayList<>();
 	// Prices
 	private final ArrayList<Double> prices = new ArrayList<>();
+	private final DayCountConvention dayCountConvention;
 	private final LocalDate today;
 	private final double volShift;
 
-	public DynamicVolatilitySurface(ArrayList<VolatilityPoint> volatilityPoints, LocalDate today, double volShift) {
+	public DynamicVolatilitySurface(ArrayList<VolatilityPoint> volatilityPoints, LocalDate today, DayCountConvention dayCountConvention, double volShift) {
 		this.volatilityPoints = volatilityPoints;
 		volatilityPoints.forEach(volatilityPoint -> {
 			volatilityDates.add(volatilityPoint.getDate());
 			strikes.add(volatilityPoint.getStrike());
 		});
+		this.dayCountConvention = dayCountConvention;
 		this.today = today;
 		this.volShift = volShift;
 	}
 
-	public DynamicVolatilitySurface(ArrayList<VolatilityPoint> volatilityPoints, LocalDate today) {
-		this(volatilityPoints, today, 0.0);
+	public DynamicVolatilitySurface(ArrayList<VolatilityPoint> volatilityPoints, LocalDate today, DayCountConvention dayCountConvention) {
+		this(volatilityPoints, today, dayCountConvention, 0.0);
 	}
 
 	public int getNumberOfVolatilityPoints() {
@@ -52,6 +55,11 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 		return strikes;
 	}
 
+	public DayCountConvention getDayCountConvention() {
+		return this.dayCountConvention;
+	}
+
+
 	public LocalDate getToday() {
 		return this.today;
 	}
@@ -60,13 +68,12 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 		return volShift;
 	}
 
-	public ArrayList<Double> getPrices(double initalStockValue, double riskFreeRate) {
+	public ArrayList<Double> getPrices(double initalStockValue, double riskFreeRate, DayCountConvention dayCountConvention) {
 		ArrayList<Double> prices = new ArrayList<>();
 
 		for(VolatilityPoint volatilityPoint : volatilityPoints) {
 			LocalDate date = volatilityPoint.getDate();
-			long period = ChronoUnit.DAYS.between(today, date);
-			double ttm = period / 365.; // TODO: Get the correct denominator
+			double ttm = dayCountConvention.getDaycountFraction(today, date); // TODO: Get the correct denominator
 
 			// Fetch point from the surface
 			double strike = volatilityPoint.getStrike();
@@ -81,7 +88,7 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 	@Override
 	public ShiftedVolatilitySurface getShiftedSurface(double shift) {
 		assert volShift == 0.0 : "Surface is already shifted";
-		return new DynamicVolatilitySurface(volatilityPoints, today, shift);
+		return new DynamicVolatilitySurface(volatilityPoints, today, dayCountConvention, shift);
 	}
 
 	@Override

@@ -63,6 +63,51 @@ class ComplexRungeKutta4thOrderIntegratorTest {
 		//TODO: Assert that relative error is below a certain threshold
 	}
 
+	@Test
+	void testLotkaVolterra() {
+		double alpha = 1;
+		double beta = 0.1;
+		double delta = 0.075;
+		double gamma = 1.5;
+		BiFunction<Double, Complex[], Complex> evolutionPrey = new BiFunction<Double, Complex[], Complex>() {
+			@Override
+			public Complex apply(Double aDouble, Complex[] complexes) {
+				Complex result = complexes[0].multiply(alpha).subtract(complexes[0].multiply(complexes[1]).multiply(beta));
+				return result;
+			}
+		};
+		BiFunction<Double, Complex[], Complex> evolutionPredator = new BiFunction<Double, Complex[], Complex>() {
+			@Override
+			public Complex apply(Double aDouble, Complex[] complexes) {
+				Complex result = complexes[0].multiply(complexes[1]).multiply(delta).subtract(complexes[1].multiply(gamma));
+				return result;
+			}
+		};
+
+		final Complex[] state = {new Complex(100, 0.), new Complex(100, 0.)};
+		List<BiFunction<Double, Complex[], Complex>> odeSystem = new ArrayList<>();
+		odeSystem.add(evolutionPrey);
+		odeSystem.add(evolutionPredator);
+		ComplexRungeKutta4thOrderIntegrator odeRungeKutta = new ComplexRungeKutta4thOrderIntegrator(state, odeSystem);
+
+		double t0 = 0.0;
+		double stepSize = 0.1;
+		int steps = 99 * 3;
+		double[] timePoints = createTimeGrid(t0, stepSize, steps);
+
+		Complex[][] solutionPath = odeRungeKutta.getSolutionPath(timePoints);
+
+		// Print results
+		System.out.println("Time" + "\t"+ "Prey" + "\t\t" + "Predator");
+		System.out.println("Time" + "\t"+ "Real" + "\t"+ "Real");
+		for(int k = 0; k <= steps; k++) {
+			double currentTime = timePoints[k];
+			System.out.println(currentTime + "\t"+ solutionPath[k][0].getReal() + "\t" + solutionPath[k][1].getReal());
+		}
+
+		//TODO: Assert that relative error is below a certain threshold
+	}
+
 	private double[] createTimeGrid(double t0, double stepSize, int steps) {
 		double[] timeGrid = new double[steps + 1];
 		timeGrid[0] = t0;
