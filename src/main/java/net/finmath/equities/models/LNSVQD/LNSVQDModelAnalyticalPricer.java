@@ -15,8 +15,8 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	/**
 	 * Numerical parameters
 	 */
-	public final int numStepsForODEIntegration = 10000;
-	private final int numStepsForInfiniteIntegral = 10000;
+	public final int numStepsForODEIntegration = 300;
+	private final int numStepsForInfiniteIntegral = 300;
 	private final double upperBoundForInfiniteIntegral = numStepsForInfiniteIntegral / 10;
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
@@ -216,7 +216,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				// 1. Compute the value of the affine-exponential approximation
 				Complex approxCharFuncVal = calculateExponentialAffineApproximation(ttm, charFuncArgs);
 				Complex E2 = approxCharFuncVal
-						.multiply(charFuncArgs[0].multiply(X0).add(charFuncArgs[1].multiply(I0).exp()));
+						.multiply(charFuncArgs[0].multiply(X0).add(charFuncArgs[1].multiply(I0)).exp());
 
 				// 2. Calculate result
 				Complex result = new Complex(0.5, -aDouble).multiply(logMoneyness).exp().multiply(1 / (aDouble * aDouble + 0.25)).multiply(E2);

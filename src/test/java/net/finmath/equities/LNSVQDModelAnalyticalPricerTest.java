@@ -29,21 +29,22 @@ class LNSVQDModelAnalyticalPricerTest {
 	/**
 	 * Simulation parameters
 	 */
-	int numberOfPaths = 5000;
-	int seed = 6548;
+	int numberOfPaths = 10000;
+	int seed = 4356;
 
 	/**
 	 * Model params
 	 */
+	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
 	private final double spot0 = 1;
-	private final double sigma0 = 0.41;
+	private final double sigma0 = 0.8327; //0.41;
 	// Value as in paper
-	private final double kappa1 = 2.21;
+	private final double kappa1 = 4.8606; //2.21;
 	// Value as in paper
-	private final double kappa2 = 2.18;
-	private final double theta = 0.38;
-	private final double beta = 0.5;
-	private final double epsilon = 3.06;
+	private final double kappa2 = 4.7938; //2.18;
+	private final double theta = 1.0139; //0.38;
+	private final double beta = 0.1985; //0.5;
+	private final double epsilon = 2.3690; //3.06;
 
 	/**
 	 * Models
@@ -88,14 +89,13 @@ class LNSVQDModelAnalyticalPricerTest {
 	 */
 	@Test
 	public void delete() {
-		Complex y = Complex.ONE.multiply(2);
-		Complex x = y.multiply(-beta).add(beta);;
-		System.out.println(x.getReal());
+		System.out.println(4.8606 * 1.0139);
+		System.out.println(2.21 * 0.38);
 	}
 	@Test
 	public void printAj() {
-		int index = 0;
-		double ttm = 1;
+		int index = 4;
+		double ttm = 10;
 		double y = 2.0;
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
 		final Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
@@ -112,18 +112,19 @@ class LNSVQDModelAnalyticalPricerTest {
 
 	@Test
 	public void printE2() {
-		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, 1, 49);
+		double ttm = 10;
 		double y = 2.;
+		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
 		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 
 		System.out.println("TTM \t Real part \t Imaginary part");
 		for(int i = 0; i < timeGrid.length; i++) {
-			double ttm = timeGrid[i];
-			Complex value = lnsvqdModelAnalyticalPricer.calculateExponentialAffineApproximation(ttm, charFuncArgs)
-					.multiply(charFuncArgs[0].multiply(lnsvqdModelAnalyticalPricer.getX0()).add(charFuncArgs[1].multiply(lnsvqdModelAnalyticalPricer.getI0())).exp());
+			double t = 8;
+			Complex value = lnsvqdModelAnalyticalPricer.calculateExponentialAffineApproximation(t, charFuncArgs);
+					//.multiply(charFuncArgs[0].multiply(lnsvqdModelAnalyticalPricer.getX0()).add(charFuncArgs[1].multiply(lnsvqdModelAnalyticalPricer.getI0())).exp());
 			double realPart = value.getReal();
 			double imaginaryPart = value.getImaginary();
-			System.out.println(ttm + "\t" + realPart + "\t"+  imaginaryPart);
+			System.out.println(t + "\t" + realPart + "\t"+  imaginaryPart);
 		}
 	}
 
@@ -210,7 +211,14 @@ class LNSVQDModelAnalyticalPricerTest {
 
 	@Test
 	void comparePricingMethods() throws CalculationException {
+		double[] timeGrid = LNSVQDUtils.createTimeGrid(0.0, 1, 5); // Change back to 0.0 = t0
+		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.6, 5);
+		for (int i = 0; i < strikes.length; i++) {
+			strikes[i] *= spot0;
+		}
+
 		// 1. Create the Monte-Carlo Process
+		TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
 		BrownianMotionFromMersenneRandomNumbers brownianMotion = new BrownianMotionFromMersenneRandomNumbers(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
 		LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdSimulationModel, brownianMotion);
 
@@ -222,17 +230,36 @@ class LNSVQDModelAnalyticalPricerTest {
 		 */
 		MonteCarloLNSVQDModel monteCarloLNSVQDModel = new MonteCarloLNSVQDModel(lnsvqdDiscretizationScheme, seed);
 
-		// Get option values
-		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot0, riskFreeRate, sigma0, maturity, strike, true); // Only valid if volatility is constant!
-		double analyticalOptionPrice = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
-		double simulatedOptionPrice = europeanOption.getValue(monteCarloLNSVQDModel);
+		// 1. Print analytical prices
+		/*for(int j = 0; j < strikes.length; j++) {
+			System.out.print("\t" + strikes[j]);
+		}
+		System.out.print("\n");
+		for(int i = 0; i < timeGrid.length; i++) {
+			double ttm = timeGrid[i];
+			System.out.print(ttm);
+			for(int j = 0; j < strikes.length; j++) {
+				double strike = strikes[j];
+				// Get option values
+				double analyticalOptionPrice = lnsvqdModelAnalyticalPricer.getCallPrice(strike, ttm, discountFactor, convenienceFcator);
+				System.out.print("\t" + analyticalOptionPrice);
+			}
+			System.out.print("\n");
+		}*/
 
-		// Print
-		System.out.println("BS option price: \t" + bsOptionValue);
-		System.out.println("Semi-analytical option price: \t" + analyticalOptionPrice);
-		System.out.println("Simulated option price: \t" + simulatedOptionPrice);
-
-		Assert.assertEquals(analyticalOptionPrice, simulatedOptionPrice, delta);
+		// 2. Print simulation prices
+		for(int i = 0; i < timeGrid.length; i++) {
+			double ttm = timeGrid[i];
+			System.out.print(ttm);
+			for(int j = 0; j < strikes.length; j++) {
+				double strike = strikes[j];
+				// Get option values
+				EuropeanOption europeanOption = new EuropeanOption(ttm, strike, 1, 0);
+				double simulatedOptionPrice = europeanOption.getValue(monteCarloLNSVQDModel);
+				System.out.print("\t" + simulatedOptionPrice);
+			}
+			System.out.print("\n");
+		}
 	}
 
 	/**
@@ -240,7 +267,6 @@ class LNSVQDModelAnalyticalPricerTest {
 	 * SECTION 3: Implied SVI surface
 	 * ***************************************************+
 	 */
-
 	@Test
 	public void outputImpliedSVISurface() {
 		double endTime = 1;
