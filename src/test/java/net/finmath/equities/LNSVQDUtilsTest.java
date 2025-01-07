@@ -41,4 +41,18 @@ public class LNSVQDUtilsTest {
 		System.out.println(arrayWithInsertedPoints);
 	}
 
+	@Test
+	public void addMidPointsToListTest() throws Exception {
+		ArrayList<Double> list = new ArrayList<>();
+		list.add(1.);
+		list.add(3.6);
+		list.add(4.3);
+		list.add(10.);
+
+		List<Double> listWithMidPoints = LNSVQDUtils.addMidPointsToList(list);
+
+		System.out.println(listWithMidPoints);
+	}
+
+
 }

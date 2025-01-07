@@ -131,5 +131,18 @@ public class LNSVQDUtils {
 		return list;
 	}
 
+	public static List<Double> addMidPointsToList(List<Double> numbers) {
+		List<Double> listWithMidpoints = new ArrayList<>();
+		// Init
+		listWithMidpoints.add(numbers.get(0));
+		for (int i = 1; i < numbers.size(); i++) {
+			double newNumber = numbers.get(i);
+			double midPoint = numbers.get(i - 1) + ((newNumber - numbers.get(i - 1)) / 2.);
+			listWithMidpoints.add(midPoint);
+			listWithMidpoints.add(newNumber);
+		}
+		return listWithMidpoints;
+	}
+
 
 }

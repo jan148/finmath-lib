@@ -264,7 +264,30 @@ class LNSVQDModelAnalyticalPricerTest {
 
 	/**
 	 * ***************************************************+
-	 * SECTION 3: Implied SVI surface
+	 * SECTION 3: TEST CALL PRICE CALCULATION WITH PRECALCULATION OF E2
+	 * ***************************************************+
+	 */
+	@Test
+	public void getCallPricesTest() {
+		double[] timeGrid = LNSVQDUtils.createTimeGrid(0.0, 1, 5); // Change back to 0.0 = t0
+		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.6, 3);
+		for(int i = 0; i < strikes.length; i++) {
+			strikes[i] *= spot0;
+		}
+
+		double[] optionPrices;
+		try {
+			optionPrices = lnsvqdModelAnalyticalPricer.getCallPrices(strikes, timeGrid);
+		} catch(Exception e) {
+			throw new IllegalArgumentException(e);
+		}
+
+		LNSVQDUtils.printArray(optionPrices);
+	}
+
+	/**
+	 * ***************************************************+
+	 * SECTION 4: Implied SVI surface
 	 * ***************************************************+
 	 */
 	@Test
