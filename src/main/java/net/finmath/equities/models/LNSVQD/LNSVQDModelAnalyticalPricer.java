@@ -18,12 +18,12 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * Numerical parameters
 	 */
 	// For ODE-integration
-	public final int numStepsForODEIntegration = 300;
+	public final int numStepsForODEIntegration = 500;
 	public final int numStepsForODEIntegrationPerUnitTime = 100;
 
-	// For Unbounded inegratio
+	// For Unbounded inegration
 	private final int numStepsForInfiniteIntegral = 200;
-	private final double upperBoundForInfiniteIntegral = 100;
+	private final double upperBoundForInfiniteIntegral = 50;
 	private final double[] yGridForInfiniteIntegral = LNSVQDUtils.createTimeGrid(0, upperBoundForInfiniteIntegral, numStepsForInfiniteIntegral);
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
@@ -327,15 +327,14 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		 * 3. For every maturity and every strike, we calculate the call option price
 		 */
 		for(int i = 0; i < maturitiesWithZero.length; i++) {
+			if(maturities[0] != 0 && i == 0) {
+				continue;
+			}
 			double maturity = maturitiesWithZero[i];
 			double discountFactor = Math.exp(-getRiskFreeRate() * maturity);
 			double convenienceFactor = 0;
 			// Get the time index of the maturity
-			int indexOfTMM = timeGridForMGFApproximationCalculationList.indexOf(maturity);
-			if(indexOfTMM == -1) {
-				throw new IllegalArgumentException("Maturity not in array: The E2 value for this maturity hasn't been calculated!");
-			}
-
+			int maturityIndex = i;
 			for(int j = 0; j < strikes.length; j++) {
 
 				/**
@@ -343,8 +342,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				 * DO FOR ONE OPTION
 				 * **********************
 				 */
-
-				int optionIndex = i * maturitiesWithZero.length + j;
+				int optionIndex = maturities[0] != 0 ? (i - 1) * strikes.length + j : i * strikes.length + j;
 
 				double strike = strikes[j];
 
@@ -365,7 +363,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 						}
 
 						// 1. Compute the value of the affine-exponential approximation
-						Complex E2 = expAffApproxMatPathPerCharFuncRealization[yIndex][indexOfTMM];
+						Complex E2 = expAffApproxMatPathPerCharFuncRealization[yIndex][maturityIndex].multiply(new Complex(-0.5, y).multiply(X0).exp());
 
 						// 2. Calculate result
 						Complex result = new Complex(0.5, -y).multiply(logMoneyness).exp().multiply(1 / (y * y + 0.25)).multiply(E2);

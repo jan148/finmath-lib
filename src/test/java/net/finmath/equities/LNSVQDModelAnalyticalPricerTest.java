@@ -92,14 +92,14 @@ class LNSVQDModelAnalyticalPricerTest {
 		System.out.println(4.8606 * 1.0139);
 		System.out.println(2.21 * 0.38);
 	}
-	/*@Test
+	@Test
 	public void printAj() {
-		int index = 4;
-		double ttm = 10;
+		int index = 1;
+		double ttm = 1;
 		double y = 2.0;
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
 		final Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
-		Complex[][] solutionPath = lnsvqdModelAnalyticalPricer.getSolutionPathForODESystem(ttm, charFuncArgs);
+		Complex[][] solutionPath = lnsvqdModelAnalyticalPricer.getSolutionPathForODESystem(timeGrid, charFuncArgs);
 		System.out.println("T \t Real part \t Imaginary part");
 		for(int i = 0; i < solutionPath.length; i++) {
 			double t = timeGrid[i];
@@ -108,20 +108,19 @@ class LNSVQDModelAnalyticalPricerTest {
 			double imaginaryPart = value.getImaginary();
 			System.out.println(t + "\t" + realPart + "\t"+  imaginaryPart);
 		}
-	}*/
+	}
 
 	@Test
 	public void printE2() {
-		double ttm = 10;
+		double ttm = 1;
 		double y = 2.;
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
 		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 
 		System.out.println("TTM \t Real part \t Imaginary part");
 		for(int i = 0; i < timeGrid.length; i++) {
-			double t = 8;
-			Complex value = lnsvqdModelAnalyticalPricer.calculateExponentialAffineApproximation(t, charFuncArgs);
-					//.multiply(charFuncArgs[0].multiply(lnsvqdModelAnalyticalPricer.getX0()).add(charFuncArgs[1].multiply(lnsvqdModelAnalyticalPricer.getI0())).exp());
+			double t = timeGrid[i];
+			Complex value = lnsvqdModelAnalyticalPricer.calculateExponentialAffineApproximation(t, charFuncArgs).multiply(charFuncArgs[0].multiply(lnsvqdModelAnalyticalPricer.getX0()).add(charFuncArgs[1].multiply(lnsvqdModelAnalyticalPricer.getI0())).exp());
 			double realPart = value.getReal();
 			double imaginaryPart = value.getImaginary();
 			System.out.println(t + "\t" + realPart + "\t"+  imaginaryPart);
@@ -211,8 +210,8 @@ class LNSVQDModelAnalyticalPricerTest {
 
 	@Test
 	void comparePricingMethods() throws CalculationException {
-		double[] timeGrid = LNSVQDUtils.createTimeGrid(0.0, 1, 5); // Change back to 0.0 = t0
-		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.6, 5);
+		double[] timeGrid = LNSVQDUtils.createTimeGrid(1.0, 1.2, 1); // Change back to 0.0 = t0
+		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.6, 2);
 		for (int i = 0; i < strikes.length; i++) {
 			strikes[i] *= spot0;
 		}
@@ -231,7 +230,7 @@ class LNSVQDModelAnalyticalPricerTest {
 		MonteCarloLNSVQDModel monteCarloLNSVQDModel = new MonteCarloLNSVQDModel(lnsvqdDiscretizationScheme, seed);
 
 		// 1. Print analytical prices
-		/*for(int j = 0; j < strikes.length; j++) {
+		for(int j = 0; j < strikes.length; j++) {
 			System.out.print("\t" + strikes[j]);
 		}
 		System.out.print("\n");
@@ -245,10 +244,10 @@ class LNSVQDModelAnalyticalPricerTest {
 				System.out.print("\t" + analyticalOptionPrice);
 			}
 			System.out.print("\n");
-		}*/
+		}
 
 		// 2. Print simulation prices
-		for(int i = 0; i < timeGrid.length; i++) {
+		/*for(int i = 0; i < timeGrid.length; i++) {
 			double ttm = timeGrid[i];
 			System.out.print(ttm);
 			for(int j = 0; j < strikes.length; j++) {
@@ -259,7 +258,7 @@ class LNSVQDModelAnalyticalPricerTest {
 				System.out.print("\t" + simulatedOptionPrice);
 			}
 			System.out.print("\n");
-		}
+		}*/
 	}
 
 	/**
@@ -268,9 +267,43 @@ class LNSVQDModelAnalyticalPricerTest {
 	 * ***************************************************+
 	 */
 	@Test
+	public void calculateExponentialAffineApproximationFullPathTest() {
+		double ttm = 1;
+		double y = 2.;
+		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
+		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
+
+		System.out.println("TTM \t Real part \t Imaginary part");
+		Complex[] values = lnsvqdModelAnalyticalPricer.calculateExponentialAffineApproximationFullPath(timeGrid, charFuncArgs);
+		for(int i = 0; i < timeGrid.length; i++) {
+			double t = timeGrid[i];
+			Complex value = values[i].multiply(charFuncArgs[0].multiply(lnsvqdModelAnalyticalPricer.getX0()).add(charFuncArgs[1].multiply(lnsvqdModelAnalyticalPricer.getI0())).exp());
+			double realPart = value.getReal();
+			double imaginaryPart = value.getImaginary();
+			System.out.println(t + "\t" + realPart + "\t"+  imaginaryPart);
+		}
+	}
+
+	@Test
+	public void comparePricingFunctions() {
+		double[] timeGrid = {0.2};
+		double[] strikes = {lnsvqdModelAnalyticalPricer.getSpot0()};
+
+		double optionPrice = lnsvqdModelAnalyticalPricer.getCallPrice(strikes[0], timeGrid[0], discountFactor, 0);
+		double[] optionPrices;
+		try {
+			optionPrices = lnsvqdModelAnalyticalPricer.getCallPrices(strikes, timeGrid);
+		} catch(Exception e) {
+			throw new IllegalArgumentException(e);
+		}
+
+		System.out.println("Price old method: " + optionPrice + "\tPrice new method: " + optionPrices[0]);
+	}
+
+	@Test
 	public void getCallPricesTest() {
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0.0, 1, 5); // Change back to 0.0 = t0
-		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.6, 3);
+		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.6, 5);
 		for(int i = 0; i < strikes.length; i++) {
 			strikes[i] *= spot0;
 		}
@@ -282,7 +315,20 @@ class LNSVQDModelAnalyticalPricerTest {
 			throw new IllegalArgumentException(e);
 		}
 
-		LNSVQDUtils.printArray(optionPrices);
+		for(int k = 0; k < strikes.length; k++) {
+			System.out.print("\t" + strikes[k]);
+		}
+		for(int i = 0; i < timeGrid.length; i++) {
+			System.out.print("\n");
+			System.out.print(timeGrid[i]);
+			for(int j = 0; j < strikes.length; j++) {
+				double discountFactor = Math.exp(-riskFreeRate * timeGrid[i]);
+				double strike = strikes[j];
+				double price = optionPrices[i * strikes.length + j];
+				//double impliedVol = AnalyticFormulas.blackScholesOptionImpliedVolatility(lnsvqdModelAnalyticalPricer.getSpot0() / discountFactor, timePoints[i], strike, discountFactor, price);
+				System.out.print("\t" + price);
+			}
+		}
 	}
 
 	/**
