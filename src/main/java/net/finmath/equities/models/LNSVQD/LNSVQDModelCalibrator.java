@@ -22,6 +22,11 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.BiFunction;
 
+/**
+ * The exponential-affine approximation to the mgf can be precalculated; For t0 < t1, we would calculate A_t0 twice,
+ * once for A_t0 and once for A_t0.
+ */
+
 public class LNSVQDModelCalibrator {
 
 	// TODO

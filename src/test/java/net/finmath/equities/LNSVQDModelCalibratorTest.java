@@ -26,15 +26,16 @@ public class LNSVQDModelCalibratorTest {
 	/**
 	 * Model params
 	 */
+	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
 	private final double spot0 = 1;
-	private final double sigma0 = 0.1445;
+	private final double sigma0 = 0.8327; //0.41;
 	// Value as in paper
-	private final double kappa1 = 1.715;
+	private final double kappa1 = 4.8606; //2.21;
 	// Value as in paper
-	private final double kappa2 = 2.108;
-	private final double theta = 0.182;
-	private final double beta = -0.00002;
-	private final double epsilon = 0.0;
+	private final double kappa2 = 4.7938; //2.18;
+	private final double theta = 1.0139; //0.38;
+	private final double beta = 0.1985; //0.5;
+	private final double epsilon = 2.3690; //3.06;
 
 	/**
 	 * Get pricer
@@ -125,12 +126,12 @@ public class LNSVQDModelCalibratorTest {
 		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 1.00, 0.1493, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 1.20, 0.1359, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 1.40, 0.1878, lnsvqdModelAnalyticalPricer.getSpot0()));
-		/*volatilityPoints.add(makeVolatilityPoint("2025-03-21", 0.60, 0.3471, lnsvqdModelAnalyticalPricer.getSpot0()));
+		volatilityPoints.add(makeVolatilityPoint("2025-03-21", 0.60, 0.3471, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2025-03-21", 0.80, 0.2427, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2025-03-21", 1.00, 0.1511, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2025-03-21", 1.20, 0.1162, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2025-03-21", 1.40, 0.1464, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 0.60, 0.3159, lnsvqdModelAnalyticalPricer.getSpot0()));
+		/*volatilityPoints.add(makeVolatilityPoint("2025-06-20", 0.60, 0.3159, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 0.80, 0.2289, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 1.00, 0.1545, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 1.20, 0.1164, lnsvqdModelAnalyticalPricer.getSpot0()));

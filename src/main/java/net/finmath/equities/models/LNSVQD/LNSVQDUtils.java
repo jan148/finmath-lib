@@ -2,6 +2,13 @@ package net.finmath.equities.models.LNSVQD;
 
 import org.apache.commons.math3.complex.Complex;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.Stream;
+
 public class LNSVQDUtils {
 	/**
 	 *
@@ -90,6 +97,38 @@ public class LNSVQDUtils {
 		for(double element : array) {
 			System.out.println(element);
 		}
+	}
+
+	public static List<Double> addTimePointsToArray(double[] array, int numberOfInsertionPoints) throws Exception {
+		double min = Arrays.stream(array).min().getAsDouble();
+		double max = Arrays.stream(array).max().getAsDouble();
+		double stepsize = (max - min) / (numberOfInsertionPoints + 1);
+
+		double[] pointsToAdd = new double[numberOfInsertionPoints];
+		pointsToAdd[0] = min + stepsize;
+		for(int j = 1; j < numberOfInsertionPoints; j++) {
+			pointsToAdd[j] = pointsToAdd[j - 1] + stepsize;
+		}
+
+		Double[] resultingArray = new Double[array.length + numberOfInsertionPoints];
+		for(int k = 0; k < resultingArray.length; k++) {
+			if(k < array.length) {
+				resultingArray[k] = array[k];
+			} else {
+				resultingArray[k] = pointsToAdd[k - array.length];
+			}
+		}
+
+		List<Double> list = Arrays.stream(resultingArray)
+				.distinct()
+				.sorted()
+				.collect(Collectors.toList());
+
+		if(list.size() != resultingArray.length) {
+			throw new Exception("Adding points generated duplicates!");
+		}
+
+		return list;
 	}
 
 

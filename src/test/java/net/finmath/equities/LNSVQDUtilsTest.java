@@ -4,6 +4,9 @@ import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import org.apache.commons.math3.complex.Complex;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class LNSVQDUtilsTest {
 
 	@Test
@@ -26,4 +29,16 @@ public class LNSVQDUtilsTest {
 			System.out.println(num.getReal() + "\t" + num.getImaginary());
 		}
 	}
+
+	@Test
+	public void addTimePointsToArrayTest() throws Exception {
+		double[] array = {1., 2.45, 4.51, 8.7};
+		int numPointsToInsert = 10;
+
+		List<Double> arrayWithInsertedPoints = LNSVQDUtils.addTimePointsToArray(array, numPointsToInsert);
+
+		System.out.println(arrayWithInsertedPoints.getClass().getSimpleName());
+		System.out.println(arrayWithInsertedPoints);
+	}
+
 }

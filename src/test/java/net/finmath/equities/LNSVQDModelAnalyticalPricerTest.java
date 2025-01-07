@@ -92,7 +92,7 @@ class LNSVQDModelAnalyticalPricerTest {
 		System.out.println(4.8606 * 1.0139);
 		System.out.println(2.21 * 0.38);
 	}
-	@Test
+	/*@Test
 	public void printAj() {
 		int index = 4;
 		double ttm = 10;
@@ -108,7 +108,7 @@ class LNSVQDModelAnalyticalPricerTest {
 			double imaginaryPart = value.getImaginary();
 			System.out.println(t + "\t" + realPart + "\t"+  imaginaryPart);
 		}
-	}
+	}*/
 
 	@Test
 	public void printE2() {
