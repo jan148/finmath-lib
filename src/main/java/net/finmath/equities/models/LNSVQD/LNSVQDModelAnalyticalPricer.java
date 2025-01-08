@@ -18,13 +18,13 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * Numerical parameters
 	 */
 	// For ODE-integration
-	public final int numStepsForODEIntegration = 500;
+	public final int numStepsForODEIntegration = 900;
 	public final int numStepsForODEIntegrationPerUnitTime = 100;
 
 	// For Unbounded inegration
-	private final int numStepsForInfiniteIntegral = 200;
-	private final double upperBoundForInfiniteIntegral = 50;
-	private final double[] yGridForInfiniteIntegral = LNSVQDUtils.createTimeGrid(0, upperBoundForInfiniteIntegral, numStepsForInfiniteIntegral);
+	public final int numStepsForInfiniteIntegral = 1000;
+	public final double upperBoundForInfiniteIntegral = 100;
+	public final double[] yGridForInfiniteIntegral = LNSVQDUtils.createTimeGrid(0, upperBoundForInfiniteIntegral, numStepsForInfiniteIntegral);
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
 		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
@@ -285,7 +285,8 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		}
 
 		// Add points
-		List<Double> timeGridForMGFApproximationCalculationList = LNSVQDUtils.addTimePointsToArray(maturitiesWithZero, this.numStepsForODEIntegration);
+		List<Double> timeGridForMGFApproximationCalculationList = Arrays.equals(maturitiesWithZero, new double[]{0}) ?
+				Arrays.stream(maturitiesWithZero).boxed().collect(Collectors.toList()) : LNSVQDUtils.addTimePointsToArray(maturitiesWithZero, this.numStepsForODEIntegration);
 		double[] timeGridForMGFApproximationCalculation = timeGridForMGFApproximationCalculationList.stream().mapToDouble(Double::doubleValue).toArray();
 
 		/**
@@ -342,6 +343,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				 * DO FOR ONE OPTION
 				 * **********************
 				 */
+
 				int optionIndex = maturities[0] != 0 ? (i - 1) * strikes.length + j : i * strikes.length + j;
 
 				double strike = strikes[j];
@@ -393,6 +395,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				 * END
 				 * **********************
 				 */
+
 			}
 		}
 

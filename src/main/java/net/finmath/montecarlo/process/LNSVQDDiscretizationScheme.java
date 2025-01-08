@@ -104,7 +104,6 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 	public MonteCarloProcessFromProcessModel clone() {
 		return null;
 	}
-
 	/**
 	 * Calculates the whole (discrete) process.
 	 */

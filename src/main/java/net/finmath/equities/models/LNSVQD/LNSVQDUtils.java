@@ -62,6 +62,11 @@ public class LNSVQDUtils {
 		Complex result = new Complex(0, 0);
 		for (int i = 0; i < v.length; i++) {
 			result = result.add(v[i].multiply(w[i]));
+			/*if(Double.isNaN(result.getReal()) || Double.isNaN(result.getImaginary())){
+				System.out.println(v[i].getReal() + "\t" + v[i].getImaginary());
+				System.out.println(w[i].getReal() + "\t" + w[i].getImaginary());
+				throw new RuntimeException("STOP!");
+			}*/
 		}
 		return result;
 	}

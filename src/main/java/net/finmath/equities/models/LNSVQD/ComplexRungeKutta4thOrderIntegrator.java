@@ -46,6 +46,10 @@ public class ComplexRungeKutta4thOrderIntegrator {
 		Complex[] overwrittenState = this.state.clone();
 		for(int j = 0; j < n; j++) {
 			d1[j] = odeSystem.get(j).apply(time, overwrittenState);
+			/*if(Double.isNaN(d1[j].getReal())){
+				System.out.println(overwrittenState[j].getReal() + "\t" + overwrittenState[j].getImaginary());
+				throw new RuntimeException("STOP:" + j);
+			}*/
 		}
 
 		overwrittenState = this.state.clone();
