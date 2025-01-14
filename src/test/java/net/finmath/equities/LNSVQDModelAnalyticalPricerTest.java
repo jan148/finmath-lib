@@ -43,12 +43,12 @@ class LNSVQDModelAnalyticalPricerTest {
 	private final double spot0 = 1;
 	private final double sigma0 = 0.8327; //0.41;
 	// Value as in paper
-	private final double kappa1 = 4.8606; // 4.8606; //2.21;
+	private final double kappa1 =  4.8606; // 4.8606;
 	// Value as in paper
-	private final double kappa2 = 4.7938; // 4.7938; //2.18;
-	private final double theta = 1.0139; // 1.0139; //0.38;
-	private final double beta = 0.1985; // 0.1985; //0.5;
-	private final double epsilon = 2.3690; //2.3690; //3.06;
+	private final double kappa2 = 4.7938; // 4.7938
+	private final double theta =  1.0139; // 1.0139
+	private final double beta = 0.1985; // 0.1985
+	private final double epsilon = 2.3690; // 2.3690;
 
 	/**
 	 * Models
@@ -188,7 +188,7 @@ class LNSVQDModelAnalyticalPricerTest {
 	 */
 	@Test
 	void getCallPrice() throws CalculationException {
-		int numberOfPaths = 5000;
+		int numberOfPaths = 150000;
 		// Get option values
 		double spot = 1;
 		double strike = 1.4;
@@ -200,7 +200,9 @@ class LNSVQDModelAnalyticalPricerTest {
 		System.out.println("Call oprion price LNSVQD: \t" + lnsvqdOptionValue);
 
 		// 1. Create the Monte-Carlo Process
-		List<Integer> seeds = Arrays.asList(1); //, 4916, 4917, 4918, 4919, 4920}; //;
+		// List<Integer> seeds = Arrays.asList(1, 2, 3, 4, 5/*, 6, 7, 8, 9, 10*/);
+		// List<Integer> seeds = Arrays.asList(6, 7, 8, 9, 10);
+		List<Integer> seeds = Arrays.asList(11, 12, 13, 14, 15);
 		double[] timeGrid = LNSVQDUtils.createTimeGrid((double) 0,
 				maturity, (int) Math.round(maturity * 365.));
 		TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
@@ -226,7 +228,7 @@ class LNSVQDModelAnalyticalPricerTest {
 				MonteCarloLNSVQDModel monteCarloLNSVQDModel = new MonteCarloLNSVQDModel(lnsvqdDiscretizationScheme, seed);
 				EuropeanOption europeanOption = new EuropeanOption(maturity, strike, 1, 0);
 				double simulatedOptionPrice = europeanOption.getValue(monteCarloLNSVQDModel);
-				System.out.println("Simulated option price; Seed = " + seed + ": \t" + simulatedOptionPrice);
+				System.out.println("Seed " + seed + ": \t" + simulatedOptionPrice);
 			} catch(CalculationException e) {
 				Thread.currentThread().interrupt();
 			}

@@ -28,10 +28,9 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	public final int numStepsForODEIntegrationPerUnitTime = 100;
 
 	// 2. Gauss-Laguerre quadrature; GL = for Gauss-Legendre
-	public final int numStepsForInfiniteIntegral = 1000;
+	/*public final int numStepsForInfiniteIntegral = 1000;
 	public final double upperBoundForInfiniteIntegral = 20;
-	public final double[] yGridForInfiniteIntegral = LNSVQDUtils.createTimeGrid(0, upperBoundForInfiniteIntegral, numStepsForInfiniteIntegral);
-
+	public final double[] yGridForInfiniteIntegral = LNSVQDUtils.createTimeGrid(0, upperBoundForInfiniteIntegral, numStepsForInfiniteIntegral);*/
 
 	public final double lowerBound = 0;
 	public final double upperBound = 20;
@@ -50,7 +49,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
 	}
 
-	private void getSolutionToLegendrePolynomials() {
+	/*private void getSolutionToLegendrePolynomials() {
 		// We need the factory to get the Legender points
 		final GaussIntegratorFactory FACTORY = new GaussIntegratorFactory();
 
@@ -63,7 +62,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			final GaussIntegrator g = FACTORY.legendreHighPrecision(numberOfPointsGL, a, b);
 			legendrePoints.add(g.getPoint(i));
 		}
-	}
+	}*/
 
 	/**
 	 * ***************************************************+
@@ -295,14 +294,14 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * TODO: Extend to arbitrary strike-maturity pairs
 	 * TODO: So far the method doesn't take into account if the first maturity isn't zero
 	 */
-	public double[] getCallPrices(double[] strikes, double[] maturities) throws Exception {
+	/*public double[] getCallPrices(double[] strikes, double[] maturities) throws Exception {
 		// Initialize the array of option prices that will be returned
 		double[] optionPrices = new double[strikes.length * maturities.length];
 
-		/**
+		*//**
 		 * 1a. Extract time information from strike-maturity pairs
 		 * TODO: Add zero to list! necessary
-		 */
+		 *//*
 		double[] maturitiesWithZero;
 		if(maturities[0] != 0) {
 			maturitiesWithZero = new double[maturities.length + 1];
@@ -317,13 +316,13 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				Arrays.stream(maturitiesWithZero).boxed().collect(Collectors.toList()) : LNSVQDUtils.addTimePointsToArray(maturitiesWithZero, this.numStepsForODEIntegration);
 		double[] timeGridForMGFApproximationCalculation = timeGridForMGFApproximationCalculationList.stream().mapToDouble(Double::doubleValue).toArray();
 
-		/**
+		*//**
 		 * 1b. Extract information for integration grid
-		 */
+		 *//*
 		List<Double> gridForIntegration = Arrays.stream(yGridForInfiniteIntegral).boxed().collect(Collectors.toList());
 		List<Double> gridForIntegrationWithMidPoints = LNSVQDUtils.addMidPointsToList(gridForIntegration);
 
-		/**
+		*//**
 		 * 2. Precalcuate the expAffApprox path
 		 * IMPORTANT: We need to calculate for all realizations of charFuncArgs!
 		 *
@@ -332,7 +331,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		 * NOTE: expAffApproxMatPathPerCharFuncRealization has the points yGridForInfiniteIntegral + the set of all midpoints because of how
 		 * Runge-Kutta is implemented; hence, we have to evaluate E2 on the midpoints two, i.e. on the points conatined in the array
 		 * gridForIntegrationWithMidPoints
-		 */
+		 *//*
 		// expAffApproxMatPathPerCharFuncArgRealization = Exponential-affine approximation at maturities per realization of the characteristic functions args
 		Complex[][] expAffApproxMatPathPerCharFuncRealization = new Complex[gridForIntegrationWithMidPoints.size()][maturitiesWithZero.length];
 		// TODO: Chech equidistance
@@ -352,9 +351,9 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			}
 		}
 
-		/**
+		*//**
 		 * 3. For every maturity and every strike, we calculate the call option price
-		 */
+		 *//*
 		for(int i = 0; i < maturitiesWithZero.length; i++) {
 			if(maturities[0] != 0 && i == 0) {
 				continue;
@@ -366,11 +365,11 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			int maturityIndex = i;
 			for(int j = 0; j < strikes.length; j++) {
 
-				/**
+				*//**
 				 * *********************
 				 * DO FOR ONE OPTION
 				 * **********************
-				 */
+				 *//*
 
 				int optionIndex = maturities[0] != 0 ? (i - 1) * strikes.length + j : i * strikes.length + j;
 
@@ -379,10 +378,10 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				// Start assembling the factors of the pricing fommula
 				double logMoneyness = Math.log(spot0 / strike) + (-Math.log(discountFactor) - convenienceFactor);
 
-				/**
+				*//**
 				 * TODO: Change factor
 				 * Define the function y -> factor * E2(t, -0.5 + iy)
-				 */
+				 *//*
 				UnivariateFunction integrand = new UnivariateFunction() {
 					@Override
 					public double value(double y) {
@@ -403,33 +402,33 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 					}
 				};
 
-				/**
+				*//**
 				 * Integerate
-				 */
+				 *//*
 				// Choose the end point of the solution path
 				double result = integratorInfiniteIntegral.integrate(100000000, integrand, 0, upperBoundForInfiniteIntegral);
 
-				/**
+				*//**
 				 * Get real part, multiply with factor
-				 */
+				 *//*
 				double optionPrice = spot0 - (discountFactor * strike / Math.PI) * result;
 
 				optionPrices[optionIndex] = optionPrice;
 
-				/**
+				*//**
 				 * *********************
 				 * END
 				 * **********************
-				 */
+				 *//*
 
 			}
 		}
 
-		/**
+		*//**
 		 * 4. Return prices
-		 */
+		 *//*
 		return optionPrices;
-	}
+	}*/
 
 	/**
 	 * ***************************************************+
