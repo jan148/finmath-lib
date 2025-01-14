@@ -22,9 +22,13 @@ import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiFunction;
 import java.util.function.DoubleUnaryOperator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * This test
@@ -33,24 +37,18 @@ import java.util.function.DoubleUnaryOperator;
  */
 class LNSVQDModelAnalyticalPricerTest {
 	/**
-	 * Simulation parameters
-	 */
-	int numberOfPaths = 20000;
-	int seed = 3;
-
-	/**
 	 * Model params
 	 */
 	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
 	private final double spot0 = 1;
 	private final double sigma0 = 0.8327; //0.41;
 	// Value as in paper
-	private final double kappa1 = 4.8606; //2.21;
+	private final double kappa1 = 4.8606; // 4.8606; //2.21;
 	// Value as in paper
-	private final double kappa2 = 4.7938; //2.18;
-	private final double theta = 1.0139; //0.38;
-	private final double beta = 0.1985; //0.5;
-	private final double epsilon = 2.3690; //3.06;
+	private final double kappa2 = 4.7938; // 4.7938; //2.18;
+	private final double theta = 1.0139; // 1.0139; //0.38;
+	private final double beta = 0.1985; // 0.1985; //0.5;
+	private final double epsilon = 2.3690; //2.3690; //3.06;
 
 	/**
 	 * Models
@@ -62,7 +60,7 @@ class LNSVQDModelAnalyticalPricerTest {
 	 * Option params and option
 	 */
 	double strike = 1;
-	double maturity = 1 / 60.;
+	double maturity = 1.2;
 	EuropeanOption europeanOption = new EuropeanOption(maturity, strike, 1, 0);
 
 	/**
@@ -75,7 +73,7 @@ class LNSVQDModelAnalyticalPricerTest {
 	/**
 	 * Time discretization
 	 */
-	double[] timeGrid = LNSVQDUtils.createTimeGrid(0, maturity, 99);
+	double[] timeGrid = LNSVQDUtils.createTimeGrid(0, maturity, 100);
 	TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
 
 	/**
@@ -98,6 +96,7 @@ class LNSVQDModelAnalyticalPricerTest {
 		System.out.println(4.8606 * 1.0139);
 		System.out.println(2.21 * 0.38);
 	}
+
 	@Test
 	public void printAj() {
 		int index = 4;
@@ -112,7 +111,7 @@ class LNSVQDModelAnalyticalPricerTest {
 			Complex value = solutionPath[i][index];
 			double realPart = value.getReal();
 			double imaginaryPart = value.getImaginary();
-			System.out.println(t + "\t" + realPart + "\t"+  imaginaryPart);
+			System.out.println(t + "\t" + realPart + "\t" + imaginaryPart);
 		}
 	}
 
@@ -129,7 +128,7 @@ class LNSVQDModelAnalyticalPricerTest {
 			Complex value = lnsvqdModelAnalyticalPricer.calculateExponentialAffineApproximation(t, charFuncArgs).multiply(charFuncArgs[0].multiply(lnsvqdModelAnalyticalPricer.getX0()).add(charFuncArgs[1].multiply(lnsvqdModelAnalyticalPricer.getI0())).exp());
 			double realPart = value.getReal();
 			double imaginaryPart = value.getImaginary();
-			System.out.println(t + "\t" + realPart + "\t"+  imaginaryPart);
+			System.out.println(t + "\t" + realPart + "\t" + imaginaryPart);
 		}
 	}
 
@@ -146,7 +145,7 @@ class LNSVQDModelAnalyticalPricerTest {
 			Complex value = lnsvqdModelAnalyticalPricer.calculateExponentialAffineApproximation(t, charFuncArgs);
 			double realPart = value.getReal();
 			double imaginaryPart = value.getImaginary();
-			System.out.println(t + "\t" + realPart + "\t"+  imaginaryPart);
+			System.out.println(t + "\t" + realPart + "\t" + imaginaryPart);
 		}
 	}
 
@@ -170,19 +169,6 @@ class LNSVQDModelAnalyticalPricerTest {
 	}
 
 	@Test
-	void getCallPrice() {
-		// Get option values
-		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot0, riskFreeRate, sigma0, maturity, strike, true);
-		double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
-
-		// Print
-		System.out.println("Call oprion price BS: \t" + bsOptionValue);
-		System.out.println("Call oprion price LNSVQD: \t" + lnsvqdOptionValue);
-
-		Assert.assertEquals(bsOptionValue, lnsvqdOptionValue, delta);
-	}
-
-	@Test
 	void printODESolution() {
 		// Get option values
 		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot0, riskFreeRate, sigma0, maturity, strike, true);
@@ -201,113 +187,23 @@ class LNSVQDModelAnalyticalPricerTest {
 	 * ***************************************************+
 	 */
 	@Test
-	public void testPriceAt0() {
-		double ttm = 0;
-		double strike = 1;
-		double logMoneyness = Math.log(lnsvqdModelAnalyticalPricer.getSpot0() / strike);
-		double discountFactor = 1;
-		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, 100);
-
-		/*DoubleUnaryOperator integrand = new DoubleUnaryOperator() {
-			@Override
-			public double applyAsDouble(double y) {
-				// 1. Compute the value of the affine-exponential approximation
-				double E2 = 1;
-
-				// 2. Calculate result
-				double result = (1 / (y * y + 0.25)) * E2;
-				return result;
-			}
-		};*/
-
-		UnivariateFunction function = x -> (1 / (x * x + 0.25));
-
-		// Create an integrator instance
-		// Parameters: number of points, relative accuracy, absolute accuracy, min and max iterations
-		int numberOfPoints = 10; // Number of integration points for Legendre-Gauss quadrature
-		double relativeAccuracy = 1.0e-6;
-		double absoluteAccuracy = 1.0e-9;
-		int minIterations = 3;
-		int maxIterations = 100;
-
-		IterativeLegendreGaussIntegrator integrator = new IterativeLegendreGaussIntegrator(
-				numberOfPoints, relativeAccuracy, absoluteAccuracy, minIterations, maxIterations
-		);
-
-		// Define the integration interval [a, b]
-		double lowerBound = 0;
-		double upperBound = 1000000;
-
-		// Perform the integration
-		double result = 0;
-		try {
-			result = integrator.integrate(100000000, function, lowerBound, upperBound);
-			System.out.println("Integral result: " + result);
-		} catch (Exception e) {
-			System.err.println("Integration failed: " + e.getMessage());
-		}
-		double optionPrice = lnsvqdModelAnalyticalPricer.getSpot0() - (discountFactor * strike / Math.PI) * result;
-		System.out.println(optionPrice);
-
-		/**
-		 * Integerate
-		 */
-		/*Complex[] state = new Complex[]{new Complex(0., 0.)};
-		List<BiFunction<Double, Complex[], Complex>> odeSystem = new ArrayList<>();
-		odeSystem.add(integrand);
-		ComplexRungeKutta4thOrderIntegrator complexRungeKutta4thOrderIntegrator = new ComplexRungeKutta4thOrderIntegrator(state, odeSystem);
-		// Choose the end point of the solution path
-		Complex integral = complexRungeKutta4thOrderIntegrator.getSolutionPath
-				(lnsvqdModelAnalyticalPricer.yGridForInfiniteIntegral)[lnsvqdModelAnalyticalPricer.numStepsForInfiniteIntegral][0];
-
-		double integralReal = integral.getReal();
-		double optionPrice = lnsvqdModelAnalyticalPricer.getSpot0() - (discountFactor * strike / Math.PI) * integralReal;
-
-		System.out.println(optionPrice);*/
-	}
-
-	@Test
-	void simulationPrice() throws CalculationException {
-		long startTime = System.nanoTime();
-
-		{
-			// 1. Create the Monte-Carlo Process
-			BrownianMotionFromMersenneRandomNumbers brownianMotion = new BrownianMotionFromMersenneRandomNumbers(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
-			LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdSimulationModel, brownianMotion);
-
-			/**
-			 * NOTE: MonteCarloLNSVQDModel glues together a discretization scheme and a model (e.g. Euler + Heston (terrible idea!));
-			 * In our case, the LNSVQD discretization scheme already has an instance of AbstractProcessModel (LNSVQDSimulationModel);
-			 * Hence, the model is already "glued" to its discretization scheme and the AssetMonteCarloSimulationModel
-			 * is a wrapper; However, we still create a new instance of it in order to be consistent with the finmath-framework
-			 */
-			MonteCarloLNSVQDModel monteCarloLNSVQDModel = new MonteCarloLNSVQDModel(lnsvqdDiscretizationScheme, seed);
-
-			// Get option values
-			double simulatedOptionPrice = europeanOption.getValue(monteCarloLNSVQDModel);
-
-			// Print
-			System.out.println("Simulated option price: \t" + simulatedOptionPrice);
-		}
-
-		long endTime = System.nanoTime(); // Record end time
-		long duration = endTime - startTime; // Calculate duration in nanoseconds
-
-		System.out.println("Execution time: " + duration / 1_000_000 + " milliseconds.");
-	}
-
-	@Test
-	void comparePricingMethods() throws CalculationException {
-		double[] timeGrid = LNSVQDUtils.createTimeGrid(0.0, 1.2, 5); // Change back to 0.0 = t0
-		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.6, 2);
-		for (int i = 0; i < strikes.length; i++) {
-			strikes[i] *= spot0;
-		}
+	void getCallPrice() throws CalculationException {
+		int numberOfPaths = 5000;
+		// Get option values
+		double spot = 1;
+		double strike = 1.4;
+		double maturity = 0.4;
+		double discountFactor = Math.exp(-lnsvqdModelAnalyticalPricer.getRiskFreeRate() * maturity);
+		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot, riskFreeRate, sigma0, maturity, strike, true);
+		System.out.println("Call oprion price BS: \t" + bsOptionValue);
+		double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
+		System.out.println("Call oprion price LNSVQD: \t" + lnsvqdOptionValue);
 
 		// 1. Create the Monte-Carlo Process
+		List<Integer> seeds = Arrays.asList(1); //, 4916, 4917, 4918, 4919, 4920}; //;
+		double[] timeGrid = LNSVQDUtils.createTimeGrid((double) 0,
+				maturity, (int) Math.round(maturity * 365.));
 		TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
-		BrownianMotionFromMersenneRandomNumbers brownianMotion = new BrownianMotionFromMersenneRandomNumbers(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
-		LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdSimulationModel, brownianMotion);
 
 		/**
 		 * NOTE: MonteCarloLNSVQDModel glues together a discretization scheme and a model (e.g. Euler + Heston (terrible idea!));
@@ -315,42 +211,31 @@ class LNSVQDModelAnalyticalPricerTest {
 		 * Hence, the model is already "glued" to its discretization scheme and the AssetMonteCarloSimulationModel
 		 * is a wrapper; However, we still create a new instance of it in order to be consistent with the finmath-framework
 		 */
-		MonteCarloLNSVQDModel monteCarloLNSVQDModel = new MonteCarloLNSVQDModel(lnsvqdDiscretizationScheme, seed);
+		// Get option values
+		// double[] values = new double[seeds.length];
+		System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
+		ForkJoinPool forkJoinPool = new ForkJoinPool(4);
 
-		// 1. Print analytical prices
-		/*for(int j = 0; j < strikes.length; j++) {
-			System.out.print("\t" + strikes[j]);
-		}
-		System.out.print("\n");
-		for(int i = 0; i < timeGrid.length; i++) {
-			double ttm = timeGrid[i];
-			System.out.print(ttm);
-			for(int j = 0; j < strikes.length; j++) {
-				double strike = strikes[j];
-				// Get option values
-				double analyticalOptionPrice = lnsvqdModelAnalyticalPricer.getCallPrice(strike, ttm, discountFactor, convenienceFcator);
-				System.out.print("\t" + analyticalOptionPrice);
+		Function<Integer, Double> getCallValue = seed -> {
+			String result = "Seed " + seed + " processed by " + Thread.currentThread().getName();
+			try {
+				// System.out.println(result);
+				BrownianMotionFromMersenneRandomNumbers brownianMotion = new BrownianMotionFromMersenneRandomNumbers(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
+				LNSVQDModel lnsvqdSimulationModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
+				LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdSimulationModel, brownianMotion);
+				MonteCarloLNSVQDModel monteCarloLNSVQDModel = new MonteCarloLNSVQDModel(lnsvqdDiscretizationScheme, seed);
+				EuropeanOption europeanOption = new EuropeanOption(maturity, strike, 1, 0);
+				double simulatedOptionPrice = europeanOption.getValue(monteCarloLNSVQDModel);
+				System.out.println("Simulated option price; Seed = " + seed + ": \t" + simulatedOptionPrice);
+			} catch(CalculationException e) {
+				Thread.currentThread().interrupt();
 			}
-			System.out.print("\n");
-		}*/
+			return 0.;
+		};
 
-		// 2. Print simulation prices
-		for(int j = 0; j < strikes.length; j++) {
-			System.out.print("\t" + strikes[j]);
-		}
-		System.out.print("\n");
-		for(int i = 0; i < timeGrid.length; i++) {
-			double ttm = timeGrid[i];
-			System.out.print(ttm);
-			for(int j = 0; j < strikes.length; j++) {
-				double strike = strikes[j];
-				// Get option values
-				EuropeanOption europeanOption = new EuropeanOption(ttm, strike, 1, 0);
-				double simulatedOptionPrice = europeanOption.getValue(0., monteCarloLNSVQDModel).getAverage();
-				System.out.print("\t" + simulatedOptionPrice);
-			}
-			System.out.print("\n");
-		}
+		List<Double> results = seeds.parallelStream()
+				.map(getCallValue) // Apply the function to each seed
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -372,54 +257,7 @@ class LNSVQDModelAnalyticalPricerTest {
 			Complex value = values[i].multiply(charFuncArgs[0].multiply(lnsvqdModelAnalyticalPricer.getX0()).add(charFuncArgs[1].multiply(lnsvqdModelAnalyticalPricer.getI0())).exp());
 			double realPart = value.getReal();
 			double imaginaryPart = value.getImaginary();
-			System.out.println(t + "\t" + realPart + "\t"+  imaginaryPart);
-		}
-	}
-
-	@Test
-	public void comparePricingFunctions() {
-		double[] timeGrid = {0.2};
-		double[] strikes = {lnsvqdModelAnalyticalPricer.getSpot0()};
-
-		double optionPrice = lnsvqdModelAnalyticalPricer.getCallPrice(strikes[0], timeGrid[0], discountFactor, 0);
-		double[] optionPrices;
-		try {
-			optionPrices = lnsvqdModelAnalyticalPricer.getCallPrices(strikes, timeGrid);
-		} catch(Exception e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		System.out.println("Price old method: " + optionPrice + "\tPrice new method: " + optionPrices[0]);
-	}
-
-	@Test
-	public void getCallPricesTest() {
-		double[] timeGrid = {0}; //LNSVQDUtils.createTimeGrid(0.0, 1.2, 5); // Change back to 0.0 = t0
-		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.6, 2);
-		for (int i = 0; i < strikes.length; i++) {
-			strikes[i] *= spot0;
-		}
-
-		double[] optionPrices;
-		try {
-			optionPrices = lnsvqdModelAnalyticalPricer.getCallPrices(strikes, timeGrid);
-		} catch(Exception e) {
-			throw new IllegalArgumentException(e);
-		}
-
-		for(int k = 0; k < strikes.length; k++) {
-			System.out.print("\t" + strikes[k]);
-		}
-		for(int i = 0; i < timeGrid.length; i++) {
-			System.out.print("\n");
-			System.out.print(timeGrid[i]);
-			for(int j = 0; j < strikes.length; j++) {
-				double discountFactor = Math.exp(-riskFreeRate * timeGrid[i]);
-				double strike = strikes[j];
-				double price = optionPrices[i * strikes.length + j];
-				//double impliedVol = AnalyticFormulas.blackScholesOptionImpliedVolatility(lnsvqdModelAnalyticalPricer.getSpot0() / discountFactor, timePoints[i], strike, discountFactor, price);
-				System.out.print("\t" + price);
-			}
+			System.out.println(t + "\t" + realPart + "\t" + imaginaryPart);
 		}
 	}
 

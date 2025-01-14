@@ -18,19 +18,22 @@ public class LNSVQDDiscretizationSchemeTest {
 	/**
 	 * Simulation parameters
 	 */
-	int numberOfPaths = 26;
-	int seed = 3107;
+	int numberOfPaths = 100;
+	int seed = 4235;
 
 	/**
 	 * Model params
 	 */
+	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
 	private final double spot0 = 1;
-	private final double sigma0 = 0.5;
-	private final double kappa1 = 0.1;
-	private final double kappa2 = 0.0;
-	private final double theta = 0.5;
-	private final double beta = 0.2;
-	private final double epsilon = 0;
+	private final double sigma0 = 0.8327; //0.41;
+	// Value as in paper
+	private final double kappa1 = 4.8606; // 4.8606; //2.21;
+	// Value as in paper
+	private final double kappa2 = 4.7938; // 4.7938; //2.18;
+	private final double theta = 1.0139; // 1.0139; //0.38;
+	private final double beta = 0.1985; // 0.1985; //0.5;
+	private final double epsilon = 2.3690; //2.3690; //3.06;
 
 
 	/**
@@ -42,19 +45,19 @@ public class LNSVQDDiscretizationSchemeTest {
 	 * Option params
 	 */
 	double strike = 1;
-	double maturity = 1. / 12;
+	double maturity = 1.2; // 1.2
 
 	/**
 	 * Market observables
 	 */
-	double riskFreeRate = 0.05;
+	double riskFreeRate = lnsvqdModel.getRiskFreeRate();
 	double discountFactor = Math.exp(-riskFreeRate * maturity);
 	double convenienceFcator = 0;
 
 	/**
 	 * Time discretization
 	 */
-	double[] timeGrid = LNSVQDUtils.createTimeGrid(0, 5, 100);
+	double[] timeGrid = LNSVQDUtils.createTimeGrid(0, maturity, 100);
 	TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
 
 	/**
@@ -69,23 +72,22 @@ public class LNSVQDDiscretizationSchemeTest {
 
 	@Test
 	public void doPrecalculateProcess() throws CalculationException {
+		int componentIndex = 0;
+
 		// Create 2D-Brownian motion and discretization scheme
 		BrownianMotionFromMersenneRandomNumbers brownianMotion = new BrownianMotionFromMersenneRandomNumbers(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
 		LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdModel, brownianMotion);
 
-		for(int l = 0; l < lnsvqdModel.getNumberOfComponents(); l++) {
-			System.out.print("Time\t");
-			for(int j = 0; j < numberOfPaths; j++) {
-				System.out.print("Realization " + j + "\t");
-			}
-			for(int k = 0; k < timeDiscretization.getNumberOfTimes(); k++) {
-				System.out.print("\n" + timeDiscretization.getTime(k) + "\t");
-				for(int j = 0; j < numberOfPaths; j++) {
-					System.out.print(lnsvqdDiscretizationScheme.getProcessValue(k, l).get(j) + "\t");
-				}
-			}
-			System.out.print("\n\n");
+		for(int i = 0; i < numberOfPaths; i++) {
+			System.out.print("\t" + "Realization " + i);
 		}
+		for(int k = 0; k < timeDiscretization.getNumberOfTimes(); k++) {
+			System.out.print("\n" + timeDiscretization.getTime(k) + "\t");
+			for(int j = 0; j < numberOfPaths; j++) {
+				System.out.print(lnsvqdDiscretizationScheme.getProcessValue(k, componentIndex).get(j) + "\t");
+			}
+		}
+		System.out.print("\n\n");
 	}
 
 	@Test

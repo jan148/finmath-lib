@@ -4,8 +4,14 @@ import net.finmath.equities.marketdata.VolatilityPoint;
 import net.finmath.equities.models.DynamicVolatilitySurface;
 import net.finmath.functions.AnalyticFormulas;
 import net.finmath.time.daycount.DayCountConvention;
+import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.integration.IterativeLegendreGaussIntegrator;
+import org.apache.commons.math3.analysis.integration.gauss.GaussIntegrator;
+import org.apache.commons.math3.analysis.integration.gauss.GaussIntegratorFactory;
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.util.Pair;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,17 +23,46 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	/**
 	 * Numerical parameters
 	 */
-	// For ODE-integration
-	public final int numStepsForODEIntegration = 900;
+	// 1. For ODE-solution
+	public final int numStepsForODEIntegration = 1500;
 	public final int numStepsForODEIntegrationPerUnitTime = 100;
 
-	// For Unbounded inegration
+	// 2. Gauss-Laguerre quadrature; GL = for Gauss-Legendre
 	public final int numStepsForInfiniteIntegral = 1000;
-	public final double upperBoundForInfiniteIntegral = 100;
+	public final double upperBoundForInfiniteIntegral = 20;
 	public final double[] yGridForInfiniteIntegral = LNSVQDUtils.createTimeGrid(0, upperBoundForInfiniteIntegral, numStepsForInfiniteIntegral);
+
+
+	public final double lowerBound = 0;
+	public final double upperBound = 20;
+
+	// GL params
+	int numberOfPointsGL = 10; // Number of integration points for Legendre-Gauss quadrature
+	double relativeAccuracyGL = 1.0e-6;
+	double absoluteAccuracyGL = 1.0e-9;
+	int minIterationsGL = 3;
+	int maxIterationsGL = 100;
+	public final double[] solutionsToLegendrePolynomials = new double[numberOfPointsGL];
+	IterativeLegendreGaussIntegrator integratorInfiniteIntegral = new IterativeLegendreGaussIntegrator(
+			numberOfPointsGL, relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
 		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
+	}
+
+	private void getSolutionToLegendrePolynomials() {
+		// We need the factory to get the Legender points
+		final GaussIntegratorFactory FACTORY = new GaussIntegratorFactory();
+
+		// The GL-implementation computes the solution on equally-sized subintervals
+		ArrayList<Double> legendrePoints = new ArrayList<>();
+		double[] subintervalPoints = LNSVQDUtils.createTimeGrid(lowerBound, upperBound, numberOfPointsGL - 1);
+		for(int i = 0; i < numberOfPointsGL - 1; i++) {
+			double a = subintervalPoints[0];
+			double b = subintervalPoints[1];
+			final GaussIntegrator g = FACTORY.legendreHighPrecision(numberOfPointsGL, a, b);
+			legendrePoints.add(g.getPoint(i));
+		}
 	}
 
 	/**
@@ -223,13 +258,10 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		// public double[] timeGridForMGFApproximationCalculation = LNSVQDUtils.createTimeGrid(0, endTime, this.numStepsForODEIntegration);
 		double logMoneyness = Math.log(spot0 / strike) + (-Math.log(discountFactor) - convencienceFactor);
 
-		/**
-		 * We use our Runge-Kutta implementation to calculate the integral
-		 */
-		BiFunction<Double, Complex[], Complex> integrand = new BiFunction<Double, Complex[], Complex>() {
+		UnivariateFunction integrand = new UnivariateFunction() {
 			@Override
-			public Complex apply(Double aDouble, Complex[] complexes) {
-				Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, aDouble), Complex.ZERO, Complex.ZERO};
+			public double value(double y) {
+				Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 
 				// 1. Compute the value of the affine-exponential approximation
 				Complex approxCharFuncVal = calculateExponentialAffineApproximation(ttm, charFuncArgs);
@@ -237,7 +269,8 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 						.multiply(charFuncArgs[0].multiply(X0).add(charFuncArgs[1].multiply(I0)).exp());
 
 				// 2. Calculate result
-				Complex result = new Complex(0.5, -aDouble).multiply(logMoneyness).exp().multiply(1 / (aDouble * aDouble + 0.25)).multiply(E2);
+				Complex resultComplex = new Complex(0.5, -y).multiply(logMoneyness).exp().multiply(1 / (y * y + 0.25)).multiply(E2);
+				double result = resultComplex.getReal();
 				return result;
 			}
 		};
@@ -245,18 +278,13 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		/**
 		 * Integerate
 		 */
-		Complex[] state = new Complex[]{new Complex(0., 0.)};
-		List<BiFunction<Double, Complex[], Complex>> odeSystem = new ArrayList<>();
-		odeSystem.add(integrand);
-		ComplexRungeKutta4thOrderIntegrator complexRungeKutta4thOrderIntegrator = new ComplexRungeKutta4thOrderIntegrator(state, odeSystem);
 		// Choose the end point of the solution path
-		Complex integral = complexRungeKutta4thOrderIntegrator.getSolutionPath(LNSVQDUtils.createTimeGrid(0, upperBoundForInfiniteIntegral, this.numStepsForInfiniteIntegral))[this.numStepsForInfiniteIntegral][0];
+		double result = integratorInfiniteIntegral.integrate(1000000, integrand, lowerBound, upperBound);
 
 		/**
 		 * Get real part, multiply with factor
 		 */
-		double integralReal = integral.getReal();
-		double optionPrice = spot0 - (discountFactor * strike / Math.PI) * integralReal;
+		double optionPrice = spot0 - (discountFactor * strike / Math.PI) * result;
 
 		return optionPrice;
 	}
@@ -352,13 +380,12 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				double logMoneyness = Math.log(spot0 / strike) + (-Math.log(discountFactor) - convenienceFactor);
 
 				/**
-				 * Define the function (ttm, y) -> E2(t, -0.5 + iy)
+				 * TODO: Change factor
+				 * Define the function y -> factor * E2(t, -0.5 + iy)
 				 */
-				BiFunction<Double, Complex[], Complex> integrand = new BiFunction<Double, Complex[], Complex>() {
-					// Note: aDouble = maturity, complexes = func arg
+				UnivariateFunction integrand = new UnivariateFunction() {
 					@Override
-					public Complex apply(Double y, Complex[] placeholder) {
-						// Get y index closest to y
+					public double value(double y) {
 						int yIndex = gridForIntegrationWithMidPoints.indexOf(y);
 						if(yIndex == -1) {
 							throw new IllegalArgumentException("y not in array: The E2 value for this the y-value " + y + " hasn't been calculated!");
@@ -369,24 +396,23 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 
 						// 2. Calculate result
 						Complex result = new Complex(0.5, -y).multiply(logMoneyness).exp().multiply(1 / (y * y + 0.25)).multiply(E2);
-						return result;
+
+						// 3. Get real part and return
+						double resultReal = result.getReal();
+						return resultReal;
 					}
 				};
+
 				/**
 				 * Integerate
 				 */
-				Complex[] state = new Complex[]{new Complex(0., 0.)};
-				List<BiFunction<Double, Complex[], Complex>> odeSystem = new ArrayList<>();
-				odeSystem.add(integrand);
-				ComplexRungeKutta4thOrderIntegrator complexRungeKutta4thOrderIntegrator = new ComplexRungeKutta4thOrderIntegrator(state, odeSystem);
 				// Choose the end point of the solution path
-				Complex integral = complexRungeKutta4thOrderIntegrator.getSolutionPath(yGridForInfiniteIntegral)[this.numStepsForInfiniteIntegral][0];
+				double result = integratorInfiniteIntegral.integrate(100000000, integrand, 0, upperBoundForInfiniteIntegral);
 
 				/**
 				 * Get real part, multiply with factor
 				 */
-				double integralReal = integral.getReal();
-				double optionPrice = spot0 - (discountFactor * strike / Math.PI) * integralReal;
+				double optionPrice = spot0 - (discountFactor * strike / Math.PI) * result;
 
 				optionPrices[optionIndex] = optionPrice;
 

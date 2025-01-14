@@ -132,6 +132,7 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 
 		// Evolve process
 		for(int timeIndex2 = 1; timeIndex2 < getTimeDiscretization().getNumberOfTimeSteps() + 1; timeIndex2++) {
+			// System.out.println("Currene time: " + getTime(timeIndex2));
 			final int timeIndex = timeIndex2;
 			// Generate process from timeIndex-1 to timeIndex
 			final double deltaT = getTime(timeIndex) - getTime(timeIndex - 1);
@@ -155,10 +156,10 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 				final RandomVariable driftOfComponent = drift[componentIndex];
 
 				// Check if the component process has stopped to evolve
-				/*if(driftOfComponent == null) {
+				if(driftOfComponent == null) {
 					discreteProcessAtCurrentTimeIndex.add(componentIndex, null);
 					continue;
-				}*/
+				}
 
 				// Apply the transform to transition into the value-space of the discretization scheme
 				currentState[componentIndex] = applyStateSpaceTransform(timeIndex - 1, componentIndex, discreteProcess[timeIndex - 1][componentIndex]);
@@ -178,7 +179,7 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 				// Volatility process
 				if(componentIndex == 1) { /* && driftOfComponent != null*/
 					// 0. Define executor
-					ExecutorService executor = new ForkJoinPool(4);
+					ExecutorService executor = new ForkJoinPool(3);
 
 					// SOLUTION TO FORWARD ODE
 					// 1. Define the function whose root is the new process-value
@@ -186,7 +187,11 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 						@Override
 						public RandomVariable apply(RandomVariable randomVariable) {
 							return brownianIncrement[0].mult(-lnsvqdModel.getBeta()).sub(brownianIncrement[1].mult(lnsvqdModel.getEpsilon()))
-									.sub(lnsvqdModel.zeta.apply(randomVariable).mult(deltaT)).sub(currentState[componentIndex]).add(randomVariable);
+															.sub(lnsvqdModel.zeta.apply(randomVariable).mult(deltaT)).sub(currentState[componentIndex]).add(randomVariable);
+							// Former: brownianIncrement[0].mult(-lnsvqdModel.getBeta()).sub(brownianIncrement[1].mult(lnsvqdModel.getEpsilon()))
+							//									.sub(lnsvqdModel.zeta.apply(randomVariable).mult(deltaT)).sub(currentState[componentIndex]).add(randomVariable);
+							/*return (brownianIncrement[1].mult(-Math.sqrt(lnsvqdModel.getTotalInstVar())))
+									.sub(lnsvqdModel.zeta.apply(randomVariable).mult(deltaT)).sub(currentState[componentIndex]).add(randomVariable);*/
 						}
 					};
 
@@ -214,22 +219,22 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 								double initialGuess = realizationsLastTimePoint[index];
 								NewtonsMethod newtonsMethod = new NewtonsMethod(initialGuess);
 								// Solve
-								/*while(!newtonsMethod.isDone()) {
-									double value = rootFunction.apply(lnsvqdModel.getRandomVariableForConstant(newtonsMethod.getBestPoint())).get(0); //.getRealizations()[j];
-									double derivative = rootFunctionDerivative.apply(lnsvqdModel.getRandomVariableForConstant(newtonsMethod.getBestPoint())).get(0); //getRealizations()[j];
-									newtonsMethod.setValueAndDerivative(value, derivative);
-								}*/
-								// TODO: Make dyanmic stooping criterion
-								for(int k = 0; k < 10; k++) {
-									// RandomVariable func = rootFunction.apply(lnsvqdModel.getRandomVariableForConstant(newtonsMethod.getNextPoint()));
+								while(true) {
 									double value = rootFunction.apply(lnsvqdModel.getRandomVariableForConstant(newtonsMethod.getNextPoint())).get(index); //.getRealizations()[j];
 									double derivative = rootFunctionDerivative.apply(lnsvqdModel.getRandomVariableForConstant(newtonsMethod.getNextPoint())).get(index); //getRealizations()[j];
 									newtonsMethod.setValueAndDerivative(value, derivative);
+									if(Math.abs(value) < 1E-5) {break;}
 								}
 								realizationsCurrentTimePoint[index] = newtonsMethod.getBestPoint();
+								// vol_var + ((kappa1 * theta / sigma0 - kappa1) + kappa2*(theta-sigma0) + adj*sigma0 - 0.5*vartheta2) * dt + beta*w0+volvol*w1
+								/*realizationsCurrentTimePoint[index] = currentState[componentIndex].get(index) +
+										((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / lnsvqdModel.getSigma0() - lnsvqdModel.getKappa1())
+												+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta()-lnsvqdModel.getSigma0()) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT +
+										lnsvqdModel.getBeta() * brownianIncrement[0].get(index) + lnsvqdModel.getEpsilon() * brownianIncrement[1].get(index);*/
 							}
 						};
 						executor.submit(worker);
+						worker.run();
 					}
 					executor.shutdown();
 					while(!executor.isTerminated()) {}
