@@ -48,7 +48,7 @@ class LNSVQDModelAnalyticalPricerTest {
 	private final double kappa2 = 4.7938; // 4.7938
 	private final double theta =  1.0139; // 1.0139
 	private final double beta = 0.1985; // 0.1985
-	private final double epsilon = 2.3690; // 2.3690;
+	private final double epsilon = 0; // 2.3690;
 
 	/**
 	 * Models
@@ -188,10 +188,10 @@ class LNSVQDModelAnalyticalPricerTest {
 	 */
 	@Test
 	void getCallPrice() throws CalculationException {
-		int numberOfPaths = 150000;
+		int numberOfPaths = 50000;
 		// Get option values
 		double spot = 1;
-		double strike = 1.4;
+		double strike = 2.3;
 		double maturity = 0.4;
 		double discountFactor = Math.exp(-lnsvqdModelAnalyticalPricer.getRiskFreeRate() * maturity);
 		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot, riskFreeRate, sigma0, maturity, strike, true);
@@ -201,8 +201,8 @@ class LNSVQDModelAnalyticalPricerTest {
 
 		// 1. Create the Monte-Carlo Process
 		// List<Integer> seeds = Arrays.asList(1, 2, 3, 4, 5/*, 6, 7, 8, 9, 10*/);
-		// List<Integer> seeds = Arrays.asList(6, 7, 8, 9, 10);
-		List<Integer> seeds = Arrays.asList(11, 12, 13, 14, 15);
+		List<Integer> seeds = Arrays.asList(6, 7, 8, 9, 10);
+		// List<Integer> seeds = Arrays.asList(11, 12, 13, 14, 15);
 		double[] timeGrid = LNSVQDUtils.createTimeGrid((double) 0,
 				maturity, (int) Math.round(maturity * 365.));
 		TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);

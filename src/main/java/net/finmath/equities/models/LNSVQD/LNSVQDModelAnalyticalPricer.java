@@ -24,7 +24,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * Numerical parameters
 	 */
 	// 1. For ODE-solution
-	public final int numStepsForODEIntegration = 1500;
+	public final int numStepsForODEIntegration = 500;
 	public final int numStepsForODEIntegrationPerUnitTime = 100;
 
 	// 2. Gauss-Laguerre quadrature; GL = for Gauss-Legendre
@@ -40,7 +40,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	double relativeAccuracyGL = 1.0e-6;
 	double absoluteAccuracyGL = 1.0e-9;
 	int minIterationsGL = 3;
-	int maxIterationsGL = 100;
+	int maxIterationsGL = 10000;
 	public final double[] solutionsToLegendrePolynomials = new double[numberOfPointsGL];
 	IterativeLegendreGaussIntegrator integratorInfiniteIntegral = new IterativeLegendreGaussIntegrator(
 			numberOfPointsGL, relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);
@@ -80,31 +80,36 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		Complex mixedDeg4 = new Complex(Math.pow(this.theta, 2) * this.totalInstVar, 0);
 
 		// 1. Matrices
-		Complex[][] M0 = {{complex0, complex0, complex0, complex0, complex0},
+		Complex[][] M0 = {
+				{complex0, complex0, complex0, complex0, complex0},
 				{complex0, mixedDeg4.multiply(0.5), complex0, complex0, complex0},
 				{complex0, complex0, complex0, complex0, complex0},
 				{complex0, complex0, complex0, complex0, complex0},
 				{complex0, complex0, complex0, complex0, complex0}};
 
-		Complex[][] M1 = {{complex0, complex0, complex0, complex0, complex0},
+		Complex[][] M1 = {
+				{complex0, complex0, complex0, complex0, complex0},
 				{complex0, mixedDeg3, mixedDeg4, complex0, complex0},
 				{complex0, mixedDeg4, complex0, complex0, complex0},
 				{complex0, complex0, complex0, complex0, complex0},
 				{complex0, complex0, complex0, complex0, complex0}};
 
-		Complex[][] M2 = {{complex0, complex0, complex0, complex0, complex0},
+		Complex[][] M2 = {
+				{complex0, complex0, complex0, complex0, complex0},
 				{complex0, totalInstVar.multiply(1. / 2), mixedDeg3.multiply(2), mixedDeg4.multiply(3. / 2), complex0},
 				{complex0, mixedDeg3.multiply(2), mixedDeg4.multiply(2), complex0, complex0},
 				{complex0, mixedDeg4.multiply(3. / 2), complex0, complex0, complex0},
 				{complex0, complex0, complex0, complex0, complex0}};
 
-		Complex[][] M3 = {{complex0, complex0, complex0, complex0, complex0},
+		Complex[][] M3 = {
+				{complex0, complex0, complex0, complex0, complex0},
 				{complex0, complex0, totalInstVar, mixedDeg3.multiply(3), mixedDeg4.multiply(2)},
 				{complex0, totalInstVar, mixedDeg3.multiply(4), mixedDeg4.multiply(3), complex0},
 				{complex0, mixedDeg3.multiply(3), mixedDeg4.multiply(3), complex0, complex0},
 				{complex0, mixedDeg4.multiply(2), complex0, complex0, complex0}};
 
-		Complex[][] M4 = {{complex0, complex0, complex0, complex0, complex0},
+		Complex[][] M4 = {
+				{complex0, complex0, complex0, complex0, complex0},
 				{complex0, complex0, complex0, totalInstVar.multiply(3. / 2), mixedDeg3.multiply(4)},
 				{complex0, complex0, totalInstVar.multiply(2), mixedDeg3.multiply(6), mixedDeg4.multiply(4)},
 				{complex0, totalInstVar.multiply(3. / 2), mixedDeg3.multiply(6), mixedDeg4.multiply(9. / 2), complex0},

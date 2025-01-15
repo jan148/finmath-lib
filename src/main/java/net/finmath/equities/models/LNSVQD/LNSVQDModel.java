@@ -256,6 +256,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 		// TODO: Check the following formulas
 		RandomVariable driftAsset = stochasticVolatility.pow(2).mult(-0.5);
 		// RandomVariable driftVolatility = zeta.apply(lnStochasticVolatility);
+
 		return new RandomVariable[]{driftAsset, ZERO};
 	}
 
