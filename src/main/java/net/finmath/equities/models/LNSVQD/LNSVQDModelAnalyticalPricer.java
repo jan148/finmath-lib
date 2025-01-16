@@ -6,6 +6,7 @@ import net.finmath.functions.AnalyticFormulas;
 import net.finmath.time.daycount.DayCountConvention;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.integration.IterativeLegendreGaussIntegrator;
+import org.apache.commons.math3.analysis.integration.MidPointIntegrator;
 import org.apache.commons.math3.analysis.integration.gauss.GaussIntegrator;
 import org.apache.commons.math3.analysis.integration.gauss.GaussIntegratorFactory;
 import org.apache.commons.math3.complex.Complex;
@@ -24,7 +25,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * Numerical parameters
 	 */
 	// 1. For ODE-solution
-	public final int numStepsForODEIntegration = 500;
+	public final int numStepsForODEIntegration = 1000;
 	public final int numStepsForODEIntegrationPerUnitTime = 100;
 
 	// 2. Gauss-Laguerre quadrature; GL = for Gauss-Legendre
@@ -32,18 +33,19 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	public final double upperBoundForInfiniteIntegral = 20;
 	public final double[] yGridForInfiniteIntegral = LNSVQDUtils.createTimeGrid(0, upperBoundForInfiniteIntegral, numStepsForInfiniteIntegral);*/
 
-	public final double lowerBound = 0;
-	public final double upperBound = 20;
-
 	// GL params
+	public final double lowerBound = 0;
+	public final double upperBound = 100;
 	int numberOfPointsGL = 10; // Number of integration points for Legendre-Gauss quadrature
 	double relativeAccuracyGL = 1.0e-6;
-	double absoluteAccuracyGL = 1.0e-9;
-	int minIterationsGL = 3;
-	int maxIterationsGL = 10000;
+	double absoluteAccuracyGL = 1.0e-11;
+	int minIterationsGL = 10;
+	int maxIterationsGL = 64;
 	public final double[] solutionsToLegendrePolynomials = new double[numberOfPointsGL];
-	IterativeLegendreGaussIntegrator integratorInfiniteIntegral = new IterativeLegendreGaussIntegrator(
-			numberOfPointsGL, relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);
+	/*IterativeLegendreGaussIntegrator integratorInfiniteIntegral = new IterativeLegendreGaussIntegrator(
+			numberOfPointsGL, relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);*/
+	MidPointIntegrator integratorInfiniteIntegral = new MidPointIntegrator(
+			relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
 		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
@@ -75,9 +77,9 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		 */
 		// Some constants
 		final Complex complex0 = Complex.ZERO;
-		Complex totalInstVar = new Complex(this.totalInstVar, 0);
-		Complex mixedDeg3 = new Complex(this.theta * this.totalInstVar, 0);
-		Complex mixedDeg4 = new Complex(Math.pow(this.theta, 2) * this.totalInstVar, 0);
+		final Complex totalInstVar = new Complex(this.totalInstVar, 0);
+		final Complex mixedDeg3 = new Complex(this.theta * this.totalInstVar, 0);
+		final Complex mixedDeg4 = new Complex(Math.pow(this.theta, 2) * this.totalInstVar, 0);
 
 		// 1. Matrices
 		Complex[][] M0 = {
@@ -241,7 +243,10 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 					.add(A[j][3].multiply(Math.pow(Y0, 3)))
 					.add(A[j][4].multiply(Math.pow(Y0, 4))))
 					.exp();
-			complexAffineApproximationPath[j] = result;
+			/**
+			 * WARNING: VERY DANGEROUS, SHOULD BE REMOVED IN THE NEAR FUTURE
+			 */
+			complexAffineApproximationPath[j] = result.isNaN() ? Complex.ZERO : result;
 		}
 		return complexAffineApproximationPath;
 	}
@@ -271,7 +276,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				Complex approxCharFuncVal = calculateExponentialAffineApproximation(ttm, charFuncArgs);
 				Complex E2 = approxCharFuncVal
 						.multiply(charFuncArgs[0].multiply(X0).add(charFuncArgs[1].multiply(I0)).exp());
-
+				// System.out.println(E2);
 				// 2. Calculate result
 				Complex resultComplex = new Complex(0.5, -y).multiply(logMoneyness).exp().multiply(1 / (y * y + 0.25)).multiply(E2);
 				double result = resultComplex.getReal();

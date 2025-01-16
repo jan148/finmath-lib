@@ -41,14 +41,14 @@ class LNSVQDModelAnalyticalPricerTest {
 	 */
 	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
 	private final double spot0 = 1;
-	private final double sigma0 = 0.8327; //0.41;
+	private final double sigma0 = 0.41; //0.8327;
 	// Value as in paper
-	private final double kappa1 =  4.8606; // 4.8606;
+	private final double kappa1 =  2.21; // 4.8606;
 	// Value as in paper
-	private final double kappa2 = 4.7938; // 4.7938
-	private final double theta =  1.0139; // 1.0139
-	private final double beta = 0.1985; // 0.1985
-	private final double epsilon = 0; // 2.3690;
+	private final double kappa2 = 2.18; // 4.7938
+	private final double theta =  0.38; // 1.0139
+	private final double beta = 0.50; // 0.1985
+	private final double epsilon = 3.06; // 2.3690;
 
 	/**
 	 * Models
@@ -86,22 +86,28 @@ class LNSVQDModelAnalyticalPricerTest {
 	 */
 	private final double delta = 10E-3;
 
+	@Test
+	public void printMatrices() {
+		Complex complex0 = Complex.ZERO;
+		Complex[][] M0 = {
+				{complex0, complex0, complex0, complex0, complex0},
+				{complex0, new Complex(0, 0.5), complex0, complex0, complex0},
+				{complex0, new Complex(1, 0.5), complex0, complex0, complex0},
+				{complex0, complex0, complex0, complex0, complex0},
+				{complex0, complex0, complex0, complex0, complex0}};
+		System.out.println(M0[2][1]);
+	}
+
 	/**
 	 * ***************************************************+
 	 * 1. Comparison semi-analytical LNSVQD call <-> BS call
 	 * ***************************************************+
 	 */
 	@Test
-	public void delete() {
-		System.out.println(4.8606 * 1.0139);
-		System.out.println(2.21 * 0.38);
-	}
-
-	@Test
 	public void printAj() {
-		int index = 4;
-		double ttm = 0;
-		double y = 30;
+		int index = 3;
+		double ttm = 0.279;
+		double y = 0.05;
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
 		final Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 		Complex[][] solutionPath = lnsvqdModelAnalyticalPricer.getSolutionPathForODESystem(timeGrid, charFuncArgs);
@@ -117,8 +123,8 @@ class LNSVQDModelAnalyticalPricerTest {
 
 	@Test
 	public void printE2() {
-		double ttm = 1;
-		double y = 200;
+		double ttm = 0.0;
+		double y = 0.05;
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
 		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 
@@ -191,7 +197,7 @@ class LNSVQDModelAnalyticalPricerTest {
 		int numberOfPaths = 50000;
 		// Get option values
 		double spot = 1;
-		double strike = 2.3;
+		double strike = 1.4;
 		double maturity = 0.4;
 		double discountFactor = Math.exp(-lnsvqdModelAnalyticalPricer.getRiskFreeRate() * maturity);
 		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot, riskFreeRate, sigma0, maturity, strike, true);

@@ -100,7 +100,7 @@ public class LNSVQDUtils {
 	}
 	public static void printArray(double[] array) {
 		for(double element : array) {
-			System.out.println(element);
+			System.out.print(element + "\t");
 		}
 	}
 

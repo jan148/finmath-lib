@@ -28,6 +28,27 @@ public class LNSVQDCallPriceSimulator {
 		this.path = new double[2][timeGrid.length][numberOfPaths];
 	}
 
+	public double[][][] getTransformedPath() {
+		if(path == null) {
+			throw new IllegalStateException("Path hasn't been precalculated yet!");
+		} else {
+			double[][][] transformedPath = this.path.clone();
+			for(int i = 1; i < timeGrid.length; i++) {
+				double deltaT = timeGrid[i] - timeGrid[i - 1];
+				double sqrtDeltaT = Math.sqrt(deltaT);
+				double discountFactor = Math.exp(-lnsvqdModel.getRiskFreeRate() * deltaT);
+				double[][] brownianIncrements = new double[numberOfPaths][2];
+				// Fill Paths
+				for(int j = 0; j < numberOfPaths; j++) {
+					transformedPath[0][i][j] = Math.log(transformedPath[0][i][j] * discountFactor);
+					transformedPath[0][i][j] = transformedPath[1][i][j] - lnsvqdModel.theta;
+				}
+			}
+			return transformedPath;
+		}
+	}
+
+
 	public void precalculatePaths(int seed) {
 		MersenneTwister mersenneTwister = new MersenneTwister(seed);
 		BrentOptimizer brentOptimizer = new BrentOptimizer(1e-8, 1e-8);
