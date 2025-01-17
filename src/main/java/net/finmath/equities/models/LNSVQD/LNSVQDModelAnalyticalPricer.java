@@ -3,12 +3,17 @@ package net.finmath.equities.models.LNSVQD;
 import net.finmath.equities.marketdata.VolatilityPoint;
 import net.finmath.equities.models.DynamicVolatilitySurface;
 import net.finmath.functions.AnalyticFormulas;
+import net.finmath.integration.SimpsonRealIntegrator;
 import net.finmath.time.daycount.DayCountConvention;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.integration.IterativeLegendreGaussIntegrator;
 import org.apache.commons.math3.analysis.integration.MidPointIntegrator;
+import org.apache.commons.math3.analysis.integration.SimpsonIntegrator;
 import org.apache.commons.math3.analysis.integration.gauss.GaussIntegrator;
 import org.apache.commons.math3.analysis.integration.gauss.GaussIntegratorFactory;
+import org.apache.commons.math3.analysis.integration.gauss.SymmetricGaussIntegrator;
+import org.apache.commons.math3.analysis.interpolation.HermiteInterpolator;
+import org.apache.commons.math3.analysis.solvers.LaguerreSolver;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 
@@ -18,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.function.DoubleUnaryOperator;
 import java.util.stream.Collectors;
 
 public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
@@ -35,17 +41,23 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 
 	// GL params
 	public final double lowerBound = 0;
-	public final double upperBound = 100;
+	public final double upperBound = 20;
 	int numberOfPointsGL = 10; // Number of integration points for Legendre-Gauss quadrature
 	double relativeAccuracyGL = 1.0e-6;
-	double absoluteAccuracyGL = 1.0e-11;
+	double absoluteAccuracyGL = 1.0e-9;
 	int minIterationsGL = 10;
-	int maxIterationsGL = 64;
+	int maxIterationsGL = 1000;
 	public final double[] solutionsToLegendrePolynomials = new double[numberOfPointsGL];
-	/*IterativeLegendreGaussIntegrator integratorInfiniteIntegral = new IterativeLegendreGaussIntegrator(
-			numberOfPointsGL, relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);*/
-	MidPointIntegrator integratorInfiniteIntegral = new MidPointIntegrator(
-			relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);
+	IterativeLegendreGaussIntegrator integratorInfiniteIntegral = new IterativeLegendreGaussIntegrator(
+			numberOfPointsGL, relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);
+	/*MidPointIntegrator integratorInfiniteIntegral = new MidPointIntegrator(
+			relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);*/
+	/*GaussIntegratorFactory gaussIntegratorFactory = new GaussIntegratorFactory();
+	GaussIntegrator hermite = gaussIntegratorFactory.hermite(numberOfPointsGL);*/
+	// SimpsonIntegrator simpsonIntegrator = new SimpsonIntegrator();
+
+	// finmath integrator
+	SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, (int) upperBound * 100, false);
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
 		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
@@ -117,6 +129,18 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				{complex0, totalInstVar.multiply(3. / 2), mixedDeg3.multiply(6), mixedDeg4.multiply(9. / 2), complex0},
 				{complex0, mixedDeg3.multiply(4), mixedDeg4.multiply(4), complex0, complex0}};
 
+		/*# fills Ls
+		L = np.zeros((n, n), dtype=np.complex128)
+		L[0, 1], L[0, 2] = lamda - theta2 * beta * vol_backbone_eta * phi, qv2
+		L[1, 1], L[1, 2] = -kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi, 2.0 * (lamda + qv - theta2 * beta * vol_backbone_eta * phi)
+		L[2, 1], L[2, 2] = -kappa2_p - beta * vol_backbone_eta * phi, vartheta2 - 2.0 * kappa_p - 4.0 * theta * beta * vol_backbone_eta * phi
+
+		if expansion_order == ExpansionOrder.SECOND:
+		L[1, 3] = 3.0*qv2
+		L[2, 3], L[2, 4] = 3.0 * (2.0 * qv - theta2 * beta * vol_backbone_eta * phi), 6.0 * qv2
+		L[3, 2], L[3, 3], L[3, 4] = -2.0 * (kappa2_p + beta * vol_backbone_eta * phi), 3.0 * (vartheta2 - kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi), 4.0 * (3.0 * qv - theta2 * beta * vol_backbone_eta * phi)
+		L[4, 3], L[4, 4] = -3.0 * (kappa2_p + beta * vol_backbone_eta * phi), 2.0 * (vartheta2 - 2.0 * kappa_p - 4.0 * theta * beta * vol_backbone_eta * phi)*/
+
 		// 2. Vectors
 		Complex L01 = complex0;
 		Complex L02 = charFuncArgs[0].multiply(-Math.pow(theta, 2) * beta);
@@ -131,26 +155,27 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		Complex L14 = mixedDeg4.multiply(3);
 		Complex L15 = complex0;
 		Complex[] L1 = {L11, L12, L13, L14, L15};
-
+		// L[2, 3], L[2, 4] = 3.0 * (2.0 * qv - theta2 * beta * vol_backbone_eta * phi), 6.0 * qv2
 		Complex L21 = complex0;
 		Complex L22 = charFuncArgs[0].multiply(-beta).subtract(kappa2);
 		Complex L23 = totalInstVar.subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(4 * theta * beta));
-		Complex L24 = totalInstVar.multiply(-2).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(3); // q = -p = -1
+		Complex L24 = mixedDeg3.multiply(2).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(3);
 		Complex L25 = mixedDeg4.multiply(6);
 		Complex[] L2 = {L21, L22, L23, L24, L25};
-
+		// L[3, 2], L[3, 3], L[3, 4] = -2.0 * (kappa2_p + beta * vol_backbone_eta * phi), 3.0 * (vartheta2 - kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi), 4.0 * (3.0 * qv - theta2 * beta * vol_backbone_eta * phi)
 		Complex L31 = complex0;
 		Complex L32 = complex0;
 		Complex L33 = charFuncArgs[0].multiply(beta).add(kappa2).multiply(-2);
 		Complex L34 = totalInstVar.subtract(kappa1 + kappa2 * theta).subtract(charFuncArgs[0].multiply(2 * theta * beta)).multiply(3);
 		Complex L35 = mixedDeg3.multiply(3).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(4);
 		Complex[] L3 = {L31, L32, L33, L34, L35};
-
+		// L[4, 3], L[4, 4] = -3.0 * (kappa2_p + beta * vol_backbone_eta * phi),
+		// 2.0 * (vartheta2 - 2.0 * kappa_p - 4.0 * theta * beta * vol_backbone_eta * phi)*/
 		Complex L41 = complex0;
 		Complex L42 = complex0;
 		Complex L43 = complex0;
 		Complex L44 = charFuncArgs[0].multiply(beta).add(kappa2).multiply(-3);
-		Complex L45 = totalInstVar.multiply(3).subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(4 * theta * beta)).multiply(2);
+		Complex L45 = totalInstVar.subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(4 * theta * beta)).multiply(2);
 		Complex[] L4 = {L41, L42, L43, L44, L45};
 
 		// 3. Scalars
@@ -243,9 +268,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 					.add(A[j][3].multiply(Math.pow(Y0, 3)))
 					.add(A[j][4].multiply(Math.pow(Y0, 4))))
 					.exp();
-			/**
-			 * WARNING: VERY DANGEROUS, SHOULD BE REMOVED IN THE NEAR FUTURE
-			 */
+			// TODO: Check and put somewhere else
 			complexAffineApproximationPath[j] = result.isNaN() ? Complex.ZERO : result;
 		}
 		return complexAffineApproximationPath;
@@ -267,9 +290,46 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		// public double[] timeGridForMGFApproximationCalculation = LNSVQDUtils.createTimeGrid(0, endTime, this.numStepsForODEIntegration);
 		double logMoneyness = Math.log(spot0 / strike) + (-Math.log(discountFactor) - convencienceFactor);
 
-		UnivariateFunction integrand = new UnivariateFunction() {
+		/*UnivariateFunction integrand = new UnivariateFunction() {
 			@Override
 			public double value(double y) {
+				Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
+
+				// 1. Compute the value of the affine-exponential approximation
+				Complex approxCharFuncVal = calculateExponentialAffineApproximation(ttm, charFuncArgs);
+				Complex E2 = approxCharFuncVal
+						.multiply(charFuncArgs[0].multiply(X0).add(charFuncArgs[1].multiply(I0)).exp());
+				// System.out.println(E2);
+				// 2. Calculate result
+				Complex resultComplex = new Complex(0.5, -y).multiply(logMoneyness).exp().multiply(1 / (y * y + 0.25)).multiply(E2);
+				double result = resultComplex.getReal();
+				return result;
+			}
+
+		*//*UnivariateFunction integrandHermite = new UnivariateFunction() {
+			@Override
+			public double value(double y) {
+				double absY = Math.abs(y);
+				Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, absY), Complex.ZERO, Complex.ZERO};
+
+				// 1. Compute the value of the affine-exponential approximation
+				Complex approxCharFuncVal = calculateExponentialAffineApproximation(ttm, charFuncArgs);
+				Complex E2 = approxCharFuncVal
+						.multiply(charFuncArgs[0].multiply(X0).add(charFuncArgs[1].multiply(I0)).exp());
+				// System.out.println(E2);
+				// 2. Calculate result
+				Complex resultComplex = new Complex(0.5, -absY).multiply(logMoneyness).exp().multiply(1 / (absY * absY + 0.25)).multiply(E2);
+
+				double hermiteAdjustment = Math.exp(Math.pow(absY, 2));
+				resultComplex = resultComplex.multiply(hermiteAdjustment);
+				double result = resultComplex.getReal();
+				return result;
+			}*//*
+		};*/
+
+		DoubleUnaryOperator integrand = new DoubleUnaryOperator() {
+			@Override
+			public double applyAsDouble(double y) {
 				Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 
 				// 1. Compute the value of the affine-exponential approximation
@@ -288,7 +348,13 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		 * Integerate
 		 */
 		// Choose the end point of the solution path
-		double result = integratorInfiniteIntegral.integrate(1000000, integrand, lowerBound, upperBound);
+		// double result = integratorInfiniteIntegral.integrate(1000000, integrand, lowerBound, upperBound);
+		// For HERMITE, integral is calculated on -infinity to +infinity -> / 2
+		// double result = hermite.integrate(integrandHermite) / 2.;
+		// SIMPSOM
+		// double result = simpsonIntegrator.integrate(100000, integrand, lowerBound, upperBound);
+		// finmath SIMPSOM
+		double result = simpsonRealIntegrator.integrate(integrand);
 
 		/**
 		 * Get real part, multiply with factor

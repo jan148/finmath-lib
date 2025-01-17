@@ -149,5 +149,21 @@ public class LNSVQDUtils {
 		return listWithMidpoints;
 	}
 
+	public static Complex[] convertDoubleArrayToComplexArray(double[] array) {
+		Complex[] complexes = new Complex[array.length];
+		for (int j = 0; j < array.length; j++) {
+			complexes[j] = new Complex(array[j], 0.);
+		}
+		return complexes;
+	}
+
+	public static double[] convertComplexArrayToDoubleWithReal(Complex[] array) {
+		double[] reals = new double[array.length];
+		for (int j = 0; j < array.length; j++) {
+			reals[j] = array[j].getReal();
+		}
+		return reals;
+	}
+
 
 }

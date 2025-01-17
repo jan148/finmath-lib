@@ -16,7 +16,7 @@ public class LNSVQDCallPriceSimulator {
 	int numberOfPaths;
 	double[] timeGrid;
 	double path[][][];
-	boolean isForwardEuler = true;
+	boolean isForwardEuler = false;
 	UnivariateFunction zeta = x -> Math.exp(-x) * lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() - Math.exp(x) * lnsvqdModel.getKappa2()
 			- lnsvqdModel.getKappa1() + lnsvqdModel.getKappa2() * lnsvqdModel.getTheta() - 0.5 * lnsvqdModel.getTotalInstVar();
 
@@ -90,6 +90,7 @@ public class LNSVQDCallPriceSimulator {
 							new org.apache.commons.math3.optim.univariate.SearchInterval(-1000, 1000)
 					);
 					volNewTransformed = result.getPoint();
+					if(Math.abs(result.getValue()) > 1e-4) {throw new ArithmeticException("The point doesn't result in a root.");}
 				} else {
 					volNewTransformed = volPrevTransformed + ((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / volPrev - lnsvqdModel.getKappa1())
 							+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - volPrev) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT +

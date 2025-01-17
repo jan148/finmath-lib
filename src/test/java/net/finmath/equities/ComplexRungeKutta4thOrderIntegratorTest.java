@@ -1,7 +1,16 @@
 package net.finmath.equities;
 
 import net.finmath.equities.models.LNSVQD.ComplexRungeKutta4thOrderIntegrator;
+import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.exception.DimensionMismatchException;
+import org.apache.commons.math3.exception.MaxCountExceededException;
+import org.apache.commons.math3.ode.ExpandableStatefulODE;
+import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
+import org.apache.commons.math3.ode.nonstiff.ClassicalRungeKuttaIntegrator;
+import org.apache.commons.math3.ode.nonstiff.RungeKuttaIntegrator;
+import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -65,10 +74,23 @@ class ComplexRungeKutta4thOrderIntegratorTest {
 
 	@Test
 	void testLotkaVolterra() {
+		double t0 = 0.0;
+		double tEnd = 0.2;
+		int steps = 20;
+		double stepSize = (tEnd - t0) / steps;
+		double[] timePoints = LNSVQDUtils.createTimeGrid(t0, tEnd, steps);
+
+
 		double alpha = 1;
 		double beta = 0.1;
 		double delta = 0.075;
 		double gamma = 1.5;
+
+		/**
+		 * ***************************************************+
+		 * 1. RK own implementation
+		 * ***************************************************+
+		 */
 		BiFunction<Double, Complex[], Complex> evolutionPrey = new BiFunction<Double, Complex[], Complex>() {
 			@Override
 			public Complex apply(Double aDouble, Complex[] complexes) {
@@ -90,11 +112,6 @@ class ComplexRungeKutta4thOrderIntegratorTest {
 		odeSystem.add(evolutionPredator);
 		ComplexRungeKutta4thOrderIntegrator odeRungeKutta = new ComplexRungeKutta4thOrderIntegrator(state, odeSystem);
 
-		double t0 = 0.0;
-		double stepSize = 0.1;
-		int steps = 99 * 3;
-		double[] timePoints = createTimeGrid(t0, stepSize, steps);
-
 		Complex[][] solutionPath = odeRungeKutta.getSolutionPath(timePoints);
 
 		// Print results
@@ -105,7 +122,42 @@ class ComplexRungeKutta4thOrderIntegratorTest {
 			System.out.println(currentTime + "\t"+ solutionPath[k][0].getReal() + "\t" + solutionPath[k][1].getReal());
 		}
 
-		//TODO: Assert that relative error is below a certain threshold
+		/**
+		 * ***************************************************+
+		 * 2. RK Apache
+		 * ***************************************************+
+		 */
+		FirstOrderDifferentialEquations firstOrderDifferentialEquations = new FirstOrderDifferentialEquations() {
+			@Override
+			public int getDimension() {
+				return 2;
+			}
+
+			@Override
+			public void computeDerivatives(double t, double[] y, double[] yDot) throws MaxCountExceededException, DimensionMismatchException {
+				yDot[0] = y[0] * (alpha) - (y[0] * y[1] * (beta));
+				yDot[1] = (y[0] * (y[1]) * (delta)) - (y[1] * (gamma));
+			}
+		};
+
+		double[] initalStateReal = LNSVQDUtils.convertComplexArrayToDoubleWithReal(state);
+		double[] yEnd = initalStateReal.clone();
+		ClassicalRungeKuttaIntegrator classicalRungeKuttaIntegrator = new ClassicalRungeKuttaIntegrator(stepSize);
+		classicalRungeKuttaIntegrator.integrate(firstOrderDifferentialEquations, t0, initalStateReal, tEnd, yEnd);
+
+		// Print results
+		System.out.println("Final state at t = " + tEnd);
+		System.out.println("y[0] (position): " + yEnd[0]);
+		System.out.println("y[1] (velocity): " + yEnd[1]);
+
+
+		/**
+		 * ***************************************************+
+		 * 3. Compare
+		 * ***************************************************+
+		 */
+		Assertions.assertEquals(yEnd[0], solutionPath[timePoints.length - 1][0].getReal(), 1e-6);
+		Assertions.assertEquals(yEnd[1], solutionPath[timePoints.length - 1][1].getReal(), 1e-6);
 	}
 
 	private double[] createTimeGrid(double t0, double stepSize, int steps) {

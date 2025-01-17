@@ -14,6 +14,8 @@ import net.finmath.montecarlo.assetderivativevaluation.products.EuropeanOption;
 import net.finmath.montecarlo.process.LNSVQDDiscretizationScheme;
 import net.finmath.time.TimeDiscretization;
 import net.finmath.time.TimeDiscretizationFromArray;
+import org.apache.commons.math3.distribution.TDistribution;
+import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -32,13 +34,11 @@ public class LNSVQDCallPriceSimulatorTest {
 	// sigma0=1.5, theta=1.0, kappa1=4.0, kappa2=4.0, beta=0.0, volvol=1.0
 	private final double spot0 = 1;
 	private final double sigma0 = 0.41; //0.8327;
-	// Value as in paper
 	private final double kappa1 =  2.21; // 4.8606;
-	// Value as in paper
 	private final double kappa2 = 2.18; // 4.7938
 	private final double theta =  0.38; // 1.0139
-	private final double beta = 0; // 0.1985
-	private final double epsilon = 0; // 2.3690;
+	private final double beta = 0.1985; // 0.1985
+	private final double epsilon = 2.3690; // 2.3690;
 
 	/**
 	 * Models
@@ -46,18 +46,23 @@ public class LNSVQDCallPriceSimulatorTest {
 	LNSVQDModel lnsvqdModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
 	LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
 
+	/**
+	 * Stat utils
+	 */
+	StandardDeviation standardDeviation = new StandardDeviation();
+
 	@Test
 	public void getCallPrice() throws CalculationException {
-		int numberOfPaths = 50000;
+		int numberOfPaths = 200000;
 		// Get option values
 		double spot = 1;
-		double strike = 1;
-		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0, 0.27, 6);
+		double strike = 1.4;
+		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.4, 1.2, 5);
 		double[] relativeErrors = new double[maturityGrid.length];
 		for(int m = 0; m < maturityGrid.length; m++){
 			double maturity = maturityGrid[m];
 			double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
-					maturity, (int) Math.round(maturity * 365.));
+					maturity, (int) Math.round(maturity * 365. * 1.5));
 			double riskFreeRate = lnsvqdModelAnalyticalPricer.getRiskFreeRate();
 			double discountFactor = Math.exp(-riskFreeRate * maturity);
 
@@ -68,21 +73,33 @@ public class LNSVQDCallPriceSimulatorTest {
 			double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
 			System.out.println("Call oprion price LNSVQD: \t" + lnsvqdOptionValue);
 
-			List<Integer> seeds = Arrays.asList(1, 2, 3, 4, 5);
+			List<Integer> seeds = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 			double[] prices = new double[seeds.size()];
+
+			// For statistics
+			TDistribution tDistribution = new TDistribution(seeds.size() - 1);
 
 			for(int seed : seeds) {
 				LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModel, numberOfPaths, timeGrid);
 				lnsvqdCallPriceSimulator.precalculatePaths(seed);
 				double simulatedOptionPrice = lnsvqdCallPriceSimulator.getCallPrice(strike);
 				prices[seeds.indexOf(seed)] = simulatedOptionPrice;
-				System.out.println(seed + ": \t" + simulatedOptionPrice);
+				System.out.println(simulatedOptionPrice);
 			}
 
 			double averagePrice = Arrays.stream(prices).average().getAsDouble();
 			double relativeError = Math.abs(averagePrice - lnsvqdOptionValue) / lnsvqdOptionValue;
+			double stdError = standardDeviation.evaluate(prices);
 
-			System.out.println("Average price: " + Arrays.stream(prices).average().getAsDouble() + "; Relative error: " + relativeError);
+			double tQuantile = tDistribution.inverseCumulativeProbability(0.975);
+			double lowerConfidenceBound = averagePrice - tQuantile * stdError / seeds.size();
+			double upperConfidenceBound = averagePrice + tQuantile * stdError / seeds.size();
+
+			System.out.println("Average price: " + Arrays.stream(prices).average().getAsDouble() + "; Relative error: " + relativeError
+					+ "; Lower 95%-bound: " + lowerConfidenceBound
+					+ "; Upper 95%-bound: " + upperConfidenceBound + "\n"
+					+ "; Analytical price " + lnsvqdOptionValue
+					+ "Analytical price in interval: " + (lowerConfidenceBound <= lnsvqdOptionValue && lnsvqdOptionValue <= upperConfidenceBound) );
 
 			relativeErrors[m] = relativeError;
 		}
