@@ -41,7 +41,7 @@ class LNSVQDModelAnalyticalPricerTest {
 	 */
 	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
 	private final double spot0 = 1;
-	private final double sigma0 = 0.41; //0.8327;
+	private final double sigma0 = 0.41; // 0.8327;
 	// Value as in paper
 	private final double kappa1 =  2.21; // 4.8606;
 	// Value as in paper
@@ -106,8 +106,8 @@ class LNSVQDModelAnalyticalPricerTest {
 	@Test
 	public void printAj() {
 		int index = 3;
-		double ttm = 0.279;
-		double y = 0.05;
+		double ttm = 1;
+		double y = 2;
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
 		final Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 		Complex[][] solutionPath = lnsvqdModelAnalyticalPricer.getSolutionPathForODESystem(timeGrid, charFuncArgs);
@@ -123,7 +123,7 @@ class LNSVQDModelAnalyticalPricerTest {
 
 	@Test
 	public void printE2() {
-		double ttm = 1.2;
+		double ttm = 1;
 		double y = 1;
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
 		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
