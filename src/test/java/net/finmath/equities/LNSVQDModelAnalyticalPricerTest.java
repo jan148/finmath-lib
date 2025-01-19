@@ -123,8 +123,8 @@ class LNSVQDModelAnalyticalPricerTest {
 
 	@Test
 	public void printE2() {
-		double ttm = 0.0;
-		double y = 0.05;
+		double ttm = 1.2;
+		double y = 1;
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
 		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 

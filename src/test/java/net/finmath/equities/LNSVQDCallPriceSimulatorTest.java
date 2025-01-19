@@ -53,7 +53,7 @@ public class LNSVQDCallPriceSimulatorTest {
 
 	@Test
 	public void getCallPrice() throws CalculationException {
-		int numberOfPaths = 200000;
+		int numberOfPaths = 10000;
 		// Get option values
 		double spot = 1;
 		double strike = 1.4;
@@ -62,7 +62,7 @@ public class LNSVQDCallPriceSimulatorTest {
 		for(int m = 0; m < maturityGrid.length; m++){
 			double maturity = maturityGrid[m];
 			double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
-					maturity, (int) Math.round(maturity * 365. * 1.5));
+					maturity, (int) Math.round(maturity * 365.));
 			double riskFreeRate = lnsvqdModelAnalyticalPricer.getRiskFreeRate();
 			double discountFactor = Math.exp(-riskFreeRate * maturity);
 

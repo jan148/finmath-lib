@@ -159,7 +159,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		Complex L21 = complex0;
 		Complex L22 = charFuncArgs[0].multiply(-beta).subtract(kappa2);
 		Complex L23 = totalInstVar.subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(4 * theta * beta));
-		Complex L24 = mixedDeg3.multiply(2).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(3);
+		Complex L24 = mixedDeg3.multiply(2).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(3); // !
 		Complex L25 = mixedDeg4.multiply(6);
 		Complex[] L2 = {L21, L22, L23, L24, L25};
 		// L[3, 2], L[3, 3], L[3, 4] = -2.0 * (kappa2_p + beta * vol_backbone_eta * phi), 3.0 * (vartheta2 - kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi), 4.0 * (3.0 * qv - theta2 * beta * vol_backbone_eta * phi)
@@ -175,7 +175,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		Complex L42 = complex0;
 		Complex L43 = complex0;
 		Complex L44 = charFuncArgs[0].multiply(beta).add(kappa2).multiply(-3);
-		Complex L45 = totalInstVar.subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(4 * theta * beta)).multiply(2);
+		Complex L45 = totalInstVar.multiply(3).subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(4 * theta * beta)).multiply(2);
 		Complex[] L4 = {L41, L42, L43, L44, L45};
 
 		// 3. Scalars
