@@ -98,9 +98,25 @@ public class LNSVQDUtils {
 		}
 		return timeGrid;
 	}
+
 	public static void printArray(double[] array) {
 		for(double element : array) {
 			System.out.print(element + "\t");
+		}
+	}
+
+	public static void printPricesFromMaturityStrikeGrid(double[] maturities, double[] strikes, double[] prices) {
+		for(int s = 0; s < strikes.length; s++) {
+			System.out.print("\t" + strikes[s]);
+		}
+		System.out.println();
+		for(int m = 0; m < maturities.length; m++) {
+			double maturity = maturities[m];
+			System.out.print(maturity + "\t");
+			for(int s = 0; s < strikes.length; s++) {
+				System.out.print(prices[m * strikes.length + s] + "\t");
+			}
+			System.out.print("\n");
 		}
 	}
 

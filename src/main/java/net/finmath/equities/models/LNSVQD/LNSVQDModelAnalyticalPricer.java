@@ -5,19 +5,9 @@ import net.finmath.equities.models.DynamicVolatilitySurface;
 import net.finmath.functions.AnalyticFormulas;
 import net.finmath.integration.SimpsonRealIntegrator;
 import net.finmath.time.daycount.DayCountConvention;
-import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.integration.IterativeLegendreGaussIntegrator;
-import org.apache.commons.math3.analysis.integration.MidPointIntegrator;
-import org.apache.commons.math3.analysis.integration.SimpsonIntegrator;
-import org.apache.commons.math3.analysis.integration.gauss.GaussIntegrator;
-import org.apache.commons.math3.analysis.integration.gauss.GaussIntegratorFactory;
-import org.apache.commons.math3.analysis.integration.gauss.SymmetricGaussIntegrator;
-import org.apache.commons.math3.analysis.interpolation.HermiteInterpolator;
-import org.apache.commons.math3.analysis.solvers.LaguerreSolver;
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.util.Pair;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,7 +47,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	// SimpsonIntegrator simpsonIntegrator = new SimpsonIntegrator();
 
 	// finmath integrator
-	SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, (int) upperBound * 100, false);
+	SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, (int) upperBound * 10, false);
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
 		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
@@ -390,13 +380,12 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 
 		// Add points
 		List<Double> timeGridForMGFApproximationCalculationList = Arrays.equals(maturitiesWithZero, new double[]{0}) ?
-				Arrays.stream(maturitiesWithZero).boxed().collect(Collectors.toList()) : LNSVQDUtils.addTimePointsToArray(maturitiesWithZero, this.numStepsForODEIntegration);
+				Arrays.stream(maturitiesWithZero).boxed().collect(Collectors.toList()) : LNSVQDUtils.addTimePointsToArray(maturitiesWithZero, numStepsForODEIntegration + 1 - maturitiesWithZero.length);
 		double[] timeGridForMGFApproximationCalculation = timeGridForMGFApproximationCalculationList.stream().mapToDouble(Double::doubleValue).toArray();
 
 		/**
 		 * 1b. Extract information for ODE-integration
 		 */
-
 		List<Double> gridForIntegrationWithMidPoints = LNSVQDUtils.addMidPointsToList(yGridForIntegration);
 
 		/**
@@ -411,12 +400,10 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		 */
 		// expAffApproxMatPathPerCharFuncArgRealization = Exponential-affine approximation at maturities per realization of the characteristic functions args
 		Complex[][] expAffApproxMatPathPerCharFuncRealization = new Complex[gridForIntegrationWithMidPoints.size()][maturitiesWithZero.length];
-		// TODO: Chech equidistance
-		double stepsize = gridForIntegrationWithMidPoints.get(1) - gridForIntegrationWithMidPoints.get(0);
 		// Loop over charFunc args
 		for(int l = 0; l < gridForIntegrationWithMidPoints.size(); l++) {
 			// TODO: expAffApproxPathPerCharFuncRealization[l] should only contain values for maturity-points, not for filler points!
-			double y = l == 0 ? 0 : l * stepsize;
+			double y = gridForIntegrationWithMidPoints.get(l);
 			Complex[] charFuncArs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 			Complex[] expAffApproxPathPerCharFuncRealization = calculateExponentialAffineApproximationFullPath(timeGridForMGFApproximationCalculation, charFuncArs);;
 
@@ -441,7 +428,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			// Get the time index of the maturity
 			int maturityIndex = i;
 			for(int j = 0; j < strikes.length; j++) {
-
 				/**
 				 * *********************
 				 * DO FOR ONE OPTION
@@ -451,16 +437,16 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 
 				double strike = strikes[j];
 
-				// Start assembling the factors of the pricing fommula
+				// Start assembling the factors of the pricing formula
 				double logMoneyness = Math.log(spot0 / strike) + (-Math.log(discountFactor) - convenienceFactor);
 
 				/**
 				 * TODO: Change factor
 				 * Define the function y -> factor * E2(t, -0.5 + iy)
 				 */
-				UnivariateFunction integrand = new UnivariateFunction() {
+				DoubleUnaryOperator integrand = new DoubleUnaryOperator() {
 					@Override
-					public double value(double y) {
+					public double applyAsDouble(double y) {
 						int yIndex = gridForIntegrationWithMidPoints.indexOf(y);
 						if(yIndex == -1) {
 							throw new IllegalArgumentException("y not in array: The E2 value for this the y-value " + y + " hasn't been calculated!");
@@ -481,8 +467,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				/**
 				 * Integerate
 				 */
-				// Choose the end point of the solution path
-				double result = integratorInfiniteIntegral.integrate(100000000, integrand, 0, upperBoundForInfiniteIntegral);
+				double result = simpsonRealIntegrator.integrate(integrand);
 
 				/**
 				 * Get real part, multiply with factor

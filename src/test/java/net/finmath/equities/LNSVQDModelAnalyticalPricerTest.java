@@ -29,6 +29,7 @@ import java.util.function.BiFunction;
 import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * This test
@@ -42,15 +43,18 @@ class LNSVQDModelAnalyticalPricerTest {
 	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
 	// (sigma0=0.5, theta=1.0, kappa1=4.0, kappa2=4.0, beta=1.0, volvol=1.0)
 	//  params = LogSvParams(sigma0=1.0, theta=1.0, kappa1=4.0, kappa2=4.0, beta=1.2, volvol=3.0)
+	// sigma0=1.5, theta=1.0, kappa1=4.0, kappa2=4.0, beta=0.0, volvol=1.0
+	// LogSvParams(sigma0=0.8376, theta=1.0413, kappa1=3.1844, kappa2=3.058, beta=0.1514, volvol=1.8458)
+	// LogSvParams(sigma0=0.9778, theta=0.5573, kappa1=4.8360, kappa2=8.6780, beta=2.3128, volvol=1.0484)
 	private final double spot0 = 1;
-	private final double sigma0 = 1.0; // 0.8327;
+	private final double sigma0 = 0.8376; // 0.8327;
 	// Value as in paper
-	private final double kappa1 =  4.0; // 4.8606;
+	private final double kappa1 =  3.1844; // 4.8606;
 	// Value as in paper
-	private final double kappa2 = 4.0; // 4.7938
-	private final double theta =  1.0; // 1.0139
-	private final double beta = 1.2; // 0.1985
-	private final double epsilon = 3.0; // 2.3690;
+	private final double kappa2 = 3.058; // 4.7938
+	private final double theta =  1.0413; // 1.0139
+	private final double beta = 0.1514; // 0.1985
+	private final double epsilon = 1.8458; // 2.3690;
 
 	/**
 	 * Models
@@ -246,6 +250,54 @@ class LNSVQDModelAnalyticalPricerTest {
 		List<Double> results = seeds.parallelStream()
 				.map(getCallValue) // Apply the function to each seed
 				.collect(Collectors.toList());
+	}
+
+	@Test
+	public void getCallPrices() throws Exception {
+		double spot = 1;
+		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.0, 1, 5);
+		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.4, 2);
+
+		/**
+		 * Get all the integration points from the integrator, in our case Simpson
+		 */
+		List<Double> yGridForIntegration = new ArrayList<>();
+
+		// Next lines adapted from finmath's Simpson implementation
+		final double	lowerBound			= lnsvqdModelAnalyticalPricer.lowerBound;
+		final double	upperBound			= lnsvqdModelAnalyticalPricer.upperBound;
+		final double	range				= upperBound-lowerBound;
+
+		final int  numberOfEvaluationPoints = (int) upperBound * 10; // Need to change this in accordance with LNSVQD pricer
+		final int numberOfDoubleSizeIntervals	= (int) ((numberOfEvaluationPoints-1) / 2.0);
+
+		final double doubleInterval = range / numberOfDoubleSizeIntervals;
+		final double singleInterval = 0.5 * doubleInterval;
+
+		IntStream intervals = IntStream.range(1, numberOfDoubleSizeIntervals);
+
+		intervals.forEach(
+				i -> {
+					yGridForIntegration.add(lowerBound + i * doubleInterval);
+					yGridForIntegration.add(lowerBound + i * doubleInterval + singleInterval);
+				}
+		);
+
+		yGridForIntegration.add(lowerBound + singleInterval);
+		yGridForIntegration.add(lowerBound);
+		yGridForIntegration.add(upperBound);
+
+		List<Double> yGridForIntegrationSortedDistinct = yGridForIntegration.stream().sorted().distinct().collect(Collectors.toList());
+		/**
+		 * Get call prices
+		 */
+		double[] callPrices = lnsvqdModelAnalyticalPricer.getCallPrices(strikes, maturityGrid, yGridForIntegrationSortedDistinct);
+
+		/**
+		 * Print
+		 */
+		LNSVQDUtils.printPricesFromMaturityStrikeGrid(maturityGrid, strikes, callPrices);
+
 	}
 
 	/**
