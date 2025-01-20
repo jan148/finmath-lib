@@ -20,9 +20,11 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -32,15 +34,17 @@ public class LNSVQDCallPriceSimulatorTest {
 	 */
 	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
 	// sigma0=1.5, theta=1.0, kappa1=4.0, kappa2=4.0, beta=0.0, volvol=1.0
+	// LogSvParams(sigma0=0.8376, theta=1.0413, kappa1=3.1844, kappa2=3.058, beta=0.1514, volvol=1.8458)
+	// LogSvParams(sigma0=0.9778, theta=0.5573, kappa1=4.8360, kappa2=8.6780, beta=2.3128, volvol=1.0484)
 	private final double spot0 = 1;
-	private final double sigma0 = 0.41; // 0.8327;
+	private final double sigma0 = 0.8376; // 0.8327;
 	// Value as in paper
-	private final double kappa1 =  2.21; // 4.8606;
+	private final double kappa1 = 3.1844; // 4.8606;
 	// Value as in paper
-	private final double kappa2 = 2.18; // 4.7938
-	private final double theta =  0.38; // 1.0139
-	private final double beta = 0.50; // 0.1985
-	private final double epsilon = 3.06; // 2.3690;
+	private final double kappa2 = 3.058; // 4.7938
+	private final double theta = 1.0413; // 1.0139
+	private final double beta = 0.1514; // 0.1985
+	private final double epsilon = 1.8458; // 2.3690;
 
 	/**
 	 * Models
@@ -52,61 +56,94 @@ public class LNSVQDCallPriceSimulatorTest {
 	 * Stat utils
 	 */
 	StandardDeviation standardDeviation = new StandardDeviation();
+	Random random = new Random();
 
 	@Test
-	public void getCallPrice() throws CalculationException {
+	public void getCallPrices() throws CalculationException {
 		int numberOfPaths = 100000;
 		// Get option values
 		double spot = 1;
-		double strike = 1.4;
-		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.0, 1.2, 5);
+		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.2, 1, 4);
+		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.4, 2);
 		double[] relativeErrors = new double[maturityGrid.length];
-		for(int m = 0; m < maturityGrid.length; m++){
+
+		double[][] pricesAnalytical = new double[maturityGrid.length][strikes.length];
+		double[][] pricesMC = new double[maturityGrid.length][strikes.length];
+
+		for(int m = 0; m < maturityGrid.length; m++) {
 			double maturity = maturityGrid[m];
 			double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
 					maturity, (int) Math.round(maturity * 365.));
 			double riskFreeRate = lnsvqdModelAnalyticalPricer.getRiskFreeRate();
 			double discountFactor = Math.exp(-riskFreeRate * maturity);
-
-			double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot, riskFreeRate, sigma0, maturity, strike, true);
-			System.out.println("Call oprion price BS: \t" + bsOptionValue);
-
 			double convenienceFcator = 0;
-			double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
-			System.out.println("Call oprion price LNSVQD: \t" + lnsvqdOptionValue);
+			for(int s = 0; s < strikes.length; s++) {
+				double strike = strikes[s];
 
-			List<Integer> seeds = Arrays.asList(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
-			double[] prices = new double[seeds.size()];
+				double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot, riskFreeRate, sigma0, maturity, strike, true);
+				System.out.println("Call oprion price BS: \t" + bsOptionValue);
 
-			// For statistics
-			TDistribution tDistribution = new TDistribution(seeds.size() - 1);
+				double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
+				pricesAnalytical[m][s] = lnsvqdOptionValue;
+				System.out.println("Call oprion price LNSVQD: \t" + lnsvqdOptionValue);
 
-			for(int seed : seeds) {
-				LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModel, numberOfPaths, timeGrid);
-				lnsvqdCallPriceSimulator.precalculatePaths(seed);
-				double simulatedOptionPrice = lnsvqdCallPriceSimulator.getCallPrice(strike);
-				prices[seeds.indexOf(seed)] = simulatedOptionPrice;
-				System.out.println(simulatedOptionPrice);
+				List<Integer> seeds = random.ints(5).boxed().collect(Collectors.toList());
+				double[] prices = new double[seeds.size()];
+
+				// For statistics
+				TDistribution tDistribution = new TDistribution(seeds.size() - 1);
+
+				for(int seed : seeds) {
+					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModel, numberOfPaths, timeGrid);
+					// lnsvqdCallPriceSimulator.precalculatePaths(seed);
+					double simulatedOptionPrice = 0; // lnsvqdCallPriceSimulator.getCallPrice(strike);
+					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
+					System.out.println(simulatedOptionPrice);
+				}
+
+				double averagePrice = Arrays.stream(prices).average().getAsDouble();
+				pricesMC[m][s] = averagePrice;
+				double relativeError = Math.abs(averagePrice - lnsvqdOptionValue) / lnsvqdOptionValue;
+				double stdError = standardDeviation.evaluate(prices);
+
+				double tQuantile = tDistribution.inverseCumulativeProbability(0.975);
+				double lowerConfidenceBound = averagePrice - tQuantile * stdError / seeds.size();
+				double upperConfidenceBound = averagePrice + tQuantile * stdError / seeds.size();
+
+				/*System.out.println("Average price: " + Arrays.stream(prices).average().getAsDouble() + "; Relative error: " + relativeError
+						+ "; Lower 95%-bound: " + lowerConfidenceBound
+						+ "; Upper 95%-bound: " + upperConfidenceBound + "\n"
+						+ "; Analytical price " + lnsvqdOptionValue
+						+ "Analytical price in interval: " + (lowerConfidenceBound <= lnsvqdOptionValue && lnsvqdOptionValue <= upperConfidenceBound));
+*/
+				relativeErrors[m] = relativeError;
 			}
-
-			double averagePrice = Arrays.stream(prices).average().getAsDouble();
-			double relativeError = Math.abs(averagePrice - lnsvqdOptionValue) / lnsvqdOptionValue;
-			double stdError = standardDeviation.evaluate(prices);
-
-			double tQuantile = tDistribution.inverseCumulativeProbability(0.975);
-			double lowerConfidenceBound = averagePrice - tQuantile * stdError / seeds.size();
-			double upperConfidenceBound = averagePrice + tQuantile * stdError / seeds.size();
-
-			System.out.println("Average price: " + Arrays.stream(prices).average().getAsDouble() + "; Relative error: " + relativeError
-					+ "; Lower 95%-bound: " + lowerConfidenceBound
-					+ "; Upper 95%-bound: " + upperConfidenceBound + "\n"
-					+ "; Analytical price " + lnsvqdOptionValue
-					+ "Analytical price in interval: " + (lowerConfidenceBound <= lnsvqdOptionValue && lnsvqdOptionValue <= upperConfidenceBound) );
-
-			relativeErrors[m] = relativeError;
 		}
-		LNSVQDUtils.printArray(maturityGrid);
-		LNSVQDUtils.printArray(relativeErrors);
+		/**
+		 * Print
+		 */
+		System.out.println("Analytical prices");
+		for(int m = 0; m < maturityGrid.length; m++) {
+			double maturity = maturityGrid[m];
+			System.out.print(maturity + "\t");
+			for(int s = 0; s < strikes.length; s++) {
+				System.out.print(pricesAnalytical[m][s] + "\t");
+			}
+			System.out.print("\n");
+		}
+
+		System.out.println("MC prices");
+		for(int m = 0; m < maturityGrid.length; m++) {
+			double maturity = maturityGrid[m];
+			System.out.print(maturity + "\t");
+			for(int s = 0; s < strikes.length; s++) {
+				System.out.print(pricesMC[m][s] + "\t");
+			}
+			System.out.print("\n");
+		}
+
+		/*LNSVQDUtils.printArray(maturityGrid);
+		LNSVQDUtils.printArray(relativeErrors);*/
 	}
 
 	@Test

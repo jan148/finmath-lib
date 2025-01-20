@@ -40,15 +40,17 @@ class LNSVQDModelAnalyticalPricerTest {
 	 * Model params
 	 */
 	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
+	// (sigma0=0.5, theta=1.0, kappa1=4.0, kappa2=4.0, beta=1.0, volvol=1.0)
+	//  params = LogSvParams(sigma0=1.0, theta=1.0, kappa1=4.0, kappa2=4.0, beta=1.2, volvol=3.0)
 	private final double spot0 = 1;
-	private final double sigma0 = 0.41; // 0.8327;
+	private final double sigma0 = 1.0; // 0.8327;
 	// Value as in paper
-	private final double kappa1 =  2.21; // 4.8606;
+	private final double kappa1 =  4.0; // 4.8606;
 	// Value as in paper
-	private final double kappa2 = 2.18; // 4.7938
-	private final double theta =  0.38; // 1.0139
-	private final double beta = 0.50; // 0.1985
-	private final double epsilon = 3.06; // 2.3690;
+	private final double kappa2 = 4.0; // 4.7938
+	private final double theta =  1.0; // 1.0139
+	private final double beta = 1.2; // 0.1985
+	private final double epsilon = 3.0; // 2.3690;
 
 	/**
 	 * Models
