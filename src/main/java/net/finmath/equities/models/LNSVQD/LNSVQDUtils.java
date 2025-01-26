@@ -1,6 +1,7 @@
 package net.finmath.equities.models.LNSVQD;
 
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.util.Pair;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -179,6 +180,16 @@ public class LNSVQDUtils {
 			reals[j] = array[j].getReal();
 		}
 		return reals;
+	}
+
+	public static List<Pair<Double, Double>> create2dMesh(double[] arr1, double[] arr2) {
+		List<Pair<Double, Double>> mesh= new ArrayList<>();
+		for (int i = 0; i < arr1.length; i++) {
+			for (int j = 0; j < arr2.length; j++) {
+				mesh.add(new Pair<Double, Double>(arr1[i], arr2[j]));
+			}
+		}
+		return mesh;
 	}
 
 

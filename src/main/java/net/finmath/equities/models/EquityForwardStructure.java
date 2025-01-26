@@ -8,6 +8,7 @@ package net.finmath.equities.models;
 import java.time.LocalDate;
 import net.finmath.equities.marketdata.AffineDividendStream;
 import net.finmath.equities.marketdata.YieldCurve;
+import net.finmath.time.daycount.DayCountConvention;
 
 /**
  * I to cover the forward structure of a stock, i.e. spot, repo curve and dividends.

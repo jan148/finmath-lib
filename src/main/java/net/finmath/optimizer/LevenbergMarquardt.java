@@ -29,7 +29,7 @@ import net.finmath.functions.LinearAlgebra;
  * The solver requires the calculation of a Jacobi-matrix \( J = \frac{\mathrm{d}f}{\mathrm{d}x} \). The iteration steps
  * are then defined by
  * \[
- * 		\Delta x = H_{\lambda}^{-1} J^T f
+ * \Delta x = H_{\lambda}^{-1} J^T f
  * \]
  * where \( H_{\lambda} \) is a regularized approximation of the Hessian matrix.
  * The solver supports two different regularizations. For <code>RegularizationMethod.LEVENBERG</code> the solver uses
@@ -42,7 +42,7 @@ import net.finmath.functions.LinearAlgebra;
  * separate class. The objective function is defined by overriding a class
  * method, see the sample code below.
  * </p>
-
+ *
  * <p>
  * The Levenberg-Marquardt solver is implemented in using multi-threading.
  * The calculation of the derivatives (in case a specific implementation of
@@ -68,7 +68,7 @@ import net.finmath.functions.LinearAlgebra;
  * Note, however, that is is an error if the initial parameter guess results in an NaN value.
  * That is, the solver should be initialized with an initial parameter in an admissible region.
  * </p>
- *
+ * <p>
  * The following simple example finds a solution for the equation <br>
  * <table>
  * <caption>Sample linear system of equations.</caption>
@@ -87,8 +87,8 @@ import net.finmath.functions.LinearAlgebra;
  * 		public void setValues(double[] parameters, double[] values) {
  * 			values[0] = parameters[0] * 0.0 + parameters[1];
  * 			values[1] = parameters[0] * 2.0 + parameters[1];
- * 		}
- * 	};
+ *        }
+ *    };
  *
  * 	// Set solver parameters
  * 	optimizer.setInitialParameters(new double[] { 0, 0 });
@@ -101,7 +101,7 @@ import net.finmath.functions.LinearAlgebra;
  * 	double[] bestParameters = optimizer.getBestFitParameters();
  * </code>
  * </pre>
- *
+ * <p>
  * See the example in the main method below.
  *
  * <p>
@@ -110,7 +110,7 @@ import net.finmath.functions.LinearAlgebra;
  * The solver will evaluate the gradient of the value vector in parallel, i.e.,
  * use as many threads as the number of parameters.
  * </p>
- *
+ * <p>
  * Note: Iteration steps will be logged (java.util.logging) with LogLevel.FINE
  *
  * @author Christian Fries
@@ -147,13 +147,13 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	private double[] targetValues = null;
 	private double[] weights = null;
 
-	private int		maxIteration = 100;
+	private int maxIteration = 100;
 
-	private double	lambda				= 0.001;
-	private double	lambdaDivisor		= 3.0;
-	private double	lambdaMultiplicator	= 2.0;
+	private double lambda = 0.001;
+	private double lambdaDivisor = 3.0;
+	private double lambdaMultiplicator = 2.0;
 
-	private double	errorRootMeanSquaredTolerance = 0.0;	// by default we solve upto machine presicion
+	private double errorRootMeanSquaredTolerance = 0.0;    // by default we solve upto machine presicion
 
 	private int iteration = 0;
 
@@ -165,14 +165,14 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	private double[] valueCurrent = null;
 	private double[][] derivativeCurrent = null;
 
-	private double errorMeanSquaredCurrent	= Double.POSITIVE_INFINITY;
-	private double errorRootMeanSquaredChange	= Double.POSITIVE_INFINITY;
+	private double errorMeanSquaredCurrent = Double.POSITIVE_INFINITY;
+	private double errorRootMeanSquaredChange = Double.POSITIVE_INFINITY;
 
 	private boolean isParameterCurrentDerivativeValid = false;
 
 	// These members will be updated in each iteration. These are members to prevent repeated memory allocation.
-	private double[][]	hessianMatrix = null;
-	private double[]	beta = null;
+	private double[][] hessianMatrix = null;
+	private double[] beta = null;
 
 	/*
 	 * Used for multi-threadded calculation of the derivative.
@@ -180,9 +180,9 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	 * we will temporarily create an executor with the specified number of threads.
 	 * Note: If an executor was provided upon construction, it will not receive a shutdown when done.
 	 */
-	private int				numberOfThreads	= 1;
-	private ExecutorService executor					= null;
-	private boolean			executorShutdownWhenDone	= true;
+	private int numberOfThreads = 1;
+	private ExecutorService executor = null;
+	private boolean executorShutdownWhenDone = true;
 
 	private final Logger logger = Logger.getLogger("net.finmath");
 
@@ -201,16 +201,16 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 		};
 
 		// Set solver parameters
-		optimizer.setInitialParameters(new double[] { 0, 0 });
-		optimizer.setWeights(new double[] { 1, 1 });
+		optimizer.setInitialParameters(new double[]{0, 0});
+		optimizer.setWeights(new double[]{1, 1});
 		optimizer.setMaxIteration(100);
-		optimizer.setTargetValues(new double[] { 5, 10 });
+		optimizer.setTargetValues(new double[]{5, 10});
 
 		optimizer.run();
 
 		final double[] bestParameters = optimizer.getBestFitParameters();
 		System.out.println("The solver for problem 1 required " + optimizer.getIterations() + " iterations. The best fit parameters are:");
-		for (int i = 0; i < bestParameters.length; i++) {
+		for(int i = 0; i < bestParameters.length; i++) {
 			System.out.println("\tparameter[" + i + "]: " + bestParameters[i]);
 		}
 
@@ -218,12 +218,12 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 		 * Creating a clone, continuing the search with new target values.
 		 * Note that we do not re-define the setValues method.
 		 */
-		final Optimizer optimizer2 = optimizer.getCloneWithModifiedTargetValues(new double[] { 5.1, 10.2 }, new double[] { 1, 1 }, true);
+		final Optimizer optimizer2 = optimizer.getCloneWithModifiedTargetValues(new double[]{5.1, 10.2}, new double[]{1, 1}, true);
 		optimizer2.run();
 
 		final double[] bestParameters2 = optimizer2.getBestFitParameters();
 		System.out.println("The solver for problem 2 required " + optimizer2.getIterations() + " iterations. The best fit parameters are:");
-		for (int i = 0; i < bestParameters2.length; i++) {
+		for(int i = 0; i < bestParameters2.length; i++) {
 			System.out.println("\tparameter[" + i + "]: " + bestParameters2[i]);
 		}
 	}
@@ -232,19 +232,19 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	 * Create a Levenberg-Marquardt solver.
 	 *
 	 * @param regularizationMethod The regularization method to use. See {@link RegularizationMethod}.
-	 * @param initialParameters Initial value for the parameters where the solver starts its search.
-	 * @param targetValues Target values to achieve.
-	 * @param maxIteration Maximum number of iterations.
-	 * @param executorService Executor to be used for concurrent valuation of the derivatives. This is only performed if setDerivative is not overwritten. <i>Warning</i>: The implementation of setValues has to be thread safe!
+	 * @param initialParameters    Initial value for the parameters where the solver starts its search.
+	 * @param targetValues         Target values to achieve.
+	 * @param maxIteration         Maximum number of iterations.
+	 * @param executorService      Executor to be used for concurrent valuation of the derivatives. This is only performed if setDerivative is not overwritten. <i>Warning</i>: The implementation of setValues has to be thread safe!
 	 */
 	public LevenbergMarquardt(final RegularizationMethod regularizationMethod, final double[] initialParameters, final double[] targetValues, final int maxIteration, final ExecutorService executorService) {
 		super();
 		this.regularizationMethod = regularizationMethod;
-		this.initialParameters	= initialParameters;
-		this.targetValues		= targetValues;
-		this.maxIteration		= maxIteration;
+		this.initialParameters = initialParameters;
+		this.targetValues = targetValues;
+		this.maxIteration = maxIteration;
 
-		weights			= new double[targetValues.length];
+		weights = new double[targetValues.length];
 		java.util.Arrays.fill(weights, 1.0);
 
 		executor = executorService;
@@ -256,9 +256,9 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	 * Create a Levenberg-Marquardt solver.
 	 *
 	 * @param initialParameters Initial value for the parameters where the solver starts its search.
-	 * @param targetValues Target values to achieve.
-	 * @param maxIteration Maximum number of iterations.
-	 * @param executorService Executor to be used for concurrent valuation of the derivatives. This is only performed if setDerivative is not overwritten. <i>Warning</i>: The implementation of setValues has to be thread safe!
+	 * @param targetValues      Target values to achieve.
+	 * @param maxIteration      Maximum number of iterations.
+	 * @param executorService   Executor to be used for concurrent valuation of the derivatives. This is only performed if setDerivative is not overwritten. <i>Warning</i>: The implementation of setValues has to be thread safe!
 	 */
 	public LevenbergMarquardt(final double[] initialParameters, final double[] targetValues, final int maxIteration, final ExecutorService executorService) {
 		this(RegularizationMethod.LEVENBERG_MARQUARDT,
@@ -269,10 +269,10 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	 * Create a Levenberg-Marquardt solver.
 	 *
 	 * @param regularizationMethod The regularization method to use. See {@link RegularizationMethod}.
-	 * @param initialParameters Initial value for the parameters where the solver starts its search.
-	 * @param targetValues Target values to achieve.
-	 * @param maxIteration Maximum number of iterations.
-	 * @param numberOfThreads Maximum number of threads. <i>Warning</i>: If this number is larger than one, the implementation of setValues has to be thread safe!
+	 * @param initialParameters    Initial value for the parameters where the solver starts its search.
+	 * @param targetValues         Target values to achieve.
+	 * @param maxIteration         Maximum number of iterations.
+	 * @param numberOfThreads      Maximum number of threads. <i>Warning</i>: If this number is larger than one, the implementation of setValues has to be thread safe!
 	 */
 	public LevenbergMarquardt(final RegularizationMethod regularizationMethod, final double[] initialParameters, final double[] targetValues, final int maxIteration, final int numberOfThreads) {
 		this(regularizationMethod, initialParameters, targetValues, maxIteration, null);
@@ -284,9 +284,9 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	 * Create a Levenberg-Marquardt solver.
 	 *
 	 * @param initialParameters Initial value for the parameters where the solver starts its search.
-	 * @param targetValues Target values to achieve.
-	 * @param maxIteration Maximum number of iterations.
-	 * @param numberOfThreads Maximum number of threads. <i>Warning</i>: If this number is larger than one, the implementation of setValues has to be thread safe!
+	 * @param targetValues      Target values to achieve.
+	 * @param maxIteration      Maximum number of iterations.
+	 * @param numberOfThreads   Maximum number of threads. <i>Warning</i>: If this number is larger than one, the implementation of setValues has to be thread safe!
 	 */
 	public LevenbergMarquardt(final double[] initialParameters, final double[] targetValues, final int maxIteration, final int numberOfThreads) {
 		this(RegularizationMethod.LEVENBERG_MARQUARDT, initialParameters, targetValues, maxIteration, numberOfThreads);
@@ -296,9 +296,9 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	 * Create a Levenberg-Marquardt solver.
 	 *
 	 * @param initialParameters List of initial values for the parameters where the solver starts its search.
-	 * @param targetValues List of target values to achieve.
-	 * @param maxIteration Maximum number of iterations.
-	 * @param executorService Executor to be used for concurrent valuation of the derivatives. This is only performed if setDerivative is not overwritten. <i>Warning</i>: The implementation of setValues has to be thread safe!
+	 * @param targetValues      List of target values to achieve.
+	 * @param maxIteration      Maximum number of iterations.
+	 * @param executorService   Executor to be used for concurrent valuation of the derivatives. This is only performed if setDerivative is not overwritten. <i>Warning</i>: The implementation of setValues has to be thread safe!
 	 */
 	public LevenbergMarquardt(final List<Number> initialParameters, final List<Number> targetValues, final int maxIteration, final ExecutorService executorService) {
 		this(numberListToDoubleArray(initialParameters), numberListToDoubleArray(targetValues), maxIteration, executorService);
@@ -308,9 +308,9 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	 * Create a Levenberg-Marquardt solver.
 	 *
 	 * @param initialParameters Initial value for the parameters where the solver starts its search.
-	 * @param targetValues Target values to achieve.
-	 * @param maxIteration Maximum number of iterations.
-	 * @param numberOfThreads Maximum number of threads. <i>Warning</i>: If this number is larger than one, the implementation of setValues has to be thread safe!
+	 * @param targetValues      Target values to achieve.
+	 * @param maxIteration      Maximum number of iterations.
+	 * @param numberOfThreads   Maximum number of threads. <i>Warning</i>: If this number is larger than one, the implementation of setValues has to be thread safe!
 	 */
 	public LevenbergMarquardt(final List<Number> initialParameters, final List<Number> targetValues, final int maxIteration, final int numberOfThreads) {
 		this(initialParameters, targetValues, maxIteration, null);
@@ -333,8 +333,8 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	 * @return A corresponding array of doubles executing <code>doubleValue()</code> on each element.
 	 */
 	private static double[] numberListToDoubleArray(final List<Number> listOfNumbers) {
-		final double[] arrayOfDoubles	= new double[listOfNumbers.size()];
-		for(int i=0; i<arrayOfDoubles.length; i++) {
+		final double[] arrayOfDoubles = new double[listOfNumbers.size()];
+		for(int i = 0; i < arrayOfDoubles.length; i++) {
 			arrayOfDoubles[i] = listOfNumbers.get(i).doubleValue();
 		}
 		return arrayOfDoubles;
@@ -477,7 +477,7 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	/**
 	 * Set the multiplicator applied to lambda if the inversion of regularized
 	 * Hessian fails, that is, if \( H + \lambda \diag H \) is not invertable.
-	 *
+	 * <p>
 	 * This will make lambda larger, hence let the stepping move slower.
 	 *
 	 * @param lambdaMultiplicator the lambdaMultiplicator to set. Should be &gt; 1.
@@ -502,7 +502,7 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	/**
 	 * Set the divisor applied to lambda (for the next iteration) if the inversion of regularized
 	 * Hessian succeeds, that is, if \( H + \lambda \diag H \) is invertable.
-	 *
+	 * <p>
 	 * This will make lambda smaller, hence let the stepping move faster.
 	 *
 	 * @param lambdaDivisor the lambdaDivisor to set. Should be &gt; 1.
@@ -534,7 +534,7 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	 * function.
 	 *
 	 * @param parameters Input value. The parameter vector.
-	 * @param values Output value. The vector of values f(i,parameters), i=1,...,n
+	 * @param values     Output value. The vector of values f(i,parameters), i=1,...,n
 	 * @throws SolverException Thrown if the valuation fails, specific cause may be available via the <code>cause()</code> method.
 	 */
 	public abstract void setValues(double[] parameters, double[] values) throws SolverException;
@@ -543,7 +543,7 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	 * The derivative of the objective function. You may override this method
 	 * if you like to implement your own derivative.
 	 *
-	 * @param parameters Input value. The parameter vector.
+	 * @param parameters  Input value. The parameter vector.
 	 * @param derivatives Output value, where derivatives[i][j] is d(value(j)) / d(parameters(i)
 	 * @throws SolverException Thrown if the valuation fails, specific cause may be available via the <code>cause()</code> method.
 	 */
@@ -552,19 +552,18 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 		// parameters = parameterCurrent, so we may use valueCurrent.
 
 		final Vector<Future<double[]>> valueFutures = new Vector<>(parameterCurrent.length);
-		for (int parameterIndex = 0; parameterIndex < parameterCurrent.length; parameterIndex++) {
-			final double[] parametersNew	= parameters.clone();
-			final double[] derivative		= derivatives[parameterIndex];
+		for(int parameterIndex = 0; parameterIndex < parameterCurrent.length; parameterIndex++) {
+			final double[] parametersNew = parameters.clone();
+			final double[] derivative = derivatives[parameterIndex];
 
 			final int workerParameterIndex = parameterIndex;
-			final Callable<double[]> worker = new  Callable<double[]>() {
+			final Callable<double[]> worker = new Callable<double[]>() {
 				@Override
 				public double[] call() {
 					double parameterFiniteDifference;
 					if(parameterSteps != null) {
 						parameterFiniteDifference = parameterSteps[workerParameterIndex];
-					}
-					else {
+					} else {
 						/*
 						 * Try to adaptively set a parameter shift. Note that in some
 						 * applications it may be important to set parameterSteps.
@@ -577,52 +576,40 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 					parametersNew[workerParameterIndex] += parameterFiniteDifference;
 
 					// Calculate derivative as (valueUpShift - valueCurrent) / parameterFiniteDifference
-					double funcValShifted = 0;
 					try {
 						setValues(parametersNew, derivative);
-						funcValShifted = derivative[0];
-						//System.out.println("Function value of shifted parameter:\t" + funcValShifted);
-					} catch (final Exception e) {
+					} catch(final Exception e) {
 						logger.severe("Valuation failed with exeption " + e.getMessage() + "\n" + e.getStackTrace());
 						// We signal an exception to calculate the derivative as NaN
 						Arrays.fill(derivative, Double.NaN);
 					}
-					for (int valueIndex = 0; valueIndex < valueCurrent.length; valueIndex++) {
+					for(int valueIndex = 0; valueIndex < valueCurrent.length; valueIndex++) {
 						derivative[valueIndex] -= valueCurrent[valueIndex];
 						derivative[valueIndex] /= parameterFiniteDifference;
 						if(Double.isNaN(derivative[valueIndex])) {
 							derivative[valueIndex] = 0.0;
 						}
-						double myDerivative = (funcValShifted - valueCurrent[0]) / parameterFiniteDifference;
-						//System.out.println("Current value: " + valueCurrent[0]);
-						//System.out.println("Derivative: " + myDerivative);
 					}
-
 					return derivative;
 				}
 			};
 			if(executor != null) {
 				final Future<double[]> valueFuture = executor.submit(worker);
 				valueFutures.add(parameterIndex, valueFuture);
-			}
-			else {
+			} else {
 				final FutureTask<double[]> valueFutureTask = new FutureTask<>(worker);
 				valueFutureTask.run();
 				valueFutures.add(parameterIndex, valueFutureTask);
 			}
 		}
 
-		for (int parameterIndex = 0; parameterIndex < parameterCurrent.length; parameterIndex++) {
+		for(int parameterIndex = 0; parameterIndex < parameterCurrent.length; parameterIndex++) {
 			try {
 				derivatives[parameterIndex] = valueFutures.get(parameterIndex).get();
-			}
-			catch (final InterruptedException | ExecutionException e) {
+			} catch(final InterruptedException | ExecutionException e) {
 				throw new SolverException(e);
 			}
 		}
-
-
-
 	}
 
 	/**
@@ -635,15 +622,15 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 		return
 				// Maximum number of iterations is reached
 				(iteration > maxIteration)
-				||
-				// Error does not improve by more that the given error tolerance
-				(errorRootMeanSquaredChange <= errorRootMeanSquaredTolerance)
-				||
-				/*
-				 * Lambda is infinite, i.e., no new point is acceptable.
-				 * For example, this may happen if setValue repeatedly give contains invalid (NaN) values.
-				 */
-				Double.isInfinite(lambda);
+						||
+						// Error does not improve by more that the given error tolerance
+						(errorRootMeanSquaredChange <= errorRootMeanSquaredTolerance)
+						||
+						/*
+						 * Lambda is infinite, i.e., no new point is acceptable.
+						 * For example, this may happen if setValue repeatedly give contains invalid (NaN) values.
+						 */
+						Double.isInfinite(lambda);
 	}
 
 	@Override
@@ -659,16 +646,16 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 		try {
 
 			// Allocate memory
-			final int numberOfParameters	= initialParameters.length;
-			final int numberOfValues		= targetValues.length;
+			final int numberOfParameters = initialParameters.length;
+			final int numberOfValues = targetValues.length;
 
-			parameterTest		= initialParameters.clone();
-			parameterIncrement	= new double[numberOfParameters];
-			parameterCurrent	= new double[numberOfParameters];
+			parameterTest = initialParameters.clone();
+			parameterIncrement = new double[numberOfParameters];
+			parameterCurrent = new double[numberOfParameters];
 
-			valueTest			= new double[numberOfValues];
-			valueCurrent		= new double[numberOfValues];
-			derivativeCurrent	= new double[parameterCurrent.length][valueCurrent.length];
+			valueTest = new double[numberOfValues];
+			valueCurrent = new double[numberOfValues];
+			derivativeCurrent = new double[parameterCurrent.length][valueCurrent.length];
 
 			hessianMatrix = new double[parameterCurrent.length][parameterCurrent.length];
 			beta = new double[parameterCurrent.length];
@@ -695,52 +682,39 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 					// Accept point
 					System.arraycopy(parameterTest, 0, parameterCurrent, 0, parameterCurrent.length);
 					System.arraycopy(valueTest, 0, valueCurrent, 0, valueCurrent.length);
-					errorMeanSquaredCurrent		= errorMeanSquaredTest;
+					errorMeanSquaredCurrent = errorMeanSquaredTest;
 
 					// Derivative has to be recalculated
 					isParameterCurrentDerivativeValid = false;
 
 					// Decrease lambda (move faster)
-					lambda			/= lambdaDivisor;
+					lambda /= lambdaDivisor;
 				} else {
 					errorRootMeanSquaredChange = Math.sqrt(errorMeanSquaredTest) - Math.sqrt(errorMeanSquaredCurrent);
 
 					// Reject point, increase lambda (move slower)
-					lambda				*= lambdaMultiplicator;
+					lambda *= lambdaMultiplicator;
 				}
 
 				// Update a new parameter trial, if we are not done
-				if (!done()) {
+				if(!done()) {
 					updateParameterTest();
 				} else {
 					break;
 				}
 
-				// Log iteration
-				if (logger.isLoggable(Level.FINE))
-				{
-					String logString =
-							"Iteration: " + iteration +
-							"\tLambda=" + lambda +
-							"\tError Current (RMS):" + Math.sqrt(errorMeanSquaredCurrent) +
-							"\tError Change:" + errorRootMeanSquaredChange + "\t";
-					for (int i = 0; i < parameterCurrent.length; i++) {
-						logString += "[" + i + "] = " + parameterCurrent[i] + "\t";
-					}
-					logger.fine(logString);
-				}
 				String logString =
 						"Iteration: " + iteration +
 								"\tLambda=" + lambda +
 								"\tError Current (RMS):" + Math.sqrt(errorMeanSquaredCurrent) +
 								"\tError Change:" + errorRootMeanSquaredChange + "\t";
-				for (int i = 0; i < parameterCurrent.length; i++) {
+				for(int i = 0; i < parameterCurrent.length; i++) {
 					logString += "[" + i + "] = " + parameterCurrent[i] + "\t";
 				}
 				System.out.println(logString);
+
 			}
-		}
-		finally {
+		} finally {
 			// Shutdown executor if present.
 			if(executor != null && executorShutdownWhenDone) {
 				executor.shutdown();
@@ -752,12 +726,12 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	public double getMeanSquaredError(final double[] value) {
 		double error = 0.0;
 
-		for (int valueIndex = 0; valueIndex < value.length; valueIndex++) {
+		for(int valueIndex = 0; valueIndex < value.length; valueIndex++) {
 			final double deviation = value[valueIndex] - targetValues[valueIndex];
 			error += weights[valueIndex] * deviation * deviation;
 		}
 
-		return error/value.length;
+		return error / value.length;
 	}
 
 	/**
@@ -766,7 +740,7 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	 * @throws SolverException Thrown if the valuation fails, specific cause may be available via the <code>cause()</code> method.
 	 */
 	private void updateParameterTest() throws SolverException {
-		if (!isParameterCurrentDerivativeValid) {
+		if(!isParameterCurrentDerivativeValid) {
 			this.setDerivatives(parameterCurrent, derivativeCurrent);
 			isParameterCurrentDerivativeValid = true;
 		}
@@ -776,26 +750,24 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 		 * where H = J^T J is the Hessian approximation and b = J^T (y-f(x)) and \Delta x is the parameterIncrement
 		 */
 		boolean hessianInvalid = true;
-		while (hessianInvalid && Double.isFinite(lambda)) {
+		while(hessianInvalid && Double.isFinite(lambda)) {
 			hessianInvalid = false;
 			// Build matrix H (Hessian approximation), that is H = J^T J
-			for (int i = 0; i < parameterCurrent.length; i++) {
-				for (int j = i; j < parameterCurrent.length; j++) {
+			for(int i = 0; i < parameterCurrent.length; i++) {
+				for(int j = i; j < parameterCurrent.length; j++) {
 					double hessianElement = 0.0;
-					for (int valueIndex = 0; valueIndex < valueCurrent.length; valueIndex++) {
+					for(int valueIndex = 0; valueIndex < valueCurrent.length; valueIndex++) {
 						hessianElement += weights[valueIndex] * derivativeCurrent[i][valueIndex] * derivativeCurrent[j][valueIndex];
 					}
-					if (i == j) {
+					if(i == j) {
 						if(regularizationMethod == RegularizationMethod.LEVENBERG) {
 							// RegularizationMethod.LEVENBERG - Regularization with a constant lambda
 							hessianElement += lambda;
-						}
-						else {
+						} else {
 							// RegularizationMethod.LEVENBERG_MARQUARDT - Regularization with a lambda time the diagonal of J^T J
-							if (hessianElement == 0.0) {
+							if(hessianElement == 0.0) {
 								hessianElement = lambda;
-							}
-							else {
+							} else {
 								hessianElement *= 1 + lambda;
 							}
 						}
@@ -808,10 +780,10 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 			}
 
 			// Build right hand side beta - gradient decent step: beta = J^T (y-f(x))
-			for (int i = 0; i < parameterCurrent.length; i++) {
+			for(int i = 0; i < parameterCurrent.length; i++) {
 				double betaElement = 0.0;
 				final double[] derivativeCurrentSingleParam = derivativeCurrent[i];
-				for (int k = 0; k < valueCurrent.length; k++) {
+				for(int k = 0; k < valueCurrent.length; k++) {
 					betaElement += weights[k] * (targetValues[k] - valueCurrent[k]) * derivativeCurrentSingleParam[k];
 				}
 				beta[i] = betaElement;
@@ -821,58 +793,58 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 				// Calculate new increment
 //				parameterIncrement = LinearAlgebra.solveLinearEquationSymmetric(hessianMatrix, beta);
 				parameterIncrement = LinearAlgebra.solveLinearEquationSVD(hessianMatrix, beta);
-			} catch (final Exception e) {
+			} catch(final Exception e) {
 				// Matrix not invertable, increase lambda
-				hessianInvalid	= true;
-				lambda			*= 16;
+				hessianInvalid = true;
+				lambda *= 16;
 			}
 		}
 
 		// Calculate new parameter
-		for (int i = 0; i < parameterCurrent.length; i++) {
+		for(int i = 0; i < parameterCurrent.length; i++) {
 			parameterTest[i] = parameterCurrent[i] + parameterIncrement[i];
 		}
 	}
 
 	/**
 	 * Create a clone of this LevenbergMarquardt optimizer.
-	 *
+	 * <p>
 	 * The clone will use the same objective function than this implementation,
 	 * i.e., the implementation of {@link #setValues(double[], double[])} and
 	 * that of {@link #setDerivatives(double[], double[][])} is reused.
 	 */
 	@Override
 	public LevenbergMarquardt clone() throws CloneNotSupportedException {
-		final LevenbergMarquardt clonedOptimizer = (LevenbergMarquardt)super.clone();
+		final LevenbergMarquardt clonedOptimizer = (LevenbergMarquardt) super.clone();
 		clonedOptimizer.isParameterCurrentDerivativeValid = false;
 		clonedOptimizer.iteration = 0;
-		clonedOptimizer.errorMeanSquaredCurrent	= Double.POSITIVE_INFINITY;
-		clonedOptimizer.errorRootMeanSquaredChange	= Double.POSITIVE_INFINITY;
+		clonedOptimizer.errorMeanSquaredCurrent = Double.POSITIVE_INFINITY;
+		clonedOptimizer.errorRootMeanSquaredChange = Double.POSITIVE_INFINITY;
 		return clonedOptimizer;
 	}
 
 	/**
 	 * Create a clone of this LevenbergMarquardt optimizer with a new vector for the
 	 * target values and weights.
-	 *
+	 * <p>
 	 * The clone will use the same objective function than this implementation,
 	 * i.e., the implementation of {@link #setValues(double[], double[])} and
 	 * that of {@link #setDerivatives(double[], double[][])} is reused.
-	 *
+	 * <p>
 	 * The initial values of the cloned optimizer will either be the original
 	 * initial values of this object or the best parameters obtained by this
 	 * optimizer, the latter is used only if this optimized signals a {@link #done()}.
 	 *
-	 * @param newTargetVaues New array of target values.
-	 * @param newWeights New array of weights.
+	 * @param newTargetVaues                         New array of target values.
+	 * @param newWeights                             New array of weights.
 	 * @param isUseBestParametersAsInitialParameters If true and this optimizer is done(), then the clone will use this.{@link #getBestFitParameters()} as initial parameters.
 	 * @return A new LevenbergMarquardt optimizer, cloning this one except modified target values and weights.
 	 * @throws CloneNotSupportedException Thrown if this optimizer cannot be cloned.
 	 */
 	public LevenbergMarquardt getCloneWithModifiedTargetValues(final double[] newTargetVaues, final double[] newWeights, final boolean isUseBestParametersAsInitialParameters) throws CloneNotSupportedException {
 		final LevenbergMarquardt clonedOptimizer = clone();
-		clonedOptimizer.targetValues = newTargetVaues.clone();		// Defensive copy
-		clonedOptimizer.weights = newWeights.clone();				// Defensive copy
+		clonedOptimizer.targetValues = newTargetVaues.clone();        // Defensive copy
+		clonedOptimizer.weights = newWeights.clone();                // Defensive copy
 
 		if(isUseBestParametersAsInitialParameters && this.done()) {
 			clonedOptimizer.initialParameters = this.getBestFitParameters();
@@ -884,17 +856,17 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	/**
 	 * Create a clone of this LevenbergMarquardt optimizer with a new vector for the
 	 * target values and weights.
-	 *
+	 * <p>
 	 * The clone will use the same objective function than this implementation,
 	 * i.e., the implementation of {@link #setValues(double[], double[])} and
 	 * that of {@link #setDerivatives(double[], double[][])} is reused.
-	 *
+	 * <p>
 	 * The initial values of the cloned optimizer will either be the original
 	 * initial values of this object or the best parameters obtained by this
 	 * optimizer, the latter is used only if this optimized signals a {@link #done()}.
 	 *
-	 * @param newTargetVaues New list of target values.
-	 * @param newWeights New list of weights.
+	 * @param newTargetVaues                         New list of target values.
+	 * @param newWeights                             New list of weights.
 	 * @param isUseBestParametersAsInitialParameters If true and this optimizer is done(), then the clone will use this.{@link #getBestFitParameters()} as initial parameters.
 	 * @return A new LevenbergMarquardt optimizer, cloning this one except modified target values and weights.
 	 * @throws CloneNotSupportedException Thrown if this optimizer cannot be cloned.

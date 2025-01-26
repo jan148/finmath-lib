@@ -18,9 +18,11 @@ import net.finmath.time.TimeDiscretizationFromArray;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.integration.IterativeLegendreGaussIntegrator;
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.util.Pair;
 import org.junit.Assert;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,6 +39,11 @@ import java.util.stream.IntStream;
  * 2. compares the semi-analytical LNSVQD call option price to the simulated LNSVQD call option price
  */
 class LNSVQDModelAnalyticalPricerTest {
+	/**
+	 * Time params
+	 */
+	LocalDate valuationDate = LocalDate.parse("2000-01-01");
+
 	/**
 	 * Model params
 	 */
@@ -59,8 +66,8 @@ class LNSVQDModelAnalyticalPricerTest {
 	/**
 	 * Models
 	 */
-	LNSVQDModel lnsvqdSimulationModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
-	LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
+	LNSVQDModel lnsvqdSimulationModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
+	LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
 
 	/**
 	 * Option params and option
@@ -72,7 +79,8 @@ class LNSVQDModelAnalyticalPricerTest {
 	/**
 	 * Market observables
 	 */
-	double riskFreeRate = lnsvqdSimulationModel.getRiskFreeRate();
+	// IMPORTANT: Assume constant rf-rate
+	double riskFreeRate = lnsvqdSimulationModel.getRiskFreeRate(0);
 	double discountFactor = Math.exp(-riskFreeRate * maturity);
 	double convenienceFcator = 0;
 
@@ -198,6 +206,7 @@ class LNSVQDModelAnalyticalPricerTest {
 	 * 2. Comparison semi-analytical LNSVQD call <-> simulated LNSVQD call
 	 * ***************************************************+
 	 */
+	// IMPORTANT: Assume constant rf-rate
 	@Test
 	void getCallPrice() throws CalculationException {
 		int numberOfPaths = 50000;
@@ -205,7 +214,8 @@ class LNSVQDModelAnalyticalPricerTest {
 		double spot = 1;
 		double strike = 1.4;
 		double maturity = 0.4;
-		double discountFactor = Math.exp(-lnsvqdModelAnalyticalPricer.getRiskFreeRate() * maturity);
+		// IMPORTANT: Assume constant rf-rate
+		double discountFactor = Math.exp(-lnsvqdModelAnalyticalPricer.getRiskFreeRate(maturity) * maturity);
 		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot, riskFreeRate, sigma0, maturity, strike, true);
 		System.out.println("Call oprion price BS: \t" + bsOptionValue);
 		double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
@@ -235,7 +245,7 @@ class LNSVQDModelAnalyticalPricerTest {
 			try {
 				// System.out.println(result);
 				BrownianMotionFromMersenneRandomNumbers brownianMotion = new BrownianMotionFromMersenneRandomNumbers(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
-				LNSVQDModel lnsvqdSimulationModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
+				LNSVQDModel lnsvqdSimulationModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
 				LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdSimulationModel, brownianMotion);
 				MonteCarloLNSVQDModel monteCarloLNSVQDModel = new MonteCarloLNSVQDModel(lnsvqdDiscretizationScheme, seed);
 				EuropeanOption europeanOption = new EuropeanOption(maturity, strike, 1, 0);
@@ -291,12 +301,15 @@ class LNSVQDModelAnalyticalPricerTest {
 		/**
 		 * Get call prices
 		 */
-		double[] callPrices = lnsvqdModelAnalyticalPricer.getCallPrices(strikes, maturityGrid, yGridForIntegrationSortedDistinct);
+		double[] callPricesMethod1 = lnsvqdModelAnalyticalPricer.getCallPrices(strikes, maturityGrid, yGridForIntegrationSortedDistinct);
+		List<Pair<Double, Double>> mesh = LNSVQDUtils.create2dMesh(maturityGrid, strikes);
+		double[] callPricesMethod2 = lnsvqdModelAnalyticalPricer.getCallPricesNew(mesh);
 
 		/**
 		 * Print
 		 */
-		LNSVQDUtils.printPricesFromMaturityStrikeGrid(maturityGrid, strikes, callPrices);
+		LNSVQDUtils.printPricesFromMaturityStrikeGrid(maturityGrid, strikes, callPricesMethod1);
+		LNSVQDUtils.printPricesFromMaturityStrikeGrid(maturityGrid, strikes, callPricesMethod2);
 
 	}
 

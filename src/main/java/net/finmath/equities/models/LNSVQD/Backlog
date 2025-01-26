@@ -1,0 +1,24 @@
+LNSVQDModelAnalyticalPricer
+
+// 1. For ODE-solution
+	public final int numStepsForODEIntegration = 599;
+	public final int numStepsForODEIntegrationPerUnitTime = 100;
+
+	// 2. Gauss-Laguerre quadrature; GL = for Gauss-Legendre
+
+	// GL params
+	public final double lowerBound = 0;
+	public final double upperBound = 20;
+	int numberOfPointsGL = 10; // Number of integration points for Legendre-Gauss quadrature
+	double relativeAccuracyGL = 1.0e-6;
+	double absoluteAccuracyGL = 1.0e-9;
+	int minIterationsGL = 10;
+	int maxIterationsGL = 1000;
+	public final double[] solutionsToLegendrePolynomials = new double[numberOfPointsGL];
+	/*IterativeLegendreGaussIntegrator integratorInfiniteIntegral = new IterativeLegendreGaussIntegrator(
+			numberOfPointsGL, relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);*/
+	/*MidPointIntegrator integratorInfiniteIntegral = new MidPointIntegrator(
+			relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);*/
+	/*GaussIntegratorFactory gaussIntegratorFactory = new GaussIntegratorFactory();
+	GaussIntegrator hermite = gaussIntegratorFactory.hermite(numberOfPointsGL);*/
+	// SimpsonIntegrator simpsonIntegrator = new SimpsonIntegrator();

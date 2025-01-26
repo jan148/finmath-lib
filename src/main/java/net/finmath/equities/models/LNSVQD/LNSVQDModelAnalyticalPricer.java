@@ -1,12 +1,14 @@
 package net.finmath.equities.models.LNSVQD;
 
 import net.finmath.equities.marketdata.VolatilityPoint;
-import net.finmath.equities.models.DynamicVolatilitySurface;
+import net.finmath.equities.models.VolatilityPointsSurface;
 import net.finmath.functions.AnalyticFormulas;
 import net.finmath.integration.SimpsonRealIntegrator;
 import net.finmath.time.daycount.DayCountConvention;
+import org.apache.commons.lang3.Streams;
 import org.apache.commons.math3.analysis.integration.IterativeLegendreGaussIntegrator;
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.util.Pair;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -15,6 +17,8 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.DoubleUnaryOperator;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	/**
@@ -22,51 +26,47 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 */
 	// 1. For ODE-solution
 	public final int numStepsForODEIntegration = 599;
-	public final int numStepsForODEIntegrationPerUnitTime = 100;
 
-	// 2. Gauss-Laguerre quadrature; GL = for Gauss-Legendre
-	/*public final int numStepsForInfiniteIntegral = 1000;
-	public final double upperBoundForInfiniteIntegral = 20;
-	public final double[] yGridForInfiniteIntegral = LNSVQDUtils.createTimeGrid(0, upperBoundForInfiniteIntegral, numStepsForInfiniteIntegral);*/
-
-	// GL params
+	// 2. For unbounded integration
+	// Integration bounds params
 	public final double lowerBound = 0;
 	public final double upperBound = 20;
-	int numberOfPointsGL = 10; // Number of integration points for Legendre-Gauss quadrature
-	double relativeAccuracyGL = 1.0e-6;
-	double absoluteAccuracyGL = 1.0e-9;
-	int minIterationsGL = 10;
-	int maxIterationsGL = 1000;
-	public final double[] solutionsToLegendrePolynomials = new double[numberOfPointsGL];
-	IterativeLegendreGaussIntegrator integratorInfiniteIntegral = new IterativeLegendreGaussIntegrator(
-			numberOfPointsGL, relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);
-	/*MidPointIntegrator integratorInfiniteIntegral = new MidPointIntegrator(
-			relativeAccuracyGL, absoluteAccuracyGL, minIterationsGL, maxIterationsGL);*/
-	/*GaussIntegratorFactory gaussIntegratorFactory = new GaussIntegratorFactory();
-	GaussIntegrator hermite = gaussIntegratorFactory.hermite(numberOfPointsGL);*/
-	// SimpsonIntegrator simpsonIntegrator = new SimpsonIntegrator();
+	List<Double> yGridForIntegration = new ArrayList<>();
+
 
 	// finmath integrator
 	SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, (int) upperBound * 10, false);
 
-	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
-		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
+	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate valuationDate) {
+		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
+
+		/**
+		 * Get all the integration points from the integrator, in our case Simpson
+		 */
+		// Next lines adapted from finmath's Simpson implementation
+		final double	range				= upperBound-lowerBound;
+
+		final int  numberOfEvaluationPoints = (int) upperBound * 10; // Need to change this in accordance with LNSVQD pricer
+		final int numberOfDoubleSizeIntervals	= (int) ((numberOfEvaluationPoints-1) / 2.0);
+
+		final double doubleInterval = range / numberOfDoubleSizeIntervals;
+		final double singleInterval = 0.5 * doubleInterval;
+
+		IntStream intervals = IntStream.range(1, numberOfDoubleSizeIntervals);
+
+		intervals.forEach(
+				i -> {
+					yGridForIntegration.add(lowerBound + i * doubleInterval);
+					yGridForIntegration.add(lowerBound + i * doubleInterval + singleInterval);
+				}
+		);
+
+		yGridForIntegration.add(lowerBound + singleInterval);
+		yGridForIntegration.add(lowerBound);
+		yGridForIntegration.add(upperBound);
+
+		yGridForIntegration = yGridForIntegration.stream().sorted().distinct().collect(Collectors.toList());
 	}
-
-	/*private void getSolutionToLegendrePolynomials() {
-		// We need the factory to get the Legender points
-		final GaussIntegratorFactory FACTORY = new GaussIntegratorFactory();
-
-		// The GL-implementation computes the solution on equally-sized subintervals
-		ArrayList<Double> legendrePoints = new ArrayList<>();
-		double[] subintervalPoints = LNSVQDUtils.createTimeGrid(lowerBound, upperBound, numberOfPointsGL - 1);
-		for(int i = 0; i < numberOfPointsGL - 1; i++) {
-			double a = subintervalPoints[0];
-			double b = subintervalPoints[1];
-			final GaussIntegrator g = FACTORY.legendreHighPrecision(numberOfPointsGL, a, b);
-			legendrePoints.add(g.getPoint(i));
-		}
-	}*/
 
 	/**
 	 * ***************************************************+
@@ -423,7 +423,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				continue;
 			}
 			double maturity = maturitiesWithZero[i];
-			double discountFactor = Math.exp(-getRiskFreeRate() * maturity);
+			double discountFactor = Math.exp(-getRiskFreeRate(1) * maturity); // Todo: Check
 			double convenienceFactor = 0;
 			// Get the time index of the maturity
 			int maturityIndex = i;
@@ -491,30 +491,158 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		return optionPrices;
 	}
 
+	public double[] getCallPricesNew(List<Pair<Double, Double>> strikeMaturityPairs) throws Exception {
+		// Initialize the array of option prices that will be returned
+		double[] optionPrices = new double[strikeMaturityPairs.size()];
+
+		/**
+		 * 1a. Extract time information from strike-maturity pairs
+		 * TODO: Add zero to list! necessary
+		 */
+		double[] maturitiesWithZero = Stream.concat(strikeMaturityPairs.stream(), Stream.of(new Pair<Double, Double>(0., 0.)))
+				.mapToDouble(pair -> pair.getFirst()).sorted().distinct().toArray();
+		List<Double> maturitiesWithZeroList = Arrays.stream(maturitiesWithZero).boxed().collect(Collectors.toList());
+
+		// Add points
+		List<Double> timeGridForMGFApproximationCalculationList = Arrays.equals(maturitiesWithZero, new double[]{0}) ?
+				Arrays.stream(maturitiesWithZero).boxed().collect(Collectors.toList()) :
+				LNSVQDUtils.addTimePointsToArray(maturitiesWithZero, numStepsForODEIntegration + 1 - maturitiesWithZero.length);
+		double[] timeGridForMGFApproximationCalculation = timeGridForMGFApproximationCalculationList.stream().mapToDouble(Double::doubleValue).toArray();
+
+		/**
+		 * 1b. Extract information for ODE-integration
+		 */
+		List<Double> gridForIntegrationWithMidPoints = LNSVQDUtils.addMidPointsToList(yGridForIntegration);
+
+		/**
+		 * 2. Precalcuate the expAffApprox path
+		 * IMPORTANT: We need to calculate for all realizations of charFuncArgs!
+		 *
+		 * Result: The first dimension refers to a single realization of charFuncArgs, the second one to the value at the corresponding time
+		 *
+		 * NOTE: expAffApproxMatPathPerCharFuncRealization has the points yGridForInfiniteIntegral + the set of all midpoints because of how
+		 * Runge-Kutta is implemented; hence, we have to evaluate E2 on the midpoints, too, i.e. on the points conatined in the array
+		 * gridForIntegrationWithMidPoints
+		 */
+		// expAffApproxMatPathPerCharFuncArgRealization = Exponential-affine approximation at maturities per realization of the characteristic functions args
+		Complex[][] expAffApproxMatPathPerCharFuncRealization = new Complex[gridForIntegrationWithMidPoints.size()][maturitiesWithZero.length];
+		// Loop over charFunc args
+		for(int l = 0; l < gridForIntegrationWithMidPoints.size(); l++) {
+			// TODO: expAffApproxPathPerCharFuncRealization[l] should only contain values for maturity-points, not for filler points!
+			double y = gridForIntegrationWithMidPoints.get(l);
+			Complex[] charFuncArs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
+			Complex[] expAffApproxPathPerCharFuncRealization = calculateExponentialAffineApproximationFullPath(timeGridForMGFApproximationCalculation, charFuncArs);;
+
+			// Get only maturities
+			for(int i = 0; i < maturitiesWithZero.length; i++) {
+				double time = maturitiesWithZero[i];
+				int maturityIndex = timeGridForMGFApproximationCalculationList.indexOf(time);
+				expAffApproxMatPathPerCharFuncRealization[l][i] = expAffApproxPathPerCharFuncRealization[maturityIndex];
+			}
+		}
+
+		/**
+		 * 3. For every maturity and every strike, we calculate the call option price
+		 */
+		for(int i = 0; i < strikeMaturityPairs.size(); i++) {
+			double maturity = strikeMaturityPairs.get(i).getKey();
+			double strike = strikeMaturityPairs.get(i).getValue();
+
+			double discountFactor = Math.exp(-getRiskFreeRate(maturity) * maturity);
+			double convenienceFactor = 0;
+
+			// Get the time index of the maturity
+			int maturityIndex = maturitiesWithZeroList.indexOf(maturity);
+			int optionIndex = i;
+
+			double logMoneyness = Math.log(spot0 / strike) + (-Math.log(discountFactor) - convenienceFactor);
+
+			/**
+			 * TODO: Change factor
+			 * Define the function y -> factor * E2(t, -0.5 + iy)
+			 */
+			DoubleUnaryOperator integrand = new DoubleUnaryOperator() {
+				@Override
+				public double applyAsDouble(double y) {
+					int yIndex = gridForIntegrationWithMidPoints.indexOf(y);
+					if(yIndex == -1) {
+						throw new IllegalArgumentException("y not in array: The E2 value for this the y-value " + y + " hasn't been calculated!");
+					}
+
+					// 1. Compute the value of the affine-exponential approximation
+					Complex E2 = expAffApproxMatPathPerCharFuncRealization[yIndex][maturityIndex].multiply(new Complex(-0.5, y).multiply(X0).exp());
+
+					// 2. Calculate result
+					Complex result = new Complex(0.5, -y).multiply(logMoneyness).exp().multiply(1 / (y * y + 0.25)).multiply(E2);
+
+					// 3. Get real part and return
+					double resultReal = result.getReal();
+					return resultReal;
+				}
+			};
+			/**
+			 * Integerate
+			 */
+			double result = simpsonRealIntegrator.integrate(integrand);
+
+			/**
+			 * Get real part, multiply with factor
+			 */
+			double optionPrice = spot0 - (discountFactor * strike / Math.PI) * result;
+
+			optionPrices[optionIndex] = optionPrice;
+
+			/**
+			 * *********************
+			 * END
+			 * **********************
+			 */
+
+		}
+		/**
+		 * 4. Return prices
+		 */
+		return optionPrices;
+	}
+
 	/**
 	 * ***************************************************+
-	 * SECTION 2: Print implied vol surface
+	 * SECTION 2: Get implied vol surface
 	 * ***************************************************+
 	 */
-	// Method takes an existing volatility surface and creates a model implied vol-surface with the same
-	public DynamicVolatilitySurface getImpliedVolSurface(DynamicVolatilitySurface dynamicVolatilitySurface) {
-		LocalDate today = dynamicVolatilitySurface.getToday();
-		DayCountConvention dayCountConvention = dynamicVolatilitySurface.getDayCountConvention();
+	// Method takes an existing volatility surface and creates a model implied vol-surface with the same structure
+	public VolatilityPointsSurface getImpliedVolSurface(VolatilityPointsSurface volatilityPointsSurface) throws Exception {
+		// Check if ...
+		assert(volatilityPointsSurface.getToday() == spotDate);
 
-		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();
-		for(VolatilityPoint volatilityPoint : dynamicVolatilitySurface.getVolatilityPoints()) {
+		LocalDate today = volatilityPointsSurface.getToday();
+		DayCountConvention dayCountConvention = volatilityPointsSurface.getDayCountConvention();
+
+		// Get strike maturity pairs
+		ArrayList<Pair<Double, Double>> strikeMaturityPairs = new ArrayList<>();
+		for(VolatilityPoint volatilityPoint : volatilityPointsSurface.getVolatilityPoints()) {
 			LocalDate maturity = volatilityPoint.getDate();
 			double strike = volatilityPoint.getStrike();
 			double ttm = dayCountConvention.getDaycountFraction(today, maturity);
-			double discountFactor = Math.exp(-riskFreeRate * ttm);
+			strikeMaturityPairs.add(new Pair<>(ttm, strike));
+		}
+
+		double[] optionPrices = getCallPricesNew(strikeMaturityPairs);
+
+		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();
+		for(int i = 0; i < optionPrices.length; i++) {
+			LocalDate maturity = volatilityPointsSurface.getVolatilityPoints().get(i).getDate();
+			double strike = volatilityPointsSurface.getVolatilityPoints().get(i).getStrike();
+			double ttm = dayCountConvention.getDaycountFraction(today, maturity);
+			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
 			double forward = getSpot0() / discountFactor;
-			double price = getCallPrice(strike, ttm, discountFactor, 0);
+			double price = optionPrices[i];
 			double impliedVol = AnalyticFormulas.blackScholesOptionImpliedVolatility
 					(forward, ttm, strike, discountFactor, price);
 			volatilityPoints.add(new VolatilityPoint(maturity, strike, impliedVol));
 		}
-		DynamicVolatilitySurface modelImpliedVolSurface = new DynamicVolatilitySurface(volatilityPoints, today, dayCountConvention);
-		return modelImpliedVolSurface;
+
+		return new VolatilityPointsSurface(volatilityPoints, today, dayCountConvention);
 	}
 
 }

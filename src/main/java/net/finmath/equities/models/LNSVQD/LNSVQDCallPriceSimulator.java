@@ -36,7 +36,7 @@ public class LNSVQDCallPriceSimulator {
 			for(int i = 1; i < timeGrid.length; i++) {
 				double deltaT = timeGrid[i] - timeGrid[i - 1];
 				double sqrtDeltaT = Math.sqrt(deltaT);
-				double discountFactor = Math.exp(-lnsvqdModel.getRiskFreeRate() * deltaT);
+				double discountFactor = Math.exp(-lnsvqdModel.getRiskFreeRate(timeGrid[i]) * timeGrid[i]);
 				double[][] brownianIncrements = new double[numberOfPaths][2];
 				// Fill Paths
 				for(int j = 0; j < numberOfPaths; j++) {
@@ -64,7 +64,7 @@ public class LNSVQDCallPriceSimulator {
 		for(int i = 1; i < timeGrid.length; i++) {
 			double deltaT = timeGrid[i] - timeGrid[i - 1];
 			double sqrtDeltaT = Math.sqrt(deltaT);
-			double discountFactor = Math.exp(-lnsvqdModel.getRiskFreeRate() * deltaT);
+			double discountFactor = Math.exp(-lnsvqdModel.getRiskFreeRate(timeGrid[i]) * deltaT);
 			double[][] brownianIncrements = new double[numberOfPaths][2];
 			// Fill Paths
 			for(int j = 0; j < numberOfPaths; j++) {
@@ -108,7 +108,7 @@ public class LNSVQDCallPriceSimulator {
 	}
 
 	public double getCallPrice(double strike) {
-		double discountFactor = Math.exp(-lnsvqdModel.getRiskFreeRate() * timeGrid[timeGrid.length - 1]);
+		double discountFactor = Math.exp(-lnsvqdModel.getRiskFreeRate(0) * timeGrid[timeGrid.length - 1]); // Todo: Change (not index 0)!
 		double expectationAtMaturity = Arrays.stream(path[0][timeGrid.length - 1])
 				.map(x -> Math.max(x - strike, 0)).average().getAsDouble();
 		double price = expectationAtMaturity * discountFactor;

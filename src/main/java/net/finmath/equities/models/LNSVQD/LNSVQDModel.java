@@ -1,5 +1,9 @@
 package net.finmath.equities.models.LNSVQD;
 
+import net.finmath.equities.marketdata.AffineDividendStream;
+import net.finmath.equities.marketdata.FlatYieldCurve;
+import net.finmath.equities.marketdata.YieldCurve;
+import net.finmath.equities.models.EquityForwardStructure;
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.RandomVariableFactory;
 import net.finmath.montecarlo.RandomVariableFromArrayFactory;
@@ -8,7 +12,10 @@ import net.finmath.montecarlo.model.ProcessModel;
 import net.finmath.montecarlo.process.MonteCarloProcess;
 import net.finmath.stochastic.RandomVariable;
 import net.finmath.stochastic.Scalar;
+import net.finmath.time.daycount.DayCountConvention;
+import net.finmath.time.daycount.DayCountConvention_ACT_365;
 
+import java.time.LocalDate;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -33,7 +40,8 @@ public class LNSVQDModel extends AbstractProcessModel {
 	/**
 	 * Market observables
 	 */
-	protected final double riskFreeRate = 0.00;
+	LocalDate spotDate;
+	EquityForwardStructure equityForwardStructure;
 
 	/**
 	 * Transformed inital values
@@ -66,7 +74,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 		}
 	};
 
-	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0) {
+	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate spotDate, EquityForwardStructure equityForwardStructure) {
 		super();
 
 		// Perform necessary checks
@@ -84,6 +92,119 @@ public class LNSVQDModel extends AbstractProcessModel {
 		this.X0 = Math.log(this.spot0);
 		this.Y0 = sigma0 - theta;
 		this.I0 = I0;
+
+		// EFS
+		this.spotDate = spotDate;
+		this.equityForwardStructure = equityForwardStructure;
+	}
+
+	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate spotDate) {
+		super();
+
+		// Perform necessary checks
+		checkMartingalityOfDiscountedAssetProcess(kappa2, beta);
+
+		this.spot0 = spot0;
+		this.sigma0 = sigma0;
+		this.kappa1 = kappa1;
+		this.kappa2 = kappa2;
+		this.theta = theta;
+		this.beta = beta;
+		this.epsilon = epsilon;
+		this.totalInstVar = beta * beta + epsilon * epsilon;
+
+		this.X0 = Math.log(this.spot0);
+		this.Y0 = sigma0 - theta;
+		this.I0 = I0;
+
+		// EFS; create a EFS with a flat yield curve and 365 dayCountConvention
+		this.spotDate = spotDate;
+		this.equityForwardStructure = new EquityForwardStructure() {
+			@Override
+			public DividendModelType getDividendModel() {
+				return null;
+			}
+
+			@Override
+			public LocalDate getValuationDate() {
+				return spotDate;
+			}
+
+			@Override
+			public double getSpot() {
+				return 0;
+			}
+
+			@Override
+			public YieldCurve getRepoCurve() {
+				return new FlatYieldCurve(getValuationDate(), 0.00, new DayCountConvention_ACT_365());
+			}
+
+			@Override
+			public AffineDividendStream getDividendStream() {
+				return null;
+			}
+
+			@Override
+			public EquityForwardStructure cloneWithNewSpot(double newSpot) {
+				return null;
+			}
+
+			@Override
+			public EquityForwardStructure cloneWithNewDate(LocalDate newDate) {
+				return null;
+			}
+
+			@Override
+			public double getGrowthDiscountFactor(double startTime, double endTime) {
+				return 0;
+			}
+
+			@Override
+			public double getGrowthDiscountFactor(LocalDate startDate, LocalDate endDate) {
+				return 0;
+			}
+
+			@Override
+			public double getFutureDividendFactor(double valTime) {
+				return 0;
+			}
+
+			@Override
+			public double getFutureDividendFactor(LocalDate valDate) {
+				return 0;
+			}
+
+			@Override
+			public double getForward(double expiryTime) {
+				return 0;
+			}
+
+			@Override
+			public double getForward(LocalDate expiryDate) {
+				return 0;
+			}
+
+			@Override
+			public double getDividendAdjustedStrike(double strike, double expiryTime) {
+				return 0;
+			}
+
+			@Override
+			public double getDividendAdjustedStrike(double strike, LocalDate expiryDate) {
+				return 0;
+			}
+
+			@Override
+			public double getLogMoneyness(double strike, double expiryTime) {
+				return 0;
+			}
+
+			@Override
+			public double getLogMoneyness(double strike, LocalDate expiryDate) {
+				return 0;
+			}
+		};
 	}
 
 	/**
@@ -135,8 +256,8 @@ public class LNSVQDModel extends AbstractProcessModel {
 		return totalInstVar;
 	}
 
-	public double getRiskFreeRate() {
-		return riskFreeRate;
+	public double getRiskFreeRate(double time) {
+		return equityForwardStructure.getRepoCurve().getRate(time);
 	}
 
 	/**
@@ -239,7 +360,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 
 	@Override
 	public RandomVariable getNumeraire(MonteCarloProcess process, double time) {
-		return getRandomVariableForConstant(Math.exp(time * riskFreeRate));
+		return getRandomVariableForConstant(equityForwardStructure.getRepoCurve().getDiscountFactor(time));
 	}
 
 	/**

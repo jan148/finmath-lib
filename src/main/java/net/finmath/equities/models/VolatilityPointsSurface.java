@@ -5,7 +5,6 @@ import net.finmath.functions.AnalyticFormulas;
 import net.finmath.time.daycount.DayCountConvention;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 
 /**
@@ -14,7 +13,7 @@ import java.util.ArrayList;
  * @author Andreas Grotz, Jan Berger
  */
 
-public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolatilitySurface {
+public class VolatilityPointsSurface implements VolatilitySurface, ShiftedVolatilitySurface {
 	// TODO: Check that volatility points are sorted by ExpiryDate and Strike
 	private final ArrayList<VolatilityPoint> volatilityPoints;
 	private final ArrayList<LocalDate> volatilityDates = new ArrayList<>();
@@ -25,7 +24,7 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 	private final LocalDate today;
 	private final double volShift;
 
-	public DynamicVolatilitySurface(ArrayList<VolatilityPoint> volatilityPoints, LocalDate today, DayCountConvention dayCountConvention, double volShift) {
+	public VolatilityPointsSurface(ArrayList<VolatilityPoint> volatilityPoints, LocalDate today, DayCountConvention dayCountConvention, double volShift) {
 		this.volatilityPoints = volatilityPoints;
 		volatilityPoints.forEach(volatilityPoint -> {
 			volatilityDates.add(volatilityPoint.getDate());
@@ -36,7 +35,7 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 		this.volShift = volShift;
 	}
 
-	public DynamicVolatilitySurface(ArrayList<VolatilityPoint> volatilityPoints, LocalDate today, DayCountConvention dayCountConvention) {
+	public VolatilityPointsSurface(ArrayList<VolatilityPoint> volatilityPoints, LocalDate today, DayCountConvention dayCountConvention) {
 		this(volatilityPoints, today, dayCountConvention, 0.0);
 	}
 
@@ -88,7 +87,7 @@ public class DynamicVolatilitySurface implements VolatilitySurface, ShiftedVolat
 	@Override
 	public ShiftedVolatilitySurface getShiftedSurface(double shift) {
 		assert volShift == 0.0 : "Surface is already shifted";
-		return new DynamicVolatilitySurface(volatilityPoints, today, dayCountConvention, shift);
+		return new VolatilityPointsSurface(volatilityPoints, today, dayCountConvention, shift);
 	}
 
 	@Override

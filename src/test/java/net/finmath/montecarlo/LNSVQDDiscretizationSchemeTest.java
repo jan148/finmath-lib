@@ -12,9 +12,15 @@ import net.finmath.time.TimeDiscretizationFromArray;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.time.LocalDate;
 import java.util.function.Function;
 
 public class LNSVQDDiscretizationSchemeTest {
+	/**
+	 * Time params
+	 */
+	LocalDate valuationDate = LocalDate.parse("01-01-2000");
+
 	/**
 	 * Simulation parameters
 	 */
@@ -39,7 +45,7 @@ public class LNSVQDDiscretizationSchemeTest {
 	/**
 	 * Models
 	 */
-	LNSVQDModel lnsvqdModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
+	LNSVQDModel lnsvqdModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
 
 	/**
 	 * Option params
@@ -50,7 +56,7 @@ public class LNSVQDDiscretizationSchemeTest {
 	/**
 	 * Market observables
 	 */
-	double riskFreeRate = lnsvqdModel.getRiskFreeRate();
+	double riskFreeRate = lnsvqdModel.getRiskFreeRate(1); // Todo: Check
 	double discountFactor = Math.exp(-riskFreeRate * maturity);
 	double convenienceFcator = 0;
 

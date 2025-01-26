@@ -18,6 +18,7 @@ import org.apache.commons.math3.distribution.TDistribution;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.junit.Test;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -29,6 +30,11 @@ import java.util.stream.IntStream;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class LNSVQDCallPriceSimulatorTest {
+	/**
+	 * Time params
+	 */
+	LocalDate valuationDate = LocalDate.parse("01-01-2000");
+
 	/**
 	 * Model params
 	 */
@@ -49,8 +55,8 @@ public class LNSVQDCallPriceSimulatorTest {
 	/**
 	 * Models
 	 */
-	LNSVQDModel lnsvqdModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
-	LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0);
+	LNSVQDModel lnsvqdModel = new LNSVQDModel(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
+	LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
 
 	/**
 	 * Stat utils
@@ -64,7 +70,7 @@ public class LNSVQDCallPriceSimulatorTest {
 		// Get option values
 		double spot = 1;
 		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.2, 1, 4);
-		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.4, 2);
+		double[] strikes = LNSVQDUtils.createTimeGrid(0.6, 1.4, 4);
 		double[] relativeErrors = new double[maturityGrid.length];
 
 		double[][] pricesAnalytical = new double[maturityGrid.length][strikes.length];
@@ -74,7 +80,7 @@ public class LNSVQDCallPriceSimulatorTest {
 			double maturity = maturityGrid[m];
 			double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
 					maturity, (int) Math.round(maturity * 365.));
-			double riskFreeRate = lnsvqdModelAnalyticalPricer.getRiskFreeRate();
+			double riskFreeRate = lnsvqdModelAnalyticalPricer.getRiskFreeRate(maturity);
 			double discountFactor = Math.exp(-riskFreeRate * maturity);
 			double convenienceFcator = 0;
 			for(int s = 0; s < strikes.length; s++) {
