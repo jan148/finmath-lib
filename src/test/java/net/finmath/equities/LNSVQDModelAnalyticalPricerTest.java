@@ -48,20 +48,18 @@ class LNSVQDModelAnalyticalPricerTest {
 	 * Model params
 	 */
 	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
-	// (sigma0=0.5, theta=1.0, kappa1=4.0, kappa2=4.0, beta=1.0, volvol=1.0)
-	//  params = LogSvParams(sigma0=1.0, theta=1.0, kappa1=4.0, kappa2=4.0, beta=1.2, volvol=3.0)
 	// sigma0=1.5, theta=1.0, kappa1=4.0, kappa2=4.0, beta=0.0, volvol=1.0
 	// LogSvParams(sigma0=0.8376, theta=1.0413, kappa1=3.1844, kappa2=3.058, beta=0.1514, volvol=1.8458)
 	// LogSvParams(sigma0=0.9778, theta=0.5573, kappa1=4.8360, kappa2=8.6780, beta=2.3128, volvol=1.0484)
 	private final double spot0 = 1;
 	private final double sigma0 = 0.8376; // 0.8327;
 	// Value as in paper
-	private final double kappa1 =  3.1844; // 4.8606;
+	private final double kappa1 = 0; // 3.1844; // 4.8606;
 	// Value as in paper
-	private final double kappa2 = 3.058; // 4.7938
-	private final double theta =  1.0413; // 1.0139
-	private final double beta = 0.1514; // 0.1985
-	private final double epsilon = 1.8458; // 2.3690;
+	private final double kappa2 = 0; // 3.058; // 4.7938
+	private final double theta = 0; // 1.0413; // 1.0139
+	private final double beta = 0; // 0.1514; // 0.1985
+	private final double epsilon = 0; // 1.8458; // 2.3690;
 
 	/**
 	 * Models
@@ -265,8 +263,8 @@ class LNSVQDModelAnalyticalPricerTest {
 	@Test
 	public void getCallPrices() throws Exception {
 		double spot = 1;
-		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.07, 1, 5);
-		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.4, 5);
+		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.2, 1, 4);
+		double[] strikes = LNSVQDUtils.createTimeGrid(0.6, 1.4, 4);
 
 		/**
 		 * Get all the integration points from the integrator, in our case Simpson

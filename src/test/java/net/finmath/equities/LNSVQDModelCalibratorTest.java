@@ -26,14 +26,14 @@ public class LNSVQDModelCalibratorTest {
 	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
 	// sigma0=0.8376, theta=1.0413, kappa1=3.1844, kappa2=3.058, beta=0.1514, volvol=1.8458
 	private final double spot0 = 1;
-	private final double sigma0 = 0.8376;
+	private final double sigma0 = 0.1;
 	// Value as in paper
-	private final double kappa1 = 1.1844;
+	private final double kappa1 = 0;
 	// Value as in paper
-	private final double kappa2 = 1.058;
-	private final double theta = 0.5;
-	private final double beta = -0.0;
-	private final double epsilon = 0.0;
+	private final double kappa2 = 0;
+	private final double theta = 0;
+	private final double beta = 0;
+	private final double epsilon = 0;
 
 	/**
 	 * Get pricer
@@ -125,7 +125,7 @@ public class LNSVQDModelCalibratorTest {
 		 * 2. Calibrate and get cvalibrated paramerters
 		 */
 		double[] calibratedParameters;
-		int[] indicesCalibratedParams = {0, 1, 2 /*, 3, 4, 5*/};
+		int[] indicesCalibratedParams = {0, 1, 2 , 3, 4, 5};
 		calibratedParameters = LNSVQDModelCalibrator.calibrate(initialVolatilityParameters, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
 
 		System.out.println("Calibrated parameters:");

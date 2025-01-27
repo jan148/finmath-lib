@@ -33,7 +33,7 @@ public class LNSVQDCallPriceSimulatorTest {
 	/**
 	 * Time params
 	 */
-	LocalDate valuationDate = LocalDate.parse("01-01-2000");
+	LocalDate valuationDate = LocalDate.parse("2000-01-01");
 
 	/**
 	 * Model params
@@ -43,14 +43,14 @@ public class LNSVQDCallPriceSimulatorTest {
 	// LogSvParams(sigma0=0.8376, theta=1.0413, kappa1=3.1844, kappa2=3.058, beta=0.1514, volvol=1.8458)
 	// LogSvParams(sigma0=0.9778, theta=0.5573, kappa1=4.8360, kappa2=8.6780, beta=2.3128, volvol=1.0484)
 	private final double spot0 = 1;
-	private final double sigma0 = 0.8376; // 0.8327;
+	private final double sigma0 = 0.1077038921;
 	// Value as in paper
-	private final double kappa1 = 3.1844; // 4.8606;
+	private final double kappa1 = 0; //-6.06683025;
 	// Value as in paper
-	private final double kappa2 = 3.058; // 4.7938
-	private final double theta = 1.0413; // 1.0139
-	private final double beta = 0.1514; // 0.1985
-	private final double epsilon = 1.8458; // 2.3690;
+	private final double kappa2 = 0; //0.076113;
+	private final double theta = 0; //0.0761131;
+	private final double beta = 0; //0.076113;
+	private final double epsilon = 0; //0.3;
 
 	/**
 	 * Models
@@ -102,9 +102,9 @@ public class LNSVQDCallPriceSimulatorTest {
 				for(int seed : seeds) {
 					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModel, numberOfPaths, timeGrid);
 					// lnsvqdCallPriceSimulator.precalculatePaths(seed);
-					double simulatedOptionPrice = 0; // lnsvqdCallPriceSimulator.getCallPrice(strike);
+					double simulatedOptionPrice = 0; //lnsvqdCallPriceSimulator.getCallPrice(strike);
 					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
-					System.out.println(simulatedOptionPrice);
+					// System.out.println(simulatedOptionPrice);
 				}
 
 				double averagePrice = Arrays.stream(prices).average().getAsDouble();

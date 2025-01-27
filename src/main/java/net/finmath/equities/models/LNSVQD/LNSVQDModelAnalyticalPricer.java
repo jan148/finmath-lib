@@ -25,12 +25,12 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * Numerical parameters
 	 */
 	// 1. For ODE-solution
-	public final int numStepsForODEIntegration = 599;
+	public final int numStepsForODEIntegration = 1000;
 
 	// 2. For unbounded integration
 	// Integration bounds params
 	public final double lowerBound = 0;
-	public final double upperBound = 20;
+	public final double upperBound = 50;
 	List<Double> yGridForIntegration = new ArrayList<>();
 
 
@@ -637,6 +637,20 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
 			double forward = getSpot0() / discountFactor;
 			double price = optionPrices[i];
+			/*final double initialStockValue,
+			final double riskFreeRate,
+			final double volatility,
+			final double optionMaturity,
+			final double optionStrike)*/
+			double riskFreeRate = getRiskFreeRate(ttm);
+			double blackScholesPrice = AnalyticFormulas.blackScholesOptionValue(spot0, getRiskFreeRate(ttm), sigma0, ttm, strike);
+			// System.out.println(price + "\t" + blackScholesPrice);
+			double daysUntilExperation =  dayCountConvention.getDaycount(today, maturity);
+			/*forward,
+			final double optionMaturity,
+			final double optionStrike,
+			final double payoffUnit,
+			final double optionValue)*/
 			double impliedVol = AnalyticFormulas.blackScholesOptionImpliedVolatility
 					(forward, ttm, strike, discountFactor, price);
 			volatilityPoints.add(new VolatilityPoint(maturity, strike, impliedVol));
