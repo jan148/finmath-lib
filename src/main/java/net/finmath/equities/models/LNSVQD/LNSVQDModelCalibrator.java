@@ -71,15 +71,14 @@ public class LNSVQDModelCalibrator {
 				lnsvqdModelAnalyticalPricer.setVolatilityParameters(paramVector);
 
 				try {
-					VolatilityPointsSurface immpliedSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilitySurface);
-					values = immpliedSurface.getVolatilityPoints().stream()
+					double[] impliedVols = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilitySurface).getVolatilityPoints()
+							.stream()
 							.mapToDouble(VolatilityPoint::getVolatility)
 							.toArray();
+					System.arraycopy(impliedVols, 0, values, 0, impliedVols.length);
 				} catch(Exception e) {
 					throw new RuntimeException(e);
 				}
-
-				int xyz;
 			}
 		};
 

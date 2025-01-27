@@ -265,8 +265,8 @@ class LNSVQDModelAnalyticalPricerTest {
 	@Test
 	public void getCallPrices() throws Exception {
 		double spot = 1;
-		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.0, 1, 5);
-		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.4, 2);
+		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.07, 1, 5);
+		double[] strikes = LNSVQDUtils.createTimeGrid(0.4, 1.4, 5);
 
 		/**
 		 * Get all the integration points from the integrator, in our case Simpson

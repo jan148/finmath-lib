@@ -28,12 +28,12 @@ public class LNSVQDModelCalibratorTest {
 	private final double spot0 = 1;
 	private final double sigma0 = 0.8376;
 	// Value as in paper
-	private final double kappa1 = 3.1844;
+	private final double kappa1 = 1.1844;
 	// Value as in paper
-	private final double kappa2 = 3.058;
-	private final double theta = 1.0413;
-	private final double beta = 0.1514;
-	private final double epsilon = 1.8458;
+	private final double kappa2 = 1.058;
+	private final double theta = 0.5;
+	private final double beta = -0.0;
+	private final double epsilon = 0.0;
 
 	/**
 	 * Get pricer
@@ -125,7 +125,7 @@ public class LNSVQDModelCalibratorTest {
 		 * 2. Calibrate and get cvalibrated paramerters
 		 */
 		double[] calibratedParameters;
-		int[] indicesCalibratedParams = {/*0, 1, 2, 3, */4, 5};
+		int[] indicesCalibratedParams = {0, 1, 2 /*, 3, 4, 5*/};
 		calibratedParameters = LNSVQDModelCalibrator.calibrate(initialVolatilityParameters, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
 
 		System.out.println("Calibrated parameters:");
@@ -171,7 +171,7 @@ public class LNSVQDModelCalibratorTest {
 		volatilityPoints.add(makeVolatilityPoint("2024-11-15", 1.00, 0.1508, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2024-11-15", 1.20, 0.1568, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2024-11-15", 1.40, 0.2238, lnsvqdModelAnalyticalPricer.getSpot0()));
-		/*volatilityPoints.add(makeVolatilityPoint("2024-12-20", 0.60, 0.4171, lnsvqdModelAnalyticalPricer.getSpot0()));
+		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 0.60, 0.4171, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 0.80, 0.2762, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 1.00, 0.1493, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 1.20, 0.1359, lnsvqdModelAnalyticalPricer.getSpot0()));
@@ -215,7 +215,7 @@ public class LNSVQDModelCalibratorTest {
 		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 0.80, 0.2079, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.00, 0.1714, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.20, 0.1458, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.40, 0.1351, lnsvqdModelAnalyticalPricer.getSpot0()));*/
+		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.40, 0.1351, lnsvqdModelAnalyticalPricer.getSpot0()));
 
 		// Create volatility surface
 		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);

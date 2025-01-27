@@ -18,6 +18,7 @@ import java.util.concurrent.FutureTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import net.finmath.functions.LinearAlgebra;
 
 /**
@@ -654,6 +655,7 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 			parameterCurrent = new double[numberOfParameters];
 
 			valueTest = new double[numberOfValues];
+			// LNSVQDUtils.printArray(valueTest);
 			valueCurrent = new double[numberOfValues];
 			derivativeCurrent = new double[parameterCurrent.length][valueCurrent.length];
 
@@ -668,6 +670,7 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 
 				// Calculate values for test parameters
 				setValues(parameterTest, valueTest);
+				// LNSVQDUtils.printArray(valueTest);
 
 				// Calculate error
 				final double errorMeanSquaredTest = getMeanSquaredError(valueTest);
@@ -706,6 +709,7 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 				String logString =
 						"Iteration: " + iteration +
 								"\tLambda=" + lambda +
+								// "\tDerivative=" + derivativeCurrent[0][0] +
 								"\tError Current (RMS):" + Math.sqrt(errorMeanSquaredCurrent) +
 								"\tError Change:" + errorRootMeanSquaredChange + "\t";
 				for(int i = 0; i < parameterCurrent.length; i++) {
