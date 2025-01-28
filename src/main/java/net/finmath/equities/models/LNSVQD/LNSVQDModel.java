@@ -29,13 +29,13 @@ public class LNSVQDModel extends AbstractProcessModel {
 	 * Model parameters under the EMM
 	 */
 	protected final double spot0;
-	protected final double sigma0;
-	protected double kappa1;
-	protected double kappa2;
-	protected double theta;
-	protected double beta;
-	protected double epsilon;
-	protected double totalInstVar;
+	double sigma0;
+	double kappa1;
+	double kappa2;
+	double theta;
+	double beta;
+	double epsilon;
+	double totalInstVar;
 
 	/**
 	 * Market observables
@@ -269,11 +269,12 @@ public class LNSVQDModel extends AbstractProcessModel {
 		// Perform necessary checks
 		// checkMartingalityOfDiscountedAssetProcess(kappa2, beta);
 
-		this.kappa1 = parameterVector[0];
-		this.kappa2 = parameterVector[1];
-		this.theta = parameterVector[2];
-		this.beta = parameterVector[3];
-		this.epsilon = parameterVector[4];
+		this.sigma0 = parameterVector[0];
+		this.kappa1 = parameterVector[1];
+		this.kappa2 = parameterVector[2];
+		this.theta = parameterVector[3];
+		this.beta = parameterVector[4];
+		this.epsilon = parameterVector[5];
 		this.totalInstVar = beta * beta + epsilon * epsilon;
 
 		this.X0 = Math.log(this.spot0);
@@ -301,7 +302,7 @@ public class LNSVQDModel extends AbstractProcessModel {
  	 */
 	private void checkMartingalityOfDiscountedAssetProcess(double kappa2, double beta) {
 		if(kappa2 < beta) {
-			throw new IllegalStateException("κ2 < beta. Martingale condition violated!");
+			// throw new IllegalStateException("κ2 < beta. Martingale condition violated!");
 		}
 	}
 

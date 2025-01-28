@@ -49,7 +49,7 @@ public class LNSVQDModelCalibrator {
 				.collect(Collectors.toList());
 
 		// Optimization algorithm parameters
-		final int maxIteration = 300;
+		final int maxIteration = 500;
 		final int numberOfThreads = 4;
 
 		/**
@@ -83,7 +83,7 @@ public class LNSVQDModelCalibrator {
 		};
 
 		// Set lambda
-		levenbergMarquardt.setLambda(0.001);
+		levenbergMarquardt.setLambda(0.01);
 
 		// Print some information
 		System.out.println("Calibration started");

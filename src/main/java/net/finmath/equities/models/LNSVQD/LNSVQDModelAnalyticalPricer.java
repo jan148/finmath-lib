@@ -25,7 +25,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * Numerical parameters
 	 */
 	// 1. For ODE-solution
-	public final int numStepsForODEIntegration = 1000;
+	public final int numStepsForODEIntegration = 100;
 
 	// 2. For unbounded integration
 	// Integration bounds params

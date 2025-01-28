@@ -1,6 +1,7 @@
 package net.finmath.equities;
 
 import net.finmath.equities.marketdata.VolatilityPoint;
+import net.finmath.equities.models.LNSVQD.LNSVQDModel;
 import net.finmath.equities.models.VolatilityPointsSurface;
 import net.finmath.equities.models.LNSVQD.LNSVQDModelAnalyticalPricer;
 import net.finmath.equities.models.LNSVQD.LNSVQDModelCalibrator;
@@ -13,27 +14,29 @@ import org.junit.Test;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class LNSVQDModelCalibratorTest {
 	/**
 	 * Time params
 	 */
-	LocalDate valuationDate = LocalDate.parse("2024-09-18");
+	LocalDate valuationDate = LocalDate.parse("2024-09-30");
 
 	/**
 	 * Model params
 	 */
 	// Right params: sigma0=0.8327, theta=1.0139, kappa1=4.8606, kappa2=4.7938, beta=0.1985, volvol=2.3690
 	// sigma0=0.8376, theta=1.0413, kappa1=3.1844, kappa2=3.058, beta=0.1514, volvol=1.8458
+	//1.3052039148708081	0.673428024111928	0.10451818997966711	0.2314190140533806	-1.4040801807524814	-0.8715420756651475
 	private final double spot0 = 1;
-	private final double sigma0 = 0.1;
+	private final double sigma0 = 1.3052039148708081;
 	// Value as in paper
-	private final double kappa1 = 0;
+	private final double kappa1 = 0.673428024111928;
 	// Value as in paper
-	private final double kappa2 = 0;
-	private final double theta = 0;
-	private final double beta = 0;
-	private final double epsilon = 0;
+	private final double kappa2 = 0.10451818997966711;
+	private final double theta = 0.2314190140533806;
+	private final double beta = -1.4040801807524814;
+	private final double epsilon = -0.8715420756651475;
 
 	/**
 	 * Get pricer
@@ -109,35 +112,69 @@ public class LNSVQDModelCalibratorTest {
 	@Test
 	public void calibrateTest() throws SolverException {
 		setTargetSurface();
+		Random r = new Random();
+		double lowestError = 100000000;
+		double[] bestParam;
 
-		/**
-		 * 0. ...
-		 */
-		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
-				new LNSVQDModelAnalyticalPricer(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
+		for(int i = 0; i < 1; i++) {
+			/*double[] paramVector = new double[6];
+			paramVector[0] =  0 + (4 - 0) * r.nextDouble();
+			paramVector[1] =  0 + (4 - 0) * r.nextDouble();
+			paramVector[2] =  0 + (4 - 0) * r.nextDouble();
+			paramVector[3] =  0 + (4 - 0) * r.nextDouble();
+			paramVector[4] =  -1 + (1 - (-1)) * r.nextDouble();
+			paramVector[5] =  -1 + (1 - (-1)) * r.nextDouble();*/
 
-		/**
-		 * 1. ...
-		 */
-		final double[] initialVolatilityParameters = {sigma0, kappa1, kappa2, theta, beta, epsilon};
+			double[] paramVector = new double[]{
+					0.06732715752054531, 4.9325, 18.855, 0.09742456554842709, -2.114281327451296, 0.7251207977137288};
+			/**
+			 * 0. ...
+			 */
+			LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
+					new LNSVQDModelAnalyticalPricer(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
+			lnsvqdModelAnalyticalPricer.setVolatilityParameters(paramVector);
 
-		/**
-		 * 2. Calibrate and get cvalibrated paramerters
-		 */
-		double[] calibratedParameters;
-		int[] indicesCalibratedParams = {0, 1, 2 , 3, 4, 5};
-		calibratedParameters = LNSVQDModelCalibrator.calibrate(initialVolatilityParameters, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
+			/**
+			 * 1. Calibrate and get cvalibrated paramerters
+			 */
+			double[] calibratedParameters;
+			int[] indicesCalibratedParams = {0, /*1, 2,*/ 3, 4, 5};
+			calibratedParameters = LNSVQDModelCalibrator.calibrate(paramVector, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
 
-		System.out.println("Calibrated parameters:");
-		for(double param : calibratedParameters) {
-			System.out.println(param);
-		}
+			//System.out.println(lnsvqdModelAnalyticalPricer.getSigma0());
 
-		try {
-			VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
-			impliedVolSurface.printVolSurfaceForOutput();
-		} catch(Exception e) {
-			throw new RuntimeException(e);
+			double sigma0 = calibratedParameters[0];
+			double kappa1 = 4.9325;
+			double kappa2 = 18.855;
+			double theta = calibratedParameters[1];
+			double beta = calibratedParameters[2];
+			double epsilon = calibratedParameters[3];
+			lnsvqdModelAnalyticalPricer =
+					new LNSVQDModelAnalyticalPricer(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
+			int xyz;
+			/*System.out.println("Calibrated parameters:");
+			for(double param : calibratedParameters) {
+				System.out.println(param);
+			}*/
+
+			try {
+				VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
+				double error = 0;
+				for(int k = 0; k < volatilityPointsSurface.getVolatilityPoints().size(); k++) {
+					error += Math.pow(volatilityPointsSurface.getVolatilityPoints().get(k).getVolatility()
+							- impliedVolSurface.getVolatilityPoints().get(k).getVolatility(), 2);
+				}
+				if(error < lowestError) {
+					lowestError = error;
+					bestParam = calibratedParameters;
+					System.out.println("Best params so far: ");
+					LNSVQDUtils.printArray(bestParam);
+					impliedVolSurface.printVolSurfaceForOutput();
+				}
+			} catch(Exception e) {
+				throw new RuntimeException(e);
+			}
+
 		}
 
 

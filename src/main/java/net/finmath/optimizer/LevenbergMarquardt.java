@@ -151,7 +151,7 @@ public abstract class LevenbergMarquardt implements Serializable, Cloneable, Opt
 	private int maxIteration = 100;
 
 	private double lambda = 0.001;
-	private double lambdaDivisor = 3.0;
+	private double lambdaDivisor = 3;
 	private double lambdaMultiplicator = 2.0;
 
 	private double errorRootMeanSquaredTolerance = 0.0;    // by default we solve upto machine presicion
