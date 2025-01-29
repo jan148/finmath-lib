@@ -65,7 +65,7 @@ public class LNSVQDCallPriceSimulatorTest {
 	Random random = new Random();
 
 	@Test
-	public void getCallPrices() throws CalculationException {
+	public void getCallPrices() throws Exception {
 		int numberOfPaths = 100000;
 		// Get option values
 		double spot = 1;
@@ -89,7 +89,7 @@ public class LNSVQDCallPriceSimulatorTest {
 				double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot, riskFreeRate, sigma0, maturity, strike, true);
 				System.out.println("Call oprion price BS: \t" + bsOptionValue);
 
-				double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
+				double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity);
 				pricesAnalytical[m][s] = lnsvqdOptionValue;
 				System.out.println("Call oprion price LNSVQD: \t" + lnsvqdOptionValue);
 

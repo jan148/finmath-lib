@@ -187,10 +187,10 @@ class LNSVQDModelAnalyticalPricerTest {
 	}
 
 	@Test
-	void printODESolution() {
+	void printODESolution() throws Exception {
 		// Get option values
 		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot0, riskFreeRate, sigma0, maturity, strike, true);
-		double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
+		double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity);
 
 		// Print
 		System.out.println("Call oprion price BS: \t" + bsOptionValue);
@@ -206,7 +206,7 @@ class LNSVQDModelAnalyticalPricerTest {
 	 */
 	// IMPORTANT: Assume constant rf-rate
 	@Test
-	void getCallPrice() throws CalculationException {
+	void getCallPrice() throws Exception {
 		int numberOfPaths = 50000;
 		// Get option values
 		double spot = 1;
@@ -216,7 +216,7 @@ class LNSVQDModelAnalyticalPricerTest {
 		double discountFactor = Math.exp(-lnsvqdModelAnalyticalPricer.getRiskFreeRate(maturity) * maturity);
 		double bsOptionValue = AnalyticFormulas.blackScholesOptionValue(spot, riskFreeRate, sigma0, maturity, strike, true);
 		System.out.println("Call oprion price BS: \t" + bsOptionValue);
-		double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity, discountFactor, convenienceFcator);
+		double lnsvqdOptionValue = lnsvqdModelAnalyticalPricer.getCallPrice(strike, maturity);
 		System.out.println("Call oprion price LNSVQD: \t" + lnsvqdOptionValue);
 
 		// 1. Create the Monte-Carlo Process
@@ -260,15 +260,15 @@ class LNSVQDModelAnalyticalPricerTest {
 				.collect(Collectors.toList());
 	}
 
-	@Test
-	public void getCallPrices() throws Exception {
+	/*@Test
+	public void getEuropeanOptionPrices() throws Exception {
 		double spot = 1;
 		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.2, 1, 4);
 		double[] strikes = LNSVQDUtils.createTimeGrid(0.6, 1.4, 4);
 
-		/**
+		*//**
 		 * Get all the integration points from the integrator, in our case Simpson
-		 */
+		 *//*
 		List<Double> yGridForIntegration = new ArrayList<>();
 
 		// Next lines adapted from finmath's Simpson implementation
@@ -296,20 +296,20 @@ class LNSVQDModelAnalyticalPricerTest {
 		yGridForIntegration.add(upperBound);
 
 		List<Double> yGridForIntegrationSortedDistinct = yGridForIntegration.stream().sorted().distinct().collect(Collectors.toList());
-		/**
+		*//**
 		 * Get call prices
-		 */
-		double[] callPricesMethod1 = lnsvqdModelAnalyticalPricer.getCallPrices(strikes, maturityGrid, yGridForIntegrationSortedDistinct);
+		 *//*
+		double[] callPricesMethod1 = lnsvqdModelAnalyticalPricer.getEuropeanOptionPrices(strikes, maturityGrid, yGridForIntegrationSortedDistinct);
 		List<Pair<Double, Double>> mesh = LNSVQDUtils.create2dMesh(maturityGrid, strikes);
-		double[] callPricesMethod2 = lnsvqdModelAnalyticalPricer.getCallPricesNew(mesh);
+		double[] callPricesMethod2 = lnsvqdModelAnalyticalPricer.getEuropeanOptionPrices(mesh);
 
-		/**
+		*//**
 		 * Print
-		 */
+		 *//*
 		LNSVQDUtils.printPricesFromMaturityStrikeGrid(maturityGrid, strikes, callPricesMethod1);
 		LNSVQDUtils.printPricesFromMaturityStrikeGrid(maturityGrid, strikes, callPricesMethod2);
 
-	}
+	}*/
 
 	/**
 	 * ***************************************************+
@@ -340,7 +340,7 @@ class LNSVQDModelAnalyticalPricerTest {
 	 * ***************************************************+
 	 */
 	@Test
-	public void outputImpliedSVISurface() {
+	public void outputImpliedSVISurface() throws Exception {
 		double endTime = 1;
 		int numberOfTimePoints = 10;
 
@@ -360,7 +360,7 @@ class LNSVQDModelAnalyticalPricerTest {
 			for(int j = 0; j < moneynessLevels.length; j++) {
 				double discountFactor = Math.exp(-riskFreeRate * timePoints[i]);
 				double strike = lnsvqdModelAnalyticalPricer.getSpot0() * moneynessLevels[j];
-				double price = lnsvqdModelAnalyticalPricer.getCallPrice(strike, timePoints[i], discountFactor, 0);
+				double price = lnsvqdModelAnalyticalPricer.getCallPrice(strike, timePoints[i]);
 				double impliedVol = AnalyticFormulas.blackScholesOptionImpliedVolatility(lnsvqdModelAnalyticalPricer.getSpot0() / discountFactor, timePoints[i], strike, discountFactor, price);
 				System.out.print("\t" + impliedVol);
 			}

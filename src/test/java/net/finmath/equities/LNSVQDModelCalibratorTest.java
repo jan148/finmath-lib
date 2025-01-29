@@ -67,7 +67,7 @@ public class LNSVQDModelCalibratorTest {
 			, 0.923490121
 			, 0.91252815
 	};
-	YieldCurve yieldCurve = new YieldCurve("Yield curve"
+	YieldCurve yieldCurve = new YieldCurve("Discount curve"
 			, valuationDate
 			, dayCountConvention
 			, discountDates
@@ -83,7 +83,7 @@ public class LNSVQDModelCalibratorTest {
 	 * ***************************************************+
 	 */
 	@Test
-	public void calibrateTest() throws SolverException {
+	public void calibrateTest() throws Exception {
 		setTargetSurface();
 		Random r = new Random();
 		double lowestError = 100000000;
@@ -91,14 +91,12 @@ public class LNSVQDModelCalibratorTest {
 
 		double[] paramVector = new double[]{
 				0.20216505228211554
-				, 4.270667195251657
-				, 16.639965808971205 - 4
+				, 2.7660217303300856
+				, 16.639965808971205
 				, 0.2360647350930049
 				, -1.693221137952367
 				, 0.9430592760276209};
-		/**
-		 * 0. ...
-		 */
+
 		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
 				new LNSVQDModelAnalyticalPricer(spot0, paramVector[0], paramVector[1], paramVector[2], paramVector[3], paramVector[4], paramVector[5], 0, valuationDate, equityForwardStructure);
 
@@ -106,33 +104,11 @@ public class LNSVQDModelCalibratorTest {
 		 * 1. Calibrate and get cvalibrated paramerters
 		 */
 		double[] calibratedParameters;
-		int[] indicesCalibratedParams = {0, /*1,*/ 2, 3, 4, 5};
+		int[] indicesCalibratedParams = {0, /*1, 2,*/ 3, 4, 5};
 		calibratedParameters = LNSVQDModelCalibrator.calibrate(paramVector, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
 
-		double[] calibratedParametersFull = paramVector.clone();
-		for(int j = 0; j < indicesCalibratedParams.length; j++) {
-			calibratedParametersFull[indicesCalibratedParams[j]] = calibratedParameters[j];
-		}
-
-		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParametersFull);
-
-		try {
-			VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
-			double error = 0;
-			for(int k = 0; k < volatilityPointsSurface.getVolatilityPoints().size(); k++) {
-				error += Math.pow(volatilityPointsSurface.getVolatilityPoints().get(k).getVolatility()
-						- impliedVolSurface.getVolatilityPoints().get(k).getVolatility(), 2);
-			}
-			if(error < lowestError) {
-				lowestError = error;
-				bestParam = calibratedParametersFull;
-				System.out.println("Best params so far: ");
-				LNSVQDUtils.printArray(bestParam);
-				impliedVolSurface.printVolSurfaceForOutput();
-			}
-		} catch(Exception e) {
-			throw new RuntimeException(e);
-		}
+		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
+		impliedVolSurface.printVolSurfaceForOutput();
 	}
 
 	/**
@@ -155,7 +131,7 @@ public class LNSVQDModelCalibratorTest {
 		// Create and adf volatility points
 		/*volatilityPoints.add(makeVolatilityPoint("2024-10-18", 0.60, 0.6097, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2024-10-18", 0.80, 0.3665, lnsvqdModelAnalyticalPricer.getSpot0()));*/
-		volatilityPoints.add(makeVolatilityPoint("2024-10-18", 1.00, 0.1374,spot0));
+		volatilityPoints.add(makeVolatilityPoint("2024-10-18", 1.00, 0.1374, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2024-10-18", 1.20, 0.212, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2024-10-18", 1.40, 0.319, spot0));
 		/*volatilityPoints.add(makeVolatilityPoint("2024-11-15", 0.60, 0.476, lnsvqdModelAnalyticalPricer.getSpot0()));

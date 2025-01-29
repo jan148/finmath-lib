@@ -6,8 +6,6 @@ import net.finmath.equities.models.VolatilityPointsSurface;
 import net.finmath.functions.AnalyticFormulas;
 import net.finmath.integration.SimpsonRealIntegrator;
 import net.finmath.time.daycount.DayCountConvention;
-import org.apache.commons.lang3.Streams;
-import org.apache.commons.math3.analysis.integration.IterativeLegendreGaussIntegrator;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 
@@ -308,227 +306,18 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	/**
 	 * We use our Runge-Kutta implementation to calculate the integral
 	 */
-	public double getCallPrice(double strike, double ttm, double discountFactor, double convencienceFactor) {
-		// public double[] timeGridForMGFApproximationCalculation = LNSVQDUtils.createTimeGrid(0, endTime, this.numStepsForODEIntegration);
-		double logMoneyness = Math.log(spot0 / strike) + (-Math.log(discountFactor) - convencienceFactor);
-
-		/*UnivariateFunction integrand = new UnivariateFunction() {
-			@Override
-			public double value(double y) {
-				Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
-
-				// 1. Compute the value of the affine-exponential approximation
-				Complex approxCharFuncVal = calculateExponentialAffineApproximation(ttm, charFuncArgs);
-				Complex E2 = approxCharFuncVal
-						.multiply(charFuncArgs[0].multiply(X0).add(charFuncArgs[1].multiply(I0)).exp());
-				// System.out.println(E2);
-				// 2. Calculate result
-				Complex resultComplex = new Complex(0.5, -y).multiply(logMoneyness).exp().multiply(1 / (y * y + 0.25)).multiply(E2);
-				double result = resultComplex.getReal();
-				return result;
-			}
-
-		*//*UnivariateFunction integrandHermite = new UnivariateFunction() {
-			@Override
-			public double value(double y) {
-				double absY = Math.abs(y);
-				Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, absY), Complex.ZERO, Complex.ZERO};
-
-				// 1. Compute the value of the affine-exponential approximation
-				Complex approxCharFuncVal = calculateExponentialAffineApproximation(ttm, charFuncArgs);
-				Complex E2 = approxCharFuncVal
-						.multiply(charFuncArgs[0].multiply(X0).add(charFuncArgs[1].multiply(I0)).exp());
-				// System.out.println(E2);
-				// 2. Calculate result
-				Complex resultComplex = new Complex(0.5, -absY).multiply(logMoneyness).exp().multiply(1 / (absY * absY + 0.25)).multiply(E2);
-
-				double hermiteAdjustment = Math.exp(Math.pow(absY, 2));
-				resultComplex = resultComplex.multiply(hermiteAdjustment);
-				double result = resultComplex.getReal();
-				return result;
-			}*//*
-		};*/
-
-		DoubleUnaryOperator integrand = new DoubleUnaryOperator() {
-			@Override
-			public double applyAsDouble(double y) {
-				Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
-
-				// 1. Compute the value of the affine-exponential approximation
-				Complex approxCharFuncVal = calculateExponentialAffineApproximation(ttm, charFuncArgs);
-				Complex E2 = approxCharFuncVal
-						.multiply(charFuncArgs[0].multiply(X0).add(charFuncArgs[1].multiply(I0)).exp());
-				// System.out.println(E2);
-				// 2. Calculate result
-				Complex resultComplex = new Complex(0.5, -y).multiply(logMoneyness).exp().multiply(1 / (y * y + 0.25)).multiply(E2);
-				double result = resultComplex.getReal();
-				return result;
-			}
-		};
-
-		/**
-		 * Integerate
-		 */
-		// Choose the end point of the solution path
-		// double result = integratorInfiniteIntegral.integrate(1000000, integrand, lowerBound, upperBound);
-		// For HERMITE, integral is calculated on -infinity to +infinity -> / 2
-		// double result = hermite.integrate(integrandHermite) / 2.;
-		// SIMPSOM
-		// double result = simpsonIntegrator.integrate(100000, integrand, lowerBound, upperBound);
-		// finmath SIMPSOM
-		double result = simpsonRealIntegrator.integrate(integrand);
-
-		/**
-		 * Get real part, multiply with factor
-		 */
-		double optionPrice = spot0 - (discountFactor * strike / Math.PI) * result;
-
-		return optionPrice;
+	public double getCallPrice(double strike, double ttm) throws Exception {
+		List<Pair<Double, Double>> strikeMaturityPairs = new ArrayList<>();
+		strikeMaturityPairs.add(new Pair<>(ttm, strike));
+		return getEuropeanOptionPrices(strikeMaturityPairs, true)[0];
 	}
 
-	/**
-	 * Calculate prices for a list of strike-maturity pairs;
-	 * The function expects tge strikes and maturities to be in teh right order
-	 * TODO: Extend to arbitrary strike-maturity pairs
-	 * TODO: So far the method doesn't take into account if the first maturity isn't zero
-	 */
-	public double[] getCallPrices(double[] strikes, double[] maturities, List<Double> yGridForIntegration) throws Exception {
-		// Initialize the array of option prices that will be returned
-		double[] optionPrices = new double[strikes.length * maturities.length];
-
-		/**
-		 * 1a. Extract time information from strike-maturity pairs
-		 * TODO: Add zero to list! necessary
-		 */
-		double[] maturitiesWithZero;
-		if(maturities[0] != 0) {
-			maturitiesWithZero = new double[maturities.length + 1];
-			maturitiesWithZero[0] = 0;
-			System.arraycopy(maturities, 0, maturitiesWithZero, 1, maturities.length);
-		} else {
-			maturitiesWithZero =  maturities;
-		}
-
-		// Add points
-		List<Double> timeGridForMGFApproximationCalculationList = Arrays.equals(maturitiesWithZero, new double[]{0}) ?
-				Arrays.stream(maturitiesWithZero).boxed().collect(Collectors.toList()) : LNSVQDUtils.addTimePointsToArray(maturitiesWithZero, numStepsForODEIntegration + 1 - maturitiesWithZero.length);
-		double[] timeGridForMGFApproximationCalculation = timeGridForMGFApproximationCalculationList.stream().mapToDouble(Double::doubleValue).toArray();
-
-		/**
-		 * 1b. Extract information for ODE-integration
-		 */
-		List<Double> gridForIntegrationWithMidPoints = LNSVQDUtils.addMidPointsToList(yGridForIntegration);
-
-		/**
-		 * 2. Precalcuate the expAffApprox path
-		 * IMPORTANT: We need to calculate for all realizations of charFuncArgs!
-		 *
-		 * Result: The first dimension refers to a single realization of charFuncArgs, the second one to the value at the corresponding time
-		 *
-		 * NOTE: expAffApproxMatPathPerCharFuncRealization has the points yGridForInfiniteIntegral + the set of all midpoints because of how
-		 * Runge-Kutta is implemented; hence, we have to evaluate E2 on the midpoints two, i.e. on the points conatined in the array
-		 * gridForIntegrationWithMidPoints
-		 */
-		// expAffApproxMatPathPerCharFuncArgRealization = Exponential-affine approximation at maturities per realization of the characteristic functions args
-		Complex[][] expAffApproxMatPathPerCharFuncRealization = new Complex[gridForIntegrationWithMidPoints.size()][maturitiesWithZero.length];
-		// Loop over charFunc args
-		for(int l = 0; l < gridForIntegrationWithMidPoints.size(); l++) {
-			// TODO: expAffApproxPathPerCharFuncRealization[l] should only contain values for maturity-points, not for filler points!
-			double y = gridForIntegrationWithMidPoints.get(l);
-			Complex[] charFuncArs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
-			Complex[] expAffApproxPathPerCharFuncRealization = calculateExponentialAffineApproximationFullPath(timeGridForMGFApproximationCalculation, charFuncArs);;
-
-			// Get only maturities
-			for(int i = 0; i < maturitiesWithZero.length; i++) {
-				double time = maturitiesWithZero[i];
-				int maturityIndex = timeGridForMGFApproximationCalculationList.indexOf(time);
-				expAffApproxMatPathPerCharFuncRealization[l][i] = expAffApproxPathPerCharFuncRealization[maturityIndex];
-			}
-		}
-
-		/**
-		 * 3. For every maturity and every strike, we calculate the call option price
-		 */
-		for(int i = 0; i < maturitiesWithZero.length; i++) {
-			if(maturities[0] != 0 && i == 0) {
-				continue;
-			}
-			double maturity = maturitiesWithZero[i];
-			double discountFactor = Math.exp(-getRiskFreeRate(1) * maturity); // Todo: Check
-			double convenienceFactor = 0;
-			// Get the time index of the maturity
-			int maturityIndex = i;
-			for(int j = 0; j < strikes.length; j++) {
-				/**
-				 * *********************
-				 * DO FOR ONE OPTION
-				 * **********************
-				 */
-				int optionIndex = maturities[0] != 0 ? (i - 1) * strikes.length + j : i * strikes.length + j;
-
-				double strike = strikes[j];
-
-				// Start assembling the factors of the pricing formula
-				double logMoneyness = Math.log(spot0 / strike) + (-Math.log(discountFactor) - convenienceFactor);
-
-				/**
-				 * TODO: Change factor
-				 * Define the function y -> factor * E2(t, -0.5 + iy)
-				 */
-				DoubleUnaryOperator integrand = new DoubleUnaryOperator() {
-					@Override
-					public double applyAsDouble(double y) {
-						int yIndex = gridForIntegrationWithMidPoints.indexOf(y);
-						if(yIndex == -1) {
-							throw new IllegalArgumentException("y not in array: The E2 value for this the y-value " + y + " hasn't been calculated!");
-						}
-
-						// 1. Compute the value of the affine-exponential approximation
-						Complex E2 = expAffApproxMatPathPerCharFuncRealization[yIndex][maturityIndex].multiply(new Complex(-0.5, y).multiply(X0).exp());
-
-						// 2. Calculate result
-						Complex result = new Complex(0.5, -y).multiply(logMoneyness).exp().multiply(1 / (y * y + 0.25)).multiply(E2);
-
-						// 3. Get real part and return
-						double resultReal = result.getReal();
-						return resultReal;
-					}
-				};
-
-				/**
-				 * Integerate
-				 */
-				double result = simpsonRealIntegrator.integrate(integrand);
-
-				/**
-				 * Get real part, multiply with factor
-				 */
-				double optionPrice = spot0 - (discountFactor * strike / Math.PI) * result;
-
-				optionPrices[optionIndex] = optionPrice;
-
-				/**
-				 * *********************
-				 * END
-				 * **********************
-				 */
-
-			}
-		}
-
-		/**
-		 * 4. Return prices
-		 */
-		return optionPrices;
-	}
-
-	public double[] getCallPricesNew(List<Pair<Double, Double>> strikeMaturityPairs) throws Exception {
+	public double[] getEuropeanOptionPrices(List<Pair<Double, Double>> strikeMaturityPairs, Boolean isCall) throws Exception {
 		// Initialize the array of option prices that will be returned
 		double[] optionPrices = new double[strikeMaturityPairs.size()];
 
 		/**
 		 * 1a. Extract time information from strike-maturity pairs
-		 * TODO: Add zero to list! necessary
 		 */
 		double[] maturitiesWithZero = Stream.concat(strikeMaturityPairs.stream(), Stream.of(new Pair<Double, Double>(0., 0.)))
 				.mapToDouble(pair -> pair.getFirst()).sorted().distinct().toArray();
@@ -579,6 +368,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			double maturity = strikeMaturityPairs.get(i).getKey();
 			double strike = strikeMaturityPairs.get(i).getValue();
 
+			double forward = equityForwardStructure.getForward(maturity);
 			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity); //Math.exp(-getRiskFreeRate(maturity) * maturity);
 			double convenienceFactor = 0;
 
@@ -620,6 +410,9 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			 * Get real part, multiply with factor
 			 */
 			double optionPrice = spot0 - (discountFactor * strike / Math.PI) * result;
+			if(!isCall) {
+				optionPrice -= discountFactor * (forward - strike);
+			}
 
 			optionPrices[optionIndex] = optionPrice;
 
@@ -658,7 +451,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			strikeMaturityPairs.add(new Pair<>(ttm, strike));
 		}
 
-		double[] optionPrices = getCallPricesNew(strikeMaturityPairs);
+		double[] optionPrices = getEuropeanOptionPrices(strikeMaturityPairs, false);
 
 		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();
 		for(int i = 0; i < optionPrices.length; i++) {
