@@ -4,6 +4,7 @@ import net.finmath.equities.marketdata.VolatilityPoint;
 import net.finmath.equities.models.VolatilityPointsSurface;
 import net.finmath.optimizer.LevenbergMarquardt;
 import net.finmath.optimizer.SolverException;
+import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 import org.apache.commons.math3.util.Pair;
 
 import java.time.LocalDate;
@@ -25,8 +26,6 @@ public class LNSVQDModelCalibrator {
 	                                 int[] parameterIndices,
 	                                 LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer,
 	                                 VolatilityPointsSurface volatilitySurface) throws SolverException {
-		LocalDate today = volatilitySurface.getToday();
-
 		// Create list of parameters that should be calibrated
 		double[] initialVolatilityParametersToCalibrate = new double[parameterIndices.length];
 		for(int j = 0; j < initialVolatilityParametersToCalibrate.length; j++) {
@@ -41,26 +40,24 @@ public class LNSVQDModelCalibrator {
 		final double[] targetValues = volatilitySurface.getVolatilityPoints().stream()
 				.mapToDouble(VolatilityPoint::getVolatility)
 				.toArray();
-		final List<Pair<Double, Double>> strikeMaturityPairs = volatilitySurface.getVolatilityPoints().stream()
-				.map(volaPoint -> {
-					double ttm = volatilitySurface.getDayCountConvention().getDaycountFraction(today, volaPoint.getDate());
-					return new Pair<>(ttm, volaPoint.getStrike());
-				})
-				.collect(Collectors.toList());
 
 		// Optimization algorithm parameters
-		final int maxIteration = 500;
+		final int maxIteration = 20;
 		final int numberOfThreads = 4;
 
 		/**
 		 * For concurrency: Create executor service
 		 */
-		ExecutorService executorService = new ForkJoinPool(numberOfThreads) ; //
+		ExecutorService executorService = new ForkJoinPool(numberOfThreads);
 
 		/**
 		 * Create optimizer
 		 */
-		LevenbergMarquardt levenbergMarquardt = new LevenbergMarquardt(initialVolatilityParametersToCalibrate, targetValues, maxIteration, executorService) {
+		LevenbergMarquardt levenbergMarquardt = new LevenbergMarquardt(
+				initialVolatilityParametersToCalibrate
+				, targetValues
+				, maxIteration
+				, executorService) {
 			@Override
 			public void setValues(double[] parameters, double[] values) {
 				double[] paramVector = initialVolatilityParameters.clone();
@@ -83,7 +80,7 @@ public class LNSVQDModelCalibrator {
 		};
 
 		// Set lambda
-		levenbergMarquardt.setLambda(0.01);
+		levenbergMarquardt.setLambda(0.10);
 
 		// Print some information
 		System.out.println("Calibration started");
@@ -95,5 +92,4 @@ public class LNSVQDModelCalibrator {
 		calibratedParameters = levenbergMarquardt.getBestFitParameters();
 		return calibratedParameters;
 	}
-
 }

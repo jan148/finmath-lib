@@ -102,7 +102,7 @@ public class LNSVQDCallPriceSimulatorTest {
 				for(int seed : seeds) {
 					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModel, numberOfPaths, timeGrid);
 					// lnsvqdCallPriceSimulator.precalculatePaths(seed);
-					double simulatedOptionPrice = 0; //lnsvqdCallPriceSimulator.getCallPrice(strike);
+					double simulatedOptionPrice = 0; // lnsvqdCallPriceSimulator.getCallPrice(strike);
 					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
 					// System.out.println(simulatedOptionPrice);
 				}

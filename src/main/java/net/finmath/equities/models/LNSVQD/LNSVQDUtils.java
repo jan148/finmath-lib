@@ -3,6 +3,7 @@ package net.finmath.equities.models.LNSVQD;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -190,6 +191,14 @@ public class LNSVQDUtils {
 			}
 		}
 		return mesh;
+	}
+
+	public static LocalDate[] createLocalDateList(String[] dates) {
+		LocalDate[] datesArray = new LocalDate[dates.length];
+		for (int i = 0; i < dates.length; i++) {
+			datesArray[i] = LocalDate.parse(dates[i]);
+		}
+		return datesArray;
 	}
 
 

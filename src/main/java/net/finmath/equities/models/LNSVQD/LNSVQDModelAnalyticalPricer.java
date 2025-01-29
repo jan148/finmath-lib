@@ -1,6 +1,7 @@
 package net.finmath.equities.models.LNSVQD;
 
 import net.finmath.equities.marketdata.VolatilityPoint;
+import net.finmath.equities.models.EquityForwardStructure;
 import net.finmath.equities.models.VolatilityPointsSurface;
 import net.finmath.functions.AnalyticFormulas;
 import net.finmath.integration.SimpsonRealIntegrator;
@@ -25,17 +26,47 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * Numerical parameters
 	 */
 	// 1. For ODE-solution
-	public final int numStepsForODEIntegration = 100;
+	public final int numStepsForODEIntegration = 300;
 
 	// 2. For unbounded integration
 	// Integration bounds params
 	public final double lowerBound = 0;
-	public final double upperBound = 50;
+	public final double upperBound = 100;
 	List<Double> yGridForIntegration = new ArrayList<>();
-
 
 	// finmath integrator
 	SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, (int) upperBound * 10, false);
+
+	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate valuationDate, EquityForwardStructure equityForwardStructure) {
+		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate, equityForwardStructure);
+
+		/**
+		 * Get all the integration points from the integrator, in our case Simpson
+		 */
+		// Next lines adapted from finmath's Simpson implementation
+		final double	range				= upperBound-lowerBound;
+
+		final int  numberOfEvaluationPoints = (int) upperBound * 10; // Need to change this in accordance with LNSVQD pricer
+		final int numberOfDoubleSizeIntervals	= (int) ((numberOfEvaluationPoints-1) / 2.0);
+
+		final double doubleInterval = range / numberOfDoubleSizeIntervals;
+		final double singleInterval = 0.5 * doubleInterval;
+
+		IntStream intervals = IntStream.range(1, numberOfDoubleSizeIntervals);
+
+		intervals.forEach(
+				i -> {
+					yGridForIntegration.add(lowerBound + i * doubleInterval);
+					yGridForIntegration.add(lowerBound + i * doubleInterval + singleInterval);
+				}
+		);
+
+		yGridForIntegration.add(lowerBound + singleInterval);
+		yGridForIntegration.add(lowerBound);
+		yGridForIntegration.add(upperBound);
+
+		yGridForIntegration = yGridForIntegration.stream().sorted().distinct().collect(Collectors.toList());
+	}
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate valuationDate) {
 		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
@@ -548,7 +579,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			double maturity = strikeMaturityPairs.get(i).getKey();
 			double strike = strikeMaturityPairs.get(i).getValue();
 
-			double discountFactor = Math.exp(-getRiskFreeRate(maturity) * maturity);
+			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity); //Math.exp(-getRiskFreeRate(maturity) * maturity);
 			double convenienceFactor = 0;
 
 			// Get the time index of the maturity
@@ -637,20 +668,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
 			double forward = getSpot0() / discountFactor;
 			double price = optionPrices[i];
-			/*final double initialStockValue,
-			final double riskFreeRate,
-			final double volatility,
-			final double optionMaturity,
-			final double optionStrike)*/
-			double riskFreeRate = getRiskFreeRate(ttm);
-			double blackScholesPrice = AnalyticFormulas.blackScholesOptionValue(spot0, getRiskFreeRate(ttm), sigma0, ttm, strike);
-			// System.out.println(price + "\t" + blackScholesPrice);
-			double daysUntilExperation =  dayCountConvention.getDaycount(today, maturity);
-			/*forward,
-			final double optionMaturity,
-			final double optionStrike,
-			final double payoffUnit,
-			final double optionValue)*/
+
 			double impliedVol = AnalyticFormulas.blackScholesOptionImpliedVolatility
 					(forward, ttm, strike, discountFactor, price);
 			volatilityPoints.add(new VolatilityPoint(maturity, strike, impliedVol));
