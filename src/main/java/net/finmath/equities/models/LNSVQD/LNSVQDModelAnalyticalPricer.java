@@ -451,7 +451,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			strikeMaturityPairs.add(new Pair<>(ttm, strike));
 		}
 
-		double[] optionPrices = getEuropeanOptionPrices(strikeMaturityPairs, false);
+		double[] optionPrices = getEuropeanOptionPrices(strikeMaturityPairs, true);
 
 		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();
 		for(int i = 0; i < optionPrices.length; i++) {
@@ -459,7 +459,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			double strike = volatilityPointsSurface.getVolatilityPoints().get(i).getStrike();
 			double ttm = dayCountConvention.getDaycountFraction(today, maturity);
 			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
-			double forward = getSpot0() / discountFactor;
+			double forward = equityForwardStructure.getForward(ttm) * spot0;
 			double price = optionPrices[i];
 
 			double impliedVol = AnalyticFormulas.blackScholesOptionImpliedVolatility

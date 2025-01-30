@@ -2,9 +2,6 @@ package net.finmath.equities.models.LNSVQD;
 
 import net.finmath.equities.marketdata.VolatilityPoint;
 import net.finmath.equities.models.VolatilityPointsSurface;
-import net.finmath.optimizer.LevenbergMarquardt;
-import net.finmath.optimizer.SolverException;
-import net.finmath.time.daycount.DayCountConvention;
 import org.apache.commons.math3.fitting.leastsquares.*;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -12,15 +9,8 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Pair;
 
-import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ForkJoinPool;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
-
-import static java.lang.Math.E;
 
 /**
  * The exponential-affine approximation to the mgf can be precalculated; For t0 < t1, we would calculate A_t0 twice,
@@ -29,7 +19,7 @@ import static java.lang.Math.E;
 
 public class LNSVQDModelCalibrator {
 
-	static double shiftSize = 1E-8;
+	static double shiftSize = 1E-6;
 
 	public static double[] calibrate(final double[] initialVolatilityParameters,
 	                                 int[] parameterIndices,
@@ -58,63 +48,25 @@ public class LNSVQDModelCalibrator {
 
 		// Optimization algorithm parameters
 		final int maxIteration = 50;
-		final int numberOfThreads = 4;
+		final int maxEvaluations = 100;
+		AtomicInteger iterationCount = new AtomicInteger(0);
 
 		double[] calibratedParameters = initialVolatilityParameters.clone();
 		double[] outputParamsOptimizer = initialVolatilityParameters.clone();
 
 		/**
-		 * For concurrency: Create executor service
-		 */
-		ExecutorService executorService = new ForkJoinPool(numberOfThreads);
-
-		/**
-		 * Create optimizer / finmath
-		 */
-		/*LevenbergMarquardt levenbergMarquardt = new LevenbergMarquardt(
-				initialVolatilityParametersToCalibrate
-				, targetValues
-				, maxIteration
-				, executorService) {
-			@Override
-			public void setValues(double[] parameters, double[] values) {
-				double[] paramVector = initialVolatilityParameters.clone();
-				for(int j = 0; j < parameterIndices.length; j++) {
-					int index = parameterIndices[j];
-					paramVector[index] = parameters[j];
-				}
-				lnsvqdModelAnalyticalPricer.setVolatilityParameters(paramVector);
-
-				try {
-					double[] impliedVols = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilitySurface).getVolatilityPoints()
-							.stream()
-							.mapToDouble(VolatilityPoint::getVolatility)
-							.toArray();
-					System.arraycopy(impliedVols, 0, values, 0, impliedVols.length);
-				} catch(Exception e) {
-					throw new RuntimeException(e);
-				}
-			}
-		};
-
-		// Set lambda
-		levenbergMarquardt.setLambda(0.10);
-
-		// Print some information
-		System.out.println("Calibration started");
-
-		// Solve
-		levenbergMarquardt.run();
-
-		// Output
-		outputParamsOptimizer = levenbergMarquardt.getBestFitParameters();*/
-
-		/**
 		 * Create optimizer / Apache
 		 */
 		// ---------------------------
-		LevenbergMarquardtOptimizer levenbergMarquardtOptimizer = new LevenbergMarquardtOptimizer();
+		LevenbergMarquardtOptimizer levenbergMarquardtOptimizer = new LevenbergMarquardtOptimizer()
+				.withCostRelativeTolerance(1.0e-6)
+				.withParameterRelativeTolerance(1.0e-6)
+				.withOrthoTolerance(1.0e-6);
+
 		MultivariateJacobianFunction model = params -> {
+			int iter = iterationCount.incrementAndGet(); // Atomic and thread-safe
+			System.out.println("Iteration: " + iter);
+
 			double[] paramsFull = initialVolatilityParameters.clone();
 			for(int i = 0; i < params.getDimension(); i++) {
 				paramsFull[parameterIndices[i]] = params.getEntry(i);
@@ -158,6 +110,11 @@ public class LNSVQDModelCalibrator {
 				}
 			}
 
+			double mse = IntStream.range(0, impliedVols.length)
+					.mapToDouble(i -> Math.pow(impliedVols[i] - targetValues[i], 2) * (1. / impliedVols.length))
+					.sum();
+			System.out.println("MSE before iteration " + iter + ": " + mse);
+
 			return new Pair<>(value, jacobian);
 		};
 		LeastSquaresProblem leastSquaresProblem = new LeastSquaresBuilder()
@@ -165,7 +122,7 @@ public class LNSVQDModelCalibrator {
 				.model(model)
 				.target(targetValues)
 				.lazyEvaluation(false)
-				.maxEvaluations(50)
+				.maxEvaluations(maxEvaluations)
 				.maxIterations(maxIteration)
 				.build();
 		// Run the optimizer
@@ -189,7 +146,7 @@ public class LNSVQDModelCalibrator {
 				.mapToDouble(i -> Math.pow(endX[i] - targetValues[i], 2) * (1. / targetValues.length))
 				.sum();
 		System.out.println("\nCalibration ended. Final cost: " + finalCost);
-		System.out.print("Final params:");
+		System.out.print("Final params: ");
 		LNSVQDUtils.printArray(calibratedParameters);
 		System.out.println("\n-------------------------------------");
 		// ---------------------------

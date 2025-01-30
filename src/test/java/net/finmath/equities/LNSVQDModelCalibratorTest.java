@@ -26,7 +26,19 @@ public class LNSVQDModelCalibratorTest {
 	 * Time params
 	 */
 	LocalDate valuationDate = LocalDate.parse("2024-09-30");
-	double spot0 = 1;
+	double spot0 = 19324.93;
+	/*Calibration started. Initial cost: 0.004027778464451843
+	Initial params: 0.227	4.9325	18.855	0.2616	-1.8123	0.9832
+	Calibration ended. Final cost: 2.0198875216494906E-4
+	Final params:0.17367338811730074	4.9325	18.855	0.13200629820313045	-0.1936567775915406	-0.17838275289288*/
+	double[] paramVector = new double[]{
+			.16495890948334133,
+			9.827774639600806,
+			-4.660220197140458,
+			0.13194185347453125,
+			-1.5027942253508553,
+			1.841300995296123	// -0.17838275289288
+	};
 
 	/**
 	 * Create volatilty surface
@@ -85,17 +97,6 @@ public class LNSVQDModelCalibratorTest {
 	@Test
 	public void calibrateTest() throws Exception {
 		setTargetSurface();
-		Random r = new Random();
-		double lowestError = 100000000;
-		double[] bestParam;
-
-		double[] paramVector = new double[]{
-				0.20216505228211554
-				, 2.7660217303300856
-				, 16.639965808971205
-				, 0.2360647350930049
-				, -1.693221137952367
-				, 0.9430592760276209};
 
 		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
 				new LNSVQDModelAnalyticalPricer(spot0, paramVector[0], paramVector[1], paramVector[2], paramVector[3], paramVector[4], paramVector[5], 0, valuationDate, equityForwardStructure);
@@ -104,9 +105,10 @@ public class LNSVQDModelCalibratorTest {
 		 * 1. Calibrate and get cvalibrated paramerters
 		 */
 		double[] calibratedParameters;
-		int[] indicesCalibratedParams = {0, /*1, 2,*/ 3, 4, 5};
+		int[] indicesCalibratedParams = {/*0, 1, */ 2, 3, 4, 5};
 		calibratedParameters = LNSVQDModelCalibrator.calibrate(paramVector, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
 
+		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
 		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
 		impliedVolSurface.printVolSurfaceForOutput();
 	}
@@ -114,12 +116,16 @@ public class LNSVQDModelCalibratorTest {
 	/**
 	 * Print calibrated surface
 	 */
-	/*@Test
+	@Test
 	public void printCalibratedSurface() throws Exception {
 		setTargetSurface();
+
+		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
+				new LNSVQDModelAnalyticalPricer(spot0, paramVector[0], paramVector[1], paramVector[2], paramVector[3], paramVector[4], paramVector[5], 0, valuationDate, equityForwardStructure);
+
 		VolatilityPointsSurface modelImpliedVolatilitySurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
 		modelImpliedVolatilitySurface.printVolSurfaceForOutput();
-	}*/
+	}
 
 	/**
 	 * UTILS
@@ -155,18 +161,18 @@ public class LNSVQDModelCalibratorTest {
 		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 1.20, 0.1164, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 1.40, 0.1341, spot0));
 		/*volatilityPoints.add(makeVolatilityPoint("2025-09-19", 0.60, 0.3028, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 0.80, 0.2239, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 1.00, 0.1575, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 1.20, 0.1198, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 1.40, 0.1307, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 0.60, 0.2908, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 0.80, 0.2204, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 1.00, 0.1625, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 1.20, 0.1279, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 1.40, 0.1322, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 0.60, 0.2725, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 0.80, 0.2127, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 1.00, 0.1645, lnsvqdModelAnalyticalPricer.getSpot0()));
+		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 0.80, 0.2239, lnsvqdModelAnalyticalPricer.getSpot0()));*/
+		/*volatilityPoints.add(makeVolatilityPoint("2025-09-19", 1.00, 0.1575, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 1.20, 0.1198, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 1.40, 0.1307, spot0));*/
+		/*volatilityPoints.add(makeVolatilityPoint("2025-12-19", 0.60, 0.2908, lnsvqdModelAnalyticalPricer.getSpot0()));
+		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 0.80, 0.2204, lnsvqdModelAnalyticalPricer.getSpot0()));*/
+		/*volatilityPoints.add(makeVolatilityPoint("2025-12-19", 1.00, 0.1625, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 1.20, 0.1279, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 1.40, 0.1322, spot0));*/
+		/*volatilityPoints.add(makeVolatilityPoint("2026-06-19", 0.60, 0.2725, lnsvqdModelAnalyticalPricer.getSpot0()));
+		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 0.80, 0.2127, lnsvqdModelAnalyticalPricer.getSpot0()));*/
+		/*volatilityPoints.add(makeVolatilityPoint("2026-06-19", 1.00, 0.1645, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 1.20, 0.1331, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 1.40, 0.1296, lnsvqdModelAnalyticalPricer.getSpot0()));
 		volatilityPoints.add(makeVolatilityPoint("2026-12-18", 0.60, 0.2649, lnsvqdModelAnalyticalPricer.getSpot0()));
@@ -191,7 +197,7 @@ public class LNSVQDModelCalibratorTest {
 
 	private VolatilityPoint makeVolatilityPoint(String date, double percentage, double volatility, double spot) {
 		LocalDate maturity = LocalDate.parse(date);
-		double strike = percentage * spot;
+		double strike = percentage * spot * equityForwardStructure.getForward(maturity);
 		return new VolatilityPoint(maturity, strike, volatility);
 	}
 
