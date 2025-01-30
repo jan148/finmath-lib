@@ -27,17 +27,13 @@ public class LNSVQDModelCalibratorTest {
 	 */
 	LocalDate valuationDate = LocalDate.parse("2024-09-30");
 	double spot0 = 19324.93;
-	/*Calibration started. Initial cost: 0.004027778464451843
-	Initial params: 0.227	4.9325	18.855	0.2616	-1.8123	0.9832
-	Calibration ended. Final cost: 2.0198875216494906E-4
-	Final params:0.17367338811730074	4.9325	18.855	0.13200629820313045	-0.1936567775915406	-0.17838275289288*/
 	double[] paramVector = new double[]{
-			.16495890948334133,
-			9.827774639600806,
-			-4.660220197140458,
-			0.13194185347453125,
-			-1.5027942253508553,
-			1.841300995296123	// -0.17838275289288
+			0.16778079819183128,
+			10.84439280484746,
+			11.081415266404194,
+			0.14585436051519188,
+			-2.714462050910902,
+			2.6723715330684525
 	};
 
 	/**
@@ -105,7 +101,14 @@ public class LNSVQDModelCalibratorTest {
 		 * 1. Calibrate and get cvalibrated paramerters
 		 */
 		double[] calibratedParameters;
-		int[] indicesCalibratedParams = {/*0, 1, */ 2, 3, 4, 5};
+		int[] indicesCalibratedParams = {
+				0
+				/*, 1
+				, 2*/
+				, 3
+				, 4
+				, 5
+		};
 		calibratedParameters = LNSVQDModelCalibrator.calibrate(paramVector, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
 
 		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
@@ -135,61 +138,61 @@ public class LNSVQDModelCalibratorTest {
 		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();
 
 		// Create and adf volatility points
-		/*volatilityPoints.add(makeVolatilityPoint("2024-10-18", 0.60, 0.6097, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2024-10-18", 0.80, 0.3665, lnsvqdModelAnalyticalPricer.getSpot0()));*/
+		volatilityPoints.add(makeVolatilityPoint("2024-10-18", 0.60, 0.6097, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2024-10-18", 0.80, 0.3665, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2024-10-18", 1.00, 0.1374, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2024-10-18", 1.20, 0.212, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2024-10-18", 1.40, 0.319, spot0));
-		/*volatilityPoints.add(makeVolatilityPoint("2024-11-15", 0.60, 0.476, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2024-11-15", 0.80, 0.3061, lnsvqdModelAnalyticalPricer.getSpot0()));*/
+		volatilityPoints.add(makeVolatilityPoint("2024-11-15", 0.60, 0.476, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2024-11-15", 0.80, 0.3061, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2024-11-15", 1.00, 0.1508, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2024-11-15", 1.20, 0.1568, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2024-11-15", 1.40, 0.2238, spot0));
-		/*volatilityPoints.add(makeVolatilityPoint("2024-12-20", 0.60, 0.4171, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 0.80, 0.2762, lnsvqdModelAnalyticalPricer.getSpot0()));*/
+		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 0.60, 0.4171, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 0.80, 0.2762, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 1.00, 0.1493, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 1.20, 0.1359, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2024-12-20", 1.40, 0.1878, spot0));
-		/*volatilityPoints.add(makeVolatilityPoint("2025-03-21", 0.60, 0.3471, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-03-21", 0.80, 0.2427, lnsvqdModelAnalyticalPricer.getSpot0()));*/
+		volatilityPoints.add(makeVolatilityPoint("2025-03-21", 0.60, 0.3471, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-03-21", 0.80, 0.2427, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2025-03-21", 1.00, 0.1511, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2025-03-21", 1.20, 0.1162, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2025-03-21", 1.40, 0.1464, spot0));
-		/*volatilityPoints.add(makeVolatilityPoint("2025-06-20", 0.60, 0.3159, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 0.80, 0.2289, lnsvqdModelAnalyticalPricer.getSpot0()));*/
+		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 0.60, 0.3159, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 0.80, 0.2289, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 1.00, 0.1545, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 1.20, 0.1164, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2025-06-20", 1.40, 0.1341, spot0));
-		/*volatilityPoints.add(makeVolatilityPoint("2025-09-19", 0.60, 0.3028, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 0.80, 0.2239, lnsvqdModelAnalyticalPricer.getSpot0()));*/
-		/*volatilityPoints.add(makeVolatilityPoint("2025-09-19", 1.00, 0.1575, spot0));
+		/*volatilityPoints.add(makeVolatilityPoint("2025-09-19", 0.60, 0.3028, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 0.80, 0.2239, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 1.00, 0.1575, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 1.20, 0.1198, spot0));
-		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 1.40, 0.1307, spot0));*/
-		/*volatilityPoints.add(makeVolatilityPoint("2025-12-19", 0.60, 0.2908, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 0.80, 0.2204, lnsvqdModelAnalyticalPricer.getSpot0()));*/
-		/*volatilityPoints.add(makeVolatilityPoint("2025-12-19", 1.00, 0.1625, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-09-19", 1.40, 0.1307, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 0.60, 0.2908, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 0.80, 0.2204, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 1.00, 0.1625, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 1.20, 0.1279, spot0));
-		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 1.40, 0.1322, spot0));*/
-		/*volatilityPoints.add(makeVolatilityPoint("2026-06-19", 0.60, 0.2725, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 0.80, 0.2127, lnsvqdModelAnalyticalPricer.getSpot0()));*/
-		/*volatilityPoints.add(makeVolatilityPoint("2026-06-19", 1.00, 0.1645, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 1.20, 0.1331, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 1.40, 0.1296, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2026-12-18", 0.60, 0.2649, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2026-12-18", 0.80, 0.2104, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2026-12-18", 1.00, 0.167, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2026-12-18", 1.20, 0.1383, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2026-12-18", 1.40, 0.1321, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2027-06-18", 0.60, 0.2584, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2027-06-18", 0.80, 0.2087, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2027-06-18", 1.00, 0.1694, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2027-06-18", 1.20, 0.1424, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2027-06-18", 1.40, 0.1333, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 0.60, 0.2544, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 0.80, 0.2079, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.00, 0.1714, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.20, 0.1458, lnsvqdModelAnalyticalPricer.getSpot0()));
-		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.40, 0.1351, lnsvqdModelAnalyticalPricer.getSpot0()));*/
+		volatilityPoints.add(makeVolatilityPoint("2025-12-19", 1.40, 0.1322, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 0.60, 0.2725, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 0.80, 0.2127, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 1.00, 0.1645, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 1.20, 0.1331, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2026-06-19", 1.40, 0.1296, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2026-12-18", 0.60, 0.2649, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2026-12-18", 0.80, 0.2104, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2026-12-18", 1.00, 0.167, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2026-12-18", 1.20, 0.1383, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2026-12-18", 1.40, 0.1321, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2027-06-18", 0.60, 0.2584, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2027-06-18", 0.80, 0.2087, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2027-06-18", 1.00, 0.1694, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2027-06-18", 1.20, 0.1424, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2027-06-18", 1.40, 0.1333, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 0.60, 0.2544, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 0.80, 0.2079, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.00, 0.1714, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.20, 0.1458, spot0));
+		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.40, 0.1351, spot0));*/
 
 		// Create volatility surface
 		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);

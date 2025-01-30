@@ -715,6 +715,60 @@ public class AnalyticFormulas {
 		}
 	}
 
+	// Same for put
+	public static double blackScholesOptionImpliedVolatilityFromPut(
+			final double forward,
+			final double optionMaturity,
+			final double optionStrike,
+			final double payoffUnit,
+			final double optionValue)
+	{
+		// Limit the maximum number of iterations, to ensure this calculation returns fast, e.g. in cases when there is no such thing as an implied vol
+		// TODO An exception should be thrown, when there is no implied volatility for the given value.
+		final int		maxIterations	= 100;
+		final double	maxAccuracy		= 1E-15;
+
+		if(optionStrike <= 0.0)
+		{
+			// Actually it is not an option
+			return 0.0;
+		}
+		else
+		{
+			// Calculate an lower and upper bound for the volatility
+			final double p = NormalDistribution.inverseCumulativeDistribution((optionValue/payoffUnit+optionStrike)/(forward+optionStrike)) / Math.sqrt(optionMaturity);
+			final double q = 2.0 * Math.abs(Math.log(forward/optionStrike)) / optionMaturity;
+
+			final double volatilityLowerBound = p + Math.sqrt(Math.max(p * p - q, 0.0));
+			final double volatilityUpperBound = p + Math.sqrt(         p * p + q      );
+
+			// If strike is close to forward the two bounds are close to the analytic solution
+			if(Math.abs(volatilityLowerBound - volatilityUpperBound) < maxAccuracy) {
+				return (volatilityLowerBound+volatilityUpperBound) / 2.0;
+			}
+
+			// Solve for implied volatility
+			final NewtonsMethod solver = new NewtonsMethod(0.5*(volatilityLowerBound+volatilityUpperBound) /* guess */);
+			while(solver.getAccuracy() > maxAccuracy && !solver.isDone() && solver.getNumberOfIterations() < maxIterations) {
+				final double volatility = solver.getNextPoint();
+
+				// Calculate analytic value
+				final double dPlus                = (Math.log(forward / optionStrike) + 0.5 * volatility * volatility * optionMaturity) / (volatility * Math.sqrt(optionMaturity));
+				final double dMinus               = dPlus - volatility * Math.sqrt(optionMaturity);
+				// Change here
+				final double valueAnalytic		= (-forward * NormalDistribution.cumulativeDistribution(-dPlus) + optionStrike * NormalDistribution.cumulativeDistribution(-dMinus)) * payoffUnit;
+				// By PC-parity: put vegas and call vegas are the same
+				final double derivativeAnalytic	= forward * Math.sqrt(optionMaturity) * Math.exp(-0.5*dPlus*dPlus) / Math.sqrt(2.0*Math.PI) * payoffUnit;
+
+				final double error = valueAnalytic - optionValue;
+
+				solver.setValueAndDerivative(error,derivativeAnalytic);
+			}
+
+			return solver.getBestPoint();
+		}
+	}
+
 	/**
 	 * Calculates the Black-Scholes option value of a digital call option.
 	 *

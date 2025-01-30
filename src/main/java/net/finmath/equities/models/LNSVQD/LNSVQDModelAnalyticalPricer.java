@@ -410,6 +410,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			 * Get real part, multiply with factor
 			 */
 			double optionPrice = spot0 - (discountFactor * strike / Math.PI) * result;
+			// PC-parity
 			if(!isCall) {
 				optionPrice -= discountFactor * (forward - strike);
 			}
@@ -460,10 +461,16 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			double ttm = dayCountConvention.getDaycountFraction(today, maturity);
 			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
 			double forward = equityForwardStructure.getForward(ttm) * spot0;
-			double price = optionPrices[i];
 
-			double impliedVol = AnalyticFormulas.blackScholesOptionImpliedVolatility
-					(forward, ttm, strike, discountFactor, price);
+			double price = optionPrices[i];
+			// Use put-prices for itm-call region
+			if(strike < forward) {
+				price = price - spot0 + strike * discountFactor;
+			}
+
+			double impliedVol = strike >= forward ?
+					AnalyticFormulas.blackScholesOptionImpliedVolatility(forward, ttm, strike, discountFactor, price)
+					: AnalyticFormulas.blackScholesOptionImpliedVolatilityFromPut(forward, ttm, strike, discountFactor, price);
 			volatilityPoints.add(new VolatilityPoint(maturity, strike, impliedVol));
 		}
 

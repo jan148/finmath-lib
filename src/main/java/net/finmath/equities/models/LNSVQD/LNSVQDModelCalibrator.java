@@ -9,6 +9,7 @@ import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.util.Pair;
 
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
@@ -47,8 +48,8 @@ public class LNSVQDModelCalibrator {
 		}
 
 		// Optimization algorithm parameters
-		final int maxIteration = 50;
-		final int maxEvaluations = 100;
+		final int maxIteration = 100;
+		final int maxEvaluations = 200;
 		AtomicInteger iterationCount = new AtomicInteger(0);
 
 		double[] calibratedParameters = initialVolatilityParameters.clone();
@@ -71,6 +72,10 @@ public class LNSVQDModelCalibrator {
 			for(int i = 0; i < params.getDimension(); i++) {
 				paramsFull[parameterIndices[i]] = params.getEntry(i);
 			}
+
+			System.out.print("Current params: ");
+			LNSVQDUtils.printArray(Arrays.stream(paramsFull).toArray());
+
 			lnsvqdModelAnalyticalPricer.setVolatilityParameters(paramsFull);
 			double[] impliedVols;
 			try {
