@@ -220,7 +220,7 @@ public final class Black76Model {
 		assert beta >= 0.0 && beta <= bMax : "The price " + undiscountedPrice
 				+ "is not attainable in Black-Scholes given the other parameters provided.";
 		if (x == 0.0) {
-			return 2.0 * NormalDistribution.inverseCumulativeDistribution(0.5 * (beta + 1.0)) * Math.sqrt(optionMaturity);
+			return 2.0 * NormalDistribution.inverseCumulativeDistribution(0.5 * (beta + 1.0)) / Math.sqrt(optionMaturity);
 		}
 		// Initial guess using rational interpolation
 		final double sqrtPi = Math.sqrt(2.0 * Math.PI);
