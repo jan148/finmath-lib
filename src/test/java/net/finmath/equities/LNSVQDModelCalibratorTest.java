@@ -4,13 +4,11 @@ import net.finmath.equities.marketdata.AffineDividend;
 import net.finmath.equities.marketdata.AffineDividendStream;
 import net.finmath.equities.marketdata.VolatilityPoint;
 import net.finmath.equities.marketdata.YieldCurve;
+import net.finmath.equities.models.Black76Model;
 import net.finmath.equities.models.BuehlerDividendForwardStructure;
 import net.finmath.equities.models.EquityForwardStructure;
-import net.finmath.equities.models.LNSVQD.LNSVQDModel;
+import net.finmath.equities.models.LNSVQD.*;
 import net.finmath.equities.models.VolatilityPointsSurface;
-import net.finmath.equities.models.LNSVQD.LNSVQDModelAnalyticalPricer;
-import net.finmath.equities.models.LNSVQD.LNSVQDModelCalibrator;
-import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import net.finmath.functions.AnalyticFormulas;
 import net.finmath.optimizer.SolverException;
 import net.finmath.time.daycount.DayCountConvention;
@@ -19,6 +17,7 @@ import org.junit.Test;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 public class LNSVQDModelCalibratorTest {
@@ -34,6 +33,25 @@ public class LNSVQDModelCalibratorTest {
 			0.14585436051519188,
 			-2.714462050910902,
 			2.6723715330684525
+	};
+
+	// 0.17971557337087685	2.166285310451572	0.0	0.11259391112260439	-1.1521366420370178	1.211288
+	double[] paramVectorHeston = new double[]{
+			0.156642865,
+			4,
+			0,
+			0.191510584,
+			-0.81402,
+			1.211288
+	};
+
+	double[] paramVectorHestonNotUsed = new double[]{
+			.19095902555549293,
+			1.595312176431141,
+			0,
+			.10219241040931401,
+			-1.009187596625914,
+			0.9910223497930533
 	};
 
 	/**
@@ -116,6 +134,40 @@ public class LNSVQDModelCalibratorTest {
 		impliedVolSurface.printVolSurfaceForOutput();
 	}
 
+	@Test
+	public void calibrateTestHeston() throws Exception {
+		setTargetSurfaceHeston();
+
+		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
+				new LNSVQDModelAnalyticalPricer(
+						spot0
+						, paramVectorHeston[0]
+						, paramVectorHeston[1]
+						, paramVectorHeston[2]
+						, paramVectorHeston[3]
+						, paramVectorHeston[4]
+						, paramVectorHeston[5]
+						, 0, valuationDate, equityForwardStructure);
+
+		/**
+		 * 1. Calibrate and get cvalibrated paramerters
+		 */
+		double[] calibratedParameters;
+		int[] indicesCalibratedParams = {
+				0
+				/*, 1
+				, 2*/
+				, 3
+				, 4
+				, 5
+		};
+		calibratedParameters = LNSVQDModelCalibrator.calibrate(paramVectorHeston, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
+
+		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
+		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
+		impliedVolSurface.printVolSurfaceForOutput();
+	}
+
 	/**
 	 * Print calibrated surface
 	 */
@@ -128,6 +180,32 @@ public class LNSVQDModelCalibratorTest {
 
 		VolatilityPointsSurface modelImpliedVolatilitySurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
 		modelImpliedVolatilitySurface.printVolSurfaceForOutput();
+	}
+
+	@Test
+	public void printCalibratedSurfaceMC() throws Exception {
+		setTargetSurfaceHeston();
+
+		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
+				new LNSVQDModelAnalyticalPricer(spot0, paramVectorHeston[0], paramVectorHeston[1], paramVectorHeston[2], paramVectorHeston[3], paramVectorHeston[4], paramVectorHeston[5], 0, valuationDate, equityForwardStructure);
+
+		for(VolatilityPoint volPoint : volatilityPointsSurface.getVolatilityPoints()) {
+			LocalDate maturity = volPoint.getDate();
+			double ttm = dayCountConvention.getDaycountFraction(valuationDate, maturity);
+			double strike = volPoint.getStrike();
+			double forward = equityForwardStructure.getForward(ttm) * spot0;
+			double discFac = equityForwardStructure.getRepoCurve().getDiscountFactor(ttm);
+			double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
+					ttm, (int) Math.round(ttm * 365.));
+			LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, 100000, timeGrid);
+			lnsvqdCallPriceSimulator.precalculatePaths(35425);
+			double price = lnsvqdCallPriceSimulator.getCallPrice(strike);
+			double impliedVol = Black76Model.optionImpliedVolatility(forward, strike, ttm, price / discFac, true);
+			System.out.println("MC implied vols" );{
+				System.out.print(maturity + "\t" + strike + "\t" + impliedVol);
+				System.out.print("\n");
+			}
+		}
 	}
 
 	/**
@@ -193,6 +271,59 @@ public class LNSVQDModelCalibratorTest {
 		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.00, 0.1714, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.20, 0.1458, spot0));
 		volatilityPoints.add(makeVolatilityPoint("2027-12-17", 1.40, 0.1351, spot0));*/
+
+		// Create volatility surface
+		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);
+	}
+
+
+	private void setTargetSurfaceHeston() {
+		double[] ttms = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
+		LocalDate[] dates = Arrays.stream(ttms).mapToObj(ttm -> {
+					long days = Math.round(ttm * 365);
+					return valuationDate.plusDays(days);}).toArray(LocalDate[]::new);
+
+		// Initialize volatilityPoints
+		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();
+		/*0.401531086	0.262002147	0.147047443	0.131142026	0.182123154
+		0.33754687	0.23199757	0.145062873	0.117617253	0.147591954
+		0.30729848	0.218394871	0.146522784	0.117841898	0.137581478
+		0.293414523	0.213139202	0.149207569	0.120862294	0.134960126
+		0.280989633	0.20937458	0.15356843	0.126817863	0.135592582
+		0.269761611	0.204298557	0.153865947	0.128339944	0.133914086*/
+
+		// Create and adf volatility points
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 0.60, 0.401531086, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 0.80, 0.262002147, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.00, 0.147047443, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.20, 0.131142026, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.40, 0.182123154, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 0.60, 0.33754687, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 0.80, 0.23199757, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.00, 0.145062873, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.20, 0.117617253, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.40, 0.147591954, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 0.60, 0.30729848, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 0.80, 0.218394871, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.00, 0.146522784, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.20, 0.117841898, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.40, 0.137581478, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 0.60, 0.293414523, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 0.80, 0.213139202, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.00, 0.149207569, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.20, 0.120862294, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.40, 0.134960126, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 0.60, 0.280989633, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 0.80, 0.20937458, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.00, 0.15356843, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.20, 0.126817863, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.40, 0.135592582, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 0.60, 0.269761611, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 0.80, 0.204298557, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.00, 0.153865947, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.20, 0.128339944, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.40, 0.133914086, spot0));
+
 
 		// Create volatility surface
 		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);

@@ -69,7 +69,7 @@ public class LNSVQDCallPriceSimulatorTest {
 		int numberOfPaths = 100000;
 		// Get option values
 		double spot = 1;
-		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.2, 1, 4);
+		double[] maturityGrid = LNSVQDUtils.createTimeGrid(0.25, 1.5, 5);
 		double[] strikes = LNSVQDUtils.createTimeGrid(0.6, 1.4, 4);
 		double[] relativeErrors = new double[maturityGrid.length];
 

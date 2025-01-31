@@ -108,7 +108,7 @@ public class LNSVQDCallPriceSimulator {
 	}
 
 	public double getCallPrice(double strike) {
-		double discountFactor = Math.exp(-lnsvqdModel.getRiskFreeRate(0) * timeGrid[timeGrid.length - 1]); // Todo: Change (not index 0)!
+		double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(timeGrid[timeGrid.length - 1]); // Todo: Change (not index 0)!
 		double expectationAtMaturity = Arrays.stream(path[0][timeGrid.length - 1])
 				.map(x -> Math.max(x - strike, 0)).average().getAsDouble();
 		double price = expectationAtMaturity * discountFactor;

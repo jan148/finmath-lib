@@ -6,6 +6,8 @@ import net.finmath.time.daycount.DayCountConvention;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * This class implements the volatility interfaces for a non-flat volatility surface.
@@ -26,6 +28,7 @@ public class VolatilityPointsSurface implements VolatilitySurface, ShiftedVolati
 
 	public VolatilityPointsSurface(ArrayList<VolatilityPoint> volatilityPoints, LocalDate today, DayCountConvention dayCountConvention, double volShift) {
 		this.volatilityPoints = volatilityPoints;
+		sortVolaPoints();
 		volatilityPoints.forEach(volatilityPoint -> {
 			volatilityDates.add(volatilityPoint.getDate());
 			strikes.add(volatilityPoint.getStrike());
@@ -138,6 +141,23 @@ public class VolatilityPointsSurface implements VolatilitySurface, ShiftedVolati
 		for(VolatilityPoint volatilityPoint : volatilityPoints) {
 			System.out.println(volatilityPoint.getDate() + "\t" + volatilityPoint.getStrike() + "\t" + volatilityPoint.getVolatility());
 		}
+	}
+
+	private void sortVolaPoints() {
+		Comparator<VolatilityPoint> comparator = new Comparator<VolatilityPoint>() {
+			@Override
+			public int compare(VolatilityPoint o1, VolatilityPoint o2) {
+				if(o1.getDate().isBefore(o2.getDate())) {
+					return -1;
+				} else if(o1.getDate().isEqual(o2.getDate()) && o1.getStrike() < o2.getStrike()) {
+					return -1;
+				} else {
+					return 1;
+				}
+			}
+		};
+
+		Collections.sort(volatilityPoints, comparator);
 	}
 
 }

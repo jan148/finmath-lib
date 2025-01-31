@@ -20,7 +20,7 @@ import java.util.stream.IntStream;
 
 public class LNSVQDModelCalibrator {
 
-	static double shiftSize = 1E-6;
+	static double shiftSize = 1E-8;
 
 	public static double[] calibrate(final double[] initialVolatilityParameters,
 	                                 int[] parameterIndices,
@@ -40,6 +40,7 @@ public class LNSVQDModelCalibrator {
 		System.out.println("Calibration started. Initial cost: " + initialCost);
 		System.out.print("Initial params: ");
 		LNSVQDUtils.printArray(initialVolatilityParameters);
+		System.out.println("-------------------------------------");
 
 		// Create list of parameters that should be calibrated
 		double[] initialVolatilityParametersToCalibrate = new double[parameterIndices.length];
