@@ -10,6 +10,10 @@ import net.finmath.equities.models.LNSVQD.LNSVQDCallPriceSimulator;
 import net.finmath.equities.models.LNSVQD.LNSVQDModelAnalyticalPricer;
 import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import net.finmath.equities.models.VolatilityPointsSurface;
+import net.finmath.montecarlo.RandomVariableFactory;
+import net.finmath.montecarlo.RandomVariableFromArrayFactory;
+import net.finmath.time.TimeDiscretization;
+import net.finmath.time.TimeDiscretizationFromArray;
 import net.finmath.time.daycount.DayCountConvention;
 import net.finmath.time.daycount.DayCountConvention_ACT_365;
 import org.junit.jupiter.api.BeforeEach;
@@ -125,9 +129,9 @@ public abstract class TestsSetupForLNSVQD {
 					, 0, valuationDate, equityForwardStructure);
 
 	/**
-	 * Create simulation model
+	 * Create simulation model (not finmath)
 	 */
-	int numberOfPaths = 200000;
+	int numberOfPaths = 100000;
 	// TODO: Discounts dates should be decoupled from maturities
 	double[] maturityGrid = Arrays.stream(discountDates)
 			.mapToDouble(date -> dayCountConvention.getDaycountFraction(valuationDate, date))
@@ -147,6 +151,12 @@ public abstract class TestsSetupForLNSVQD {
 			.toArray();
 	LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator =
 			new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGridForSimulation);
+
+	/**
+	 * Create simulation model (finmath)
+	 */
+	TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGridForSimulation);
+	RandomVariableFactory randomVariableFactory = new RandomVariableFromArrayFactory();
 
 	/**
 	 * Declare volatility surface; will be insatntiated later

@@ -8,6 +8,7 @@ import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import net.finmath.exception.CalculationException;
 import net.finmath.functions.AnalyticFormulas;
 import net.finmath.montecarlo.BrownianMotionFromMersenneRandomNumbers;
+import net.finmath.montecarlo.BrownianMotionFromRandomNumberGenerator;
 import net.finmath.montecarlo.RandomVariableFactory;
 import net.finmath.montecarlo.RandomVariableFromArrayFactory;
 import net.finmath.montecarlo.assetderivativevaluation.MonteCarloLNSVQDModel;
@@ -47,6 +48,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 		double[][] pricesBS = new double[maturityGrid.length][strikes.length];
 		double[][] pricesMC = new double[maturityGrid.length][strikes.length];
+		double[][] pricesMCFinmath = new double[maturityGrid.length][strikes.length];
 		// Get analytical prices
 		double[] pricesAnalytical = lnsvqdModelAnalyticalPricer.getEuropeanOptionPrices(strikeMaturityPairs, true);
 
@@ -64,6 +66,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 				List<Integer> seeds = random.ints(5).boxed().collect(Collectors.toList());
 				double[] prices = new double[seeds.size()];
+				double[] pricesFm = new double[seeds.size()];
 
 				// For statistics
 				TDistribution tDistribution = new TDistribution(seeds.size() - 1);
@@ -73,10 +76,20 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 					lnsvqdCallPriceSimulator.precalculatePaths(seed);
 					double simulatedOptionPrice = lnsvqdCallPriceSimulator.getCallPrice(strike, maturity);
 					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
+
+					// Price for finmath implementation
+					// BrownianMotionFromMersenneRandomNumbers brownianMotion = new BrownianMotionFromMersenneRandomNumbers(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
+					BrownianMotionFromRandomNumberGenerator brownianMotion = new BrownianMotionFromRandomNumberGenerator(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
+					LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdModelAnalyticalPricer, brownianMotion);
+					MonteCarloLNSVQDModel monteCarloLNSVQDModel = new MonteCarloLNSVQDModel(lnsvqdDiscretizationScheme, seed);
+					EuropeanOption europeanOption = new EuropeanOption(maturity, strike, 1, 0);
+					pricesFm[seeds.indexOf(seed)] = europeanOption.getValue(monteCarloLNSVQDModel);
 				}
 
 				double averagePrice = Arrays.stream(prices).average().getAsDouble();
+				double averagePriceFm = Arrays.stream(prices).average().getAsDouble();
 				pricesMC[m][s] = averagePrice;
+				pricesMCFinmath[m][s] = averagePrice;
 				/*double relativeError = Math.abs(averagePrice - lnsvqdOptionValue) / lnsvqdOptionValue;
 				double stdError = standardDeviation.evaluate(prices);
 
@@ -94,6 +107,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 				System.out.println("ANA: " + pricesAnalytical[m * strikes.length + s] + "\t"
 						+ "MC: " + pricesMC[m][s] + "\t"
+						+ "MC finmath: " + pricesMCFinmath[m][s] + "\t"
 						+ "BS: " + pricesBS[m][s]);
 			}
 
@@ -127,6 +141,16 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 			System.out.print(maturity + "\t");
 			for(int s = 0; s < strikes.length; s++) {
 				System.out.print(pricesBS[m][s] + "\t");
+			}
+			System.out.print("\n");
+		}
+
+		System.out.println("Mc prices finmath");
+		for(int m = 0; m < maturityGrid.length; m++) {
+			double maturity = maturityGrid[m];
+			System.out.print(maturity + "\t");
+			for(int s = 0; s < strikes.length; s++) {
+				System.out.print(pricesMCFinmath[m][s] + "\t");
 			}
 			System.out.print("\n");
 		}
