@@ -99,6 +99,8 @@ public class LNSVQDUtils {
 		for(int j = 1; j <= steps; j++) {
 			timeGrid[j] = timeGrid[j - 1] + stepSize;
 		}
+		// TODO: A cheat, change later; problem is precision
+		timeGrid[steps] = tEnd;
 		return timeGrid;
 	}
 

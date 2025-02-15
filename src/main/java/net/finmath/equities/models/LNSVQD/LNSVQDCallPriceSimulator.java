@@ -67,7 +67,8 @@ public class LNSVQDCallPriceSimulator {
 		for(int i = 1; i < timeGrid.length; i++) {
 			double deltaT = timeGrid[i] - timeGrid[i - 1];
 			double sqrtDeltaT = Math.sqrt(deltaT);
-			double discountFactor = Math.exp(-lnsvqdModel.getRiskFreeRate(timeGrid[i]) * deltaT);
+			double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(timeGrid[i - 1]);
+			double discountFactorCurrent = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(timeGrid[i]);
 			double[][] brownianIncrements = new double[numberOfPaths][2];
 			// Fill Paths
 			for(int j = 0; j < numberOfPaths; j++) {
@@ -105,7 +106,7 @@ public class LNSVQDCallPriceSimulator {
 				double assetPrev = path[0][i - 1][j];
 				double assetTransformed = Math.log(assetPrev * discountFactor);
 				assetTransformed += Math.pow(volPrev, 2) * (-0.5) * deltaT + volPrev * brownianIncrements[j][0];
-				path[0][i][j] = Math.exp(assetTransformed) / discountFactor;
+				path[0][i][j] = Math.exp(assetTransformed) / discountFactorCurrent;
 			}
 		}
 	}

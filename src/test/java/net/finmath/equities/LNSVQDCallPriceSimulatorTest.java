@@ -1,17 +1,31 @@
 package net.finmath.equities;
 
+import net.finmath.equities.models.Black76Model;
 import net.finmath.equities.models.LNSVQD.LNSVQDCallPriceSimulator;
+import net.finmath.equities.models.LNSVQD.LNSVQDModel;
+import net.finmath.equities.models.LNSVQD.LNSVQDModelAnalyticalPricer;
 import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import net.finmath.exception.CalculationException;
 import net.finmath.functions.AnalyticFormulas;
+import net.finmath.montecarlo.BrownianMotionFromMersenneRandomNumbers;
+import net.finmath.montecarlo.RandomVariableFactory;
+import net.finmath.montecarlo.RandomVariableFromArrayFactory;
+import net.finmath.montecarlo.assetderivativevaluation.MonteCarloLNSVQDModel;
+import net.finmath.montecarlo.assetderivativevaluation.products.EuropeanOption;
+import net.finmath.montecarlo.process.LNSVQDDiscretizationScheme;
+import net.finmath.time.TimeDiscretization;
+import net.finmath.time.TimeDiscretizationFromArray;
 import org.apache.commons.math3.distribution.TDistribution;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.util.Pair;
 import org.junit.Test;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.ForkJoinPool;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -31,38 +45,59 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 		List<Pair<Double, Double>> strikeMaturityPairs = LNSVQDUtils.create2dMesh(maturityGrid, strikes);
 		//double[] relativeErrors = new double[maturityGrid.length];
 
+		double[][] pricesBS = new double[maturityGrid.length][strikes.length];
+		double[][] pricesMC = new double[maturityGrid.length][strikes.length];
 		// Get analytical prices
 		double[] pricesAnalytical = lnsvqdModelAnalyticalPricer.getEuropeanOptionPrices(strikeMaturityPairs, true);
 
-		// Get MC-prices
-		List<Integer> seeds = random.ints(5).boxed().collect(Collectors.toList());
-		// seeds * maturities * strikes
-		double[][][] pricesMCPerSeed = new double[seeds.size()][maturityGrid.length][strikes.length];
-
-		for(int j = 0; j < seeds.size(); j++) {
-			int seed = seeds.get(j);
-			lnsvqdCallPriceSimulator.precalculatePaths(seed);
-			for(int m = 0; m < maturityGrid.length; m++) {
-				double maturity = maturityGrid[m];
-				for(int s = 0; s < strikes.length; s++) {
-					double strike = strikes[s];
-					pricesMCPerSeed[j][m][s] = lnsvqdCallPriceSimulator.getCallPrice(strike, maturity);
-				}
-			}
-		}
-
-		double[][] pricesMC = new double[maturityGrid.length][strikes.length];
 		for(int m = 0; m < maturityGrid.length; m++) {
-			int finalM = m;
+			double maturity = maturityGrid[m];
+			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
+			double forward = spot0 / discountFactor;
+			double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
+					maturity, (int) Math.round(maturity * 365.));
 			for(int s = 0; s < strikes.length; s++) {
-				int finalS = s;
-				pricesMC[m][s] = IntStream.range(0, seeds.size())
-						.mapToDouble(i -> pricesMCPerSeed[i][finalM][finalS])
-						.average()
-						.getAsDouble();
-			}
-		}
+				double strike = strikes[s];
 
+				// BS value
+				pricesBS[m][s] = Black76Model.optionPrice(forward, strike, maturity, selectedParams[0], true, discountFactor);
+
+				List<Integer> seeds = random.ints(5).boxed().collect(Collectors.toList());
+				double[] prices = new double[seeds.size()];
+
+				// For statistics
+				TDistribution tDistribution = new TDistribution(seeds.size() - 1);
+
+				for(int seed : seeds) {
+					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid);
+					lnsvqdCallPriceSimulator.precalculatePaths(seed);
+					double simulatedOptionPrice = lnsvqdCallPriceSimulator.getCallPrice(strike, maturity);
+					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
+				}
+
+				double averagePrice = Arrays.stream(prices).average().getAsDouble();
+				pricesMC[m][s] = averagePrice;
+				/*double relativeError = Math.abs(averagePrice - lnsvqdOptionValue) / lnsvqdOptionValue;
+				double stdError = standardDeviation.evaluate(prices);
+
+				double tQuantile = tDistribution.inverseCumulativeProbability(0.975);
+				double lowerConfidenceBound = averagePrice - tQuantile * stdError / seeds.size();
+				double upperConfidenceBound = averagePrice + tQuantile * stdError / seeds.size();*/
+
+				/*System.out.println("Average price: " + Arrays.stream(prices).average().getAsDouble() + "; Relative error: " + relativeError
+						+ "; Lower 95%-bound: " + lowerConfidenceBound
+						+ "; Upper 95%-bound: " + upperConfidenceBound + "\n"
+						+ "; Analytical price " + lnsvqdOptionValue
+						+ "Analytical price in interval: " + (lowerConfidenceBound <= lnsvqdOptionValue && lnsvqdOptionValue <= upperConfidenceBound));
+*/
+				/*relativeErrors[m] = relativeError;*/
+
+				System.out.println("ANA: " + pricesAnalytical[m * strikes.length + s] + "\t"
+						+ "MC: " + pricesMC[m][s] + "\t"
+						+ "BS: " + pricesBS[m][s]);
+			}
+
+		}
 		/**
 		 * Print
 		 */
@@ -82,6 +117,16 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 			System.out.print(maturity + "\t");
 			for(int s = 0; s < strikes.length; s++) {
 				System.out.print(pricesMC[m][s] + "\t");
+			}
+			System.out.print("\n");
+		}
+
+		System.out.println("BS prices");
+		for(int m = 0; m < maturityGrid.length; m++) {
+			double maturity = maturityGrid[m];
+			System.out.print(maturity + "\t");
+			for(int s = 0; s < strikes.length; s++) {
+				System.out.print(pricesBS[m][s] + "\t");
 			}
 			System.out.print("\n");
 		}

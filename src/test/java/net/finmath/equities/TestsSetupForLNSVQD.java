@@ -31,12 +31,21 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create analytical model
 	 */
+	final double[] paramBlackScholes = new double[]{
+			0.2,
+			0,
+			0,
+			0,
+			0,
+			0
+	};
+
 	final double[] paramVectorLowVolOfVol = new double[]{
 			0.156642865,
 			4,
 			0,
 			0.191510584,
-			-2,
+			-0.2,
 			0.211288
 	};
 
@@ -58,7 +67,7 @@ public abstract class TestsSetupForLNSVQD {
 			1.53513925
 	};
 
-	double[] selectedParams = paramVectorLowVolOfVol;
+	double[] selectedParams = paramVectorCalibrated;
 
 	/**
 	 * Other
@@ -118,12 +127,12 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create simulation model
 	 */
-	int numberOfPaths = 100000;
+	int numberOfPaths = 200000;
 	// TODO: Discounts dates should be decoupled from maturities
 	double[] maturityGrid = Arrays.stream(discountDates)
 			.mapToDouble(date -> dayCountConvention.getDaycountFraction(valuationDate, date))
 			.toArray();
-	int numberPointsToInsert = (int) (maturityGrid[maturityGrid.length - 1] * 365 - maturityGrid.length);
+	int numberPointsToInsert = (int) (maturityGrid[maturityGrid.length - 1] * 365 * 2 - maturityGrid.length);
 	List<Double> timeGridForSimulationList;
 	{
 		try {
