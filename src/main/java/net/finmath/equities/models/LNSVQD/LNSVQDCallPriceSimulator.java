@@ -10,6 +10,9 @@ import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import org.apache.commons.math3.random.MersenneTwister;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class LNSVQDCallPriceSimulator {
 	LNSVQDModel lnsvqdModel;
@@ -48,7 +51,7 @@ public class LNSVQDCallPriceSimulator {
 		}
 	}
 
-
+	// !PATHS START WITH ZERO!
 	public void precalculatePaths(int seed) {
 		MersenneTwister mersenneTwister = new MersenneTwister(seed);
 		BrentOptimizer brentOptimizer = new BrentOptimizer(1e-8, 1e-8);
@@ -107,12 +110,14 @@ public class LNSVQDCallPriceSimulator {
 		}
 	}
 
-	public double getCallPrice(double strike) {
-		double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(timeGrid[timeGrid.length - 1]); // Todo: Change (not index 0)!
-		double expectationAtMaturity = Arrays.stream(path[0][timeGrid.length - 1])
+	public double getCallPrice(double strike, double maturity) throws Exception {
+		List<Double> list = Arrays.stream(timeGrid).boxed().collect(Collectors.toList());
+		int matIndex = list.indexOf(maturity);
+		if(matIndex == -1) {throw new Exception("Maturity not found!");}
+		double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(maturity); // Todo: Change (not index 0)!
+		double expectationAtMaturity = Arrays.stream(path[0][matIndex])
 				.map(x -> Math.max(x - strike, 0)).average().getAsDouble();
 		double price = expectationAtMaturity * discountFactor;
 		return price;
 	}
-
 }

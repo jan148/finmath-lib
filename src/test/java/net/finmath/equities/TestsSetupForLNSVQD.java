@@ -4,39 +4,43 @@ import net.finmath.equities.marketdata.AffineDividend;
 import net.finmath.equities.marketdata.AffineDividendStream;
 import net.finmath.equities.marketdata.VolatilityPoint;
 import net.finmath.equities.marketdata.YieldCurve;
-import net.finmath.equities.models.Black76Model;
 import net.finmath.equities.models.BuehlerDividendForwardStructure;
 import net.finmath.equities.models.EquityForwardStructure;
-import net.finmath.equities.models.LNSVQD.*;
+import net.finmath.equities.models.LNSVQD.LNSVQDCallPriceSimulator;
+import net.finmath.equities.models.LNSVQD.LNSVQDModelAnalyticalPricer;
+import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import net.finmath.equities.models.VolatilityPointsSurface;
-import net.finmath.functions.AnalyticFormulas;
-import net.finmath.optimizer.SolverException;
 import net.finmath.time.daycount.DayCountConvention;
 import net.finmath.time.daycount.DayCountConvention_ACT_365;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Random;
+import java.util.List;
 
-public class LNSVQDModelCalibratorTest {
+import static java.lang.Math.E;
+
+public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Time params
 	 */
 	LocalDate valuationDate = LocalDate.parse("2024-09-30");
-	double spot0 = 19324.93;
-	double[] paramVector = new double[]{
-			0.16778079819183128,
-			10.84439280484746,
-			11.081415266404194,
-			0.14585436051519188,
-			-2.714462050910902,
-			2.6723715330684525
+	double spot0 = 1; // 19324.93;
+
+	/**
+	 * Create analytical model
+	 */
+	final double[] paramVectorLowVolOfVol = new double[]{
+			0.156642865,
+			4,
+			0,
+			0.191510584,
+			-2,
+			0.211288
 	};
 
-	// 0.17971557337087685	2.166285310451572	0.0	0.11259391112260439	-1.1521366420370178	1.211288
-	double[] paramVectorHeston = new double[]{
+	final double[] paramVectorInitial = new double[]{
 			0.156642865,
 			4,
 			0,
@@ -45,19 +49,16 @@ public class LNSVQDModelCalibratorTest {
 			1.211288
 	};
 
-	double[] paramVectorHestonNotUsed = new double[]{
-			.19095902555549293,
-			1.595312176431141,
+	final double[] paramVectorCalibrated = new double[]{
+			0.13731067,
+			4,
 			0,
-			.10219241040931401,
-			-1.009187596625914,
-			0.9910223497930533
+			0.14664391,
+			-1.4890642,
+			1.53513925
 	};
 
-	/**
-	 * Create volatilty surface
-	 */
-	VolatilityPointsSurface volatilityPointsSurface;
+	double[] selectedParams = paramVectorLowVolOfVol;
 
 	/**
 	 * Other
@@ -71,27 +72,27 @@ public class LNSVQDModelCalibratorTest {
 			"2024-10-18",
 			"2024-11-15",
 			"2024-12-20",
-			"2025-03-21",
+			"2025-03-21"/*,
 			"2025-06-20",
 			"2025-09-19",
 			"2025-12-19",
 			"2026-06-19",
 			"2026-12-18",
 			"2027-06-18",
-			"2027-12-17"
+			"2027-12-17"*/
 	});
 	double[] discountFactors = new double[]{
 			0.997589468
 			, 0.994816096
 			, 0.991454403
 			, 0.982961371
-			, 0.973114616
+			/*, 0.973114616
 			, 0.96776706
 			, 0.962814667
 			, 0.949011402
 			, 0.938160121
 			, 0.923490121
-			, 0.91252815
+			, 0.91252815*/
 	};
 	YieldCurve yieldCurve = new YieldCurve("Discount curve"
 			, valuationDate
@@ -103,113 +104,64 @@ public class LNSVQDModelCalibratorTest {
 	AffineDividendStream affineDividendStream = new AffineDividendStream(affineDividends);
 	EquityForwardStructure equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, 1, yieldCurve, affineDividendStream, dayCountConvention);
 
-	/**
-	 * ***************************************************+
-	 * SECTION 1: Calibration test
-	 * ***************************************************+
-	 */
-	@Test
-	public void calibrateTest() throws Exception {
-		setTargetSurface();
-
-		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
-				new LNSVQDModelAnalyticalPricer(spot0, paramVector[0], paramVector[1], paramVector[2], paramVector[3], paramVector[4], paramVector[5], 0, valuationDate, equityForwardStructure);
-
-		/**
-		 * 1. Calibrate and get cvalibrated paramerters
-		 */
-		double[] calibratedParameters;
-		int[] indicesCalibratedParams = {
-				0
-				/*, 1
-				, 2*/
-				, 3
-				, 4
-				, 5
-		};
-		calibratedParameters = LNSVQDModelCalibrator.calibrate(paramVector, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
-
-		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
-		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
-		impliedVolSurface.printVolSurfaceForOutput();
-	}
-
-	@Test
-	public void calibrateTestHeston() throws Exception {
-		setTargetSurfaceHeston();
-
-		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
-				new LNSVQDModelAnalyticalPricer(
-						spot0
-						, paramVectorHeston[0]
-						, paramVectorHeston[1]
-						, paramVectorHeston[2]
-						, paramVectorHeston[3]
-						, paramVectorHeston[4]
-						, paramVectorHeston[5]
-						, 0, valuationDate, equityForwardStructure);
-
-		/**
-		 * 1. Calibrate and get cvalibrated paramerters
-		 */
-		double[] calibratedParameters;
-		int[] indicesCalibratedParams = {
-				0
-				/*, 1
-				, 2*/
-				, 3
-				, 4
-				, 5
-		};
-		calibratedParameters = LNSVQDModelCalibrator.calibrate(paramVectorHeston, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
-
-		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
-		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
-		impliedVolSurface.printVolSurfaceForOutput();
-	}
+	LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
+			new LNSVQDModelAnalyticalPricer(
+					spot0
+					, selectedParams[0]
+					, selectedParams[1]
+					, selectedParams[2]
+					, selectedParams[3]
+					, selectedParams[4]
+					, selectedParams[5]
+					, 0, valuationDate, equityForwardStructure);
 
 	/**
-	 * Print calibrated surface
+	 * Create simulation model
 	 */
-	@Test
-	public void printCalibratedSurface() throws Exception {
-		setTargetSurface();
-
-		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
-				new LNSVQDModelAnalyticalPricer(spot0, paramVector[0], paramVector[1], paramVector[2], paramVector[3], paramVector[4], paramVector[5], 0, valuationDate, equityForwardStructure);
-
-		VolatilityPointsSurface modelImpliedVolatilitySurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
-		modelImpliedVolatilitySurface.printVolSurfaceForOutput();
-	}
-
-	@Test
-	public void printCalibratedSurfaceMC() throws Exception {
-		setTargetSurfaceHeston();
-
-		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
-				new LNSVQDModelAnalyticalPricer(spot0, paramVectorHeston[0], paramVectorHeston[1], paramVectorHeston[2], paramVectorHeston[3], paramVectorHeston[4], paramVectorHeston[5], 0, valuationDate, equityForwardStructure);
-
-		for(VolatilityPoint volPoint : volatilityPointsSurface.getVolatilityPoints()) {
-			LocalDate maturity = volPoint.getDate();
-			double ttm = dayCountConvention.getDaycountFraction(valuationDate, maturity);
-			double strike = volPoint.getStrike();
-			double forward = equityForwardStructure.getForward(ttm) * spot0;
-			double discFac = equityForwardStructure.getRepoCurve().getDiscountFactor(ttm);
-			double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
-					ttm, (int) Math.round(ttm * 365.));
-			LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, 100000, timeGrid);
-			lnsvqdCallPriceSimulator.precalculatePaths(35425);
-			double price = lnsvqdCallPriceSimulator.getCallPrice(strike, ttm);
-			double impliedVol = Black76Model.optionImpliedVolatility(forward, strike, ttm, price / discFac, true);
-			System.out.println("MC implied vols" );{
-				System.out.print(maturity + "\t" + strike + "\t" + impliedVol);
-				System.out.print("\n");
-			}
+	int numberOfPaths = 100000;
+	// TODO: Discounts dates should be decoupled from maturities
+	double[] maturityGrid = Arrays.stream(discountDates)
+			.mapToDouble(date -> dayCountConvention.getDaycountFraction(valuationDate, date))
+			.toArray();
+	int numberPointsToInsert = (int) (maturityGrid[maturityGrid.length - 1] * 365 - maturityGrid.length);
+	List<Double> timeGridForSimulationList;
+	{
+		try {
+			timeGridForSimulationList = LNSVQDUtils.addTimePointsToArray
+					(maturityGrid, numberPointsToInsert, 0, maturityGrid[maturityGrid.length - 1] - 1E-18, true);
+		} catch(Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
+	double[] timeGridForSimulation = timeGridForSimulationList.stream()
+			.mapToDouble(Double::doubleValue)
+			.toArray();
+	LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator =
+			new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGridForSimulation);
 
 	/**
+	 * Declare volatility surface; will be insatntiated later
+	 */
+	VolatilityPointsSurface volatilityPointsSurface;
+
+	//-----------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * ***************************************************+
+	 * Init method
+	 * ***************************************************+
+	 */
+	@BeforeEach
+	public void init(){
+		setTargetSurfaceHeston();
+	}
+
+	//-----------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * ***************************************************+
 	 * UTILS
+	 * ***************************************************+
 	 */
 	private void setTargetSurface() {
 		// Initialize volatilityPoints
@@ -280,8 +232,8 @@ public class LNSVQDModelCalibratorTest {
 	private void setTargetSurfaceHeston() {
 		double[] ttms = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(ttms).mapToObj(ttm -> {
-					long days = Math.round(ttm * 365);
-					return valuationDate.plusDays(days);}).toArray(LocalDate[]::new);
+			long days = Math.round(ttm * 365);
+			return valuationDate.plusDays(days);}).toArray(LocalDate[]::new);
 
 		// Initialize volatilityPoints
 		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();

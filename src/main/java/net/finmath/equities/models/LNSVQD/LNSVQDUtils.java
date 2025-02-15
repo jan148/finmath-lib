@@ -125,13 +125,21 @@ public class LNSVQDUtils {
 		}
 	}
 
+	// TODO
 	public static List<Double> addTimePointsToArray(double[] array, int numberOfInsertionPoints) throws Exception {
-		double min = Arrays.stream(array).min().getAsDouble();
-		double max = Arrays.stream(array).max().getAsDouble();
-		double stepsize = (max - min) / (numberOfInsertionPoints + 1);
+		double from = Arrays.stream(array).min().getAsDouble();
+		double to = Arrays.stream(array).max().getAsDouble();
+		return addTimePointsToArray(array, numberOfInsertionPoints, from, to, false);
+	}
+
+	// fromToIncl = from / to inclusive?
+	public static List<Double> addTimePointsToArray(double[] array, int numberOfInsertionPoints, double from, double to, Boolean fromToIncl) throws Exception {
+		double min = from;
+		double max = to;
+		double stepsize = fromToIncl ? (max - min) / numberOfInsertionPoints : (max - min) / (numberOfInsertionPoints + 1);
 
 		double[] pointsToAdd = new double[numberOfInsertionPoints];
-		pointsToAdd[0] = min + stepsize;
+		pointsToAdd[0] = fromToIncl ? min : min + stepsize;
 		for(int j = 1; j < numberOfInsertionPoints; j++) {
 			pointsToAdd[j] = pointsToAdd[j - 1] + stepsize;
 		}
@@ -150,7 +158,7 @@ public class LNSVQDUtils {
 				.sorted()
 				.collect(Collectors.toList());
 
-		if(list.size() != resultingArray.length) {
+		if(array.length + numberOfInsertionPoints != list.size()) {
 			throw new Exception("Adding points generated duplicates!");
 		}
 

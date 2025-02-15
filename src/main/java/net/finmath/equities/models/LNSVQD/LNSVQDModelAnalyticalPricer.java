@@ -43,10 +43,10 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		 * Get all the integration points from the integrator, in our case Simpson
 		 */
 		// Next lines adapted from finmath's Simpson implementation
-		final double	range				= upperBound-lowerBound;
+		final double range = upperBound - lowerBound;
 
-		final int  numberOfEvaluationPoints = (int) upperBound * 10; // Need to change this in accordance with LNSVQD pricer
-		final int numberOfDoubleSizeIntervals	= (int) ((numberOfEvaluationPoints-1) / 2.0);
+		final int numberOfEvaluationPoints = (int) upperBound * 10; // Need to change this in accordance with LNSVQD pricer
+		final int numberOfDoubleSizeIntervals = (int) ((numberOfEvaluationPoints - 1) / 2.0);
 
 		final double doubleInterval = range / numberOfDoubleSizeIntervals;
 		final double singleInterval = 0.5 * doubleInterval;
@@ -74,10 +74,10 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		 * Get all the integration points from the integrator, in our case Simpson
 		 */
 		// Next lines adapted from finmath's Simpson implementation
-		final double	range				= upperBound-lowerBound;
+		final double range = upperBound - lowerBound;
 
-		final int  numberOfEvaluationPoints = (int) upperBound * 10; // Need to change this in accordance with LNSVQD pricer
-		final int numberOfDoubleSizeIntervals	= (int) ((numberOfEvaluationPoints-1) / 2.0);
+		final int numberOfEvaluationPoints = (int) upperBound * 10; // Need to change this in accordance with LNSVQD pricer
+		final int numberOfDoubleSizeIntervals = (int) ((numberOfEvaluationPoints - 1) / 2.0);
 
 		final double doubleInterval = range / numberOfDoubleSizeIntervals;
 		final double singleInterval = 0.5 * doubleInterval;
@@ -314,122 +314,21 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	}
 
 	public double[] getEuropeanOptionPrices(List<Pair<Double, Double>> strikeMaturityPairs, Boolean isCall) throws Exception {
-		// Initialize the array of option prices that will be returned
-		double[] optionPrices = new double[strikeMaturityPairs.size()];
+		double[] uS = getU(strikeMaturityPairs);
+		double[] optionPrices;
 
-		/**
-		 * 1a. Extract time information from strike-maturity pairs
-		 */
-		double[] maturitiesWithZero = Stream.concat(strikeMaturityPairs.stream(), Stream.of(new Pair<Double, Double>(0., 0.)))
-				.mapToDouble(pair -> pair.getFirst()).sorted().distinct().toArray();
-		List<Double> maturitiesWithZeroList = Arrays.stream(maturitiesWithZero).boxed().collect(Collectors.toList());
-
-		// Add points
-		List<Double> timeGridForMGFApproximationCalculationList = Arrays.equals(maturitiesWithZero, new double[]{0}) ?
-				Arrays.stream(maturitiesWithZero).boxed().collect(Collectors.toList()) :
-				LNSVQDUtils.addTimePointsToArray(maturitiesWithZero, numStepsForODEIntegration + 1 - maturitiesWithZero.length);
-		double[] timeGridForMGFApproximationCalculation = timeGridForMGFApproximationCalculationList.stream().mapToDouble(Double::doubleValue).toArray();
-
-		/**
-		 * 1b. Extract information for ODE-integration
-		 */
-		List<Double> gridForIntegrationWithMidPoints = LNSVQDUtils.addMidPointsToList(yGridForIntegration);
-
-		/**
-		 * 2. Precalcuate the expAffApprox path
-		 * IMPORTANT: We need to calculate for all realizations of charFuncArgs!
-		 *
-		 * Result: The first dimension refers to a single realization of charFuncArgs, the second one to the value at the corresponding time
-		 *
-		 * NOTE: expAffApproxMatPathPerCharFuncRealization has the points yGridForInfiniteIntegral + the set of all midpoints because of how
-		 * Runge-Kutta is implemented; hence, we have to evaluate E2 on the midpoints, too, i.e. on the points conatined in the array
-		 * gridForIntegrationWithMidPoints
-		 */
-		// expAffApproxMatPathPerCharFuncArgRealization = Exponential-affine approximation at maturities per realization of the characteristic functions args
-		Complex[][] expAffApproxMatPathPerCharFuncRealization = new Complex[gridForIntegrationWithMidPoints.size()][maturitiesWithZero.length];
-		// Loop over charFunc args
-		for(int l = 0; l < gridForIntegrationWithMidPoints.size(); l++) {
-			// TODO: expAffApproxPathPerCharFuncRealization[l] should only contain values for maturity-points, not for filler points!
-			double y = gridForIntegrationWithMidPoints.get(l);
-			Complex[] charFuncArs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
-			Complex[] expAffApproxPathPerCharFuncRealization = calculateExponentialAffineApproximationFullPath(timeGridForMGFApproximationCalculation, charFuncArs);;
-
-			// Get only maturities
-			for(int i = 0; i < maturitiesWithZero.length; i++) {
-				double time = maturitiesWithZero[i];
-				int maturityIndex = timeGridForMGFApproximationCalculationList.indexOf(time);
-				expAffApproxMatPathPerCharFuncRealization[l][i] = expAffApproxPathPerCharFuncRealization[maturityIndex];
-			}
+		if(isCall) {
+			optionPrices = Arrays.stream(uS).map(u -> spot0 - u).toArray();
+		} else {
+			optionPrices = IntStream.range(0, strikeMaturityPairs.size())
+					.mapToDouble(i -> {
+						double maturity = strikeMaturityPairs.get(i).getKey();
+						double strike = strikeMaturityPairs.get(i).getValue();
+						double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
+						return discountFactor * strike - uS[i];
+					})
+					.toArray();
 		}
-
-		/**
-		 * 3. For every maturity and every strike, we calculate the call option price
-		 */
-		for(int i = 0; i < strikeMaturityPairs.size(); i++) {
-			double maturity = strikeMaturityPairs.get(i).getKey();
-			double strike = strikeMaturityPairs.get(i).getValue();
-
-			double forward = equityForwardStructure.getForward(maturity);
-			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity); //Math.exp(-getRiskFreeRate(maturity) * maturity);
-			double convenienceFactor = 0;
-
-			// Get the time index of the maturity
-			int maturityIndex = maturitiesWithZeroList.indexOf(maturity);
-			int optionIndex = i;
-
-			double logMoneyness = Math.log(spot0 / strike) + (-Math.log(discountFactor) - convenienceFactor);
-
-			/**
-			 * TODO: Change factor
-			 * Define the function y -> factor * E2(t, -0.5 + iy)
-			 */
-			DoubleUnaryOperator integrand = new DoubleUnaryOperator() {
-				@Override
-				public double applyAsDouble(double y) {
-					int yIndex = gridForIntegrationWithMidPoints.indexOf(y);
-					if(yIndex == -1) {
-						throw new IllegalArgumentException("y not in array: The E2 value for this the y-value " + y + " hasn't been calculated!");
-					}
-
-					// 1. Compute the value of the affine-exponential approximation
-					Complex E2 = expAffApproxMatPathPerCharFuncRealization[yIndex][maturityIndex].multiply(new Complex(-0.5, y).multiply(X0).exp());
-
-					// 2. Calculate result
-					Complex result = new Complex(0.5, -y).multiply(logMoneyness).exp().multiply(1 / (y * y + 0.25)).multiply(E2);
-
-					// 3. Get real part and return
-					double resultReal = result.getReal();
-					return resultReal;
-				}
-			};
-			/**
-			 * Integerate
-			 */
-			double result = simpsonRealIntegrator.integrate(integrand);
-
-			/**
-			 * Get real part, multiply with factor
-			 */
-			double optionPrice;
-			// PC-parity
-			if(isCall) {
-				optionPrice = spot0 - (discountFactor * strike / Math.PI) * result;
-			} else {
-				optionPrice = discountFactor * strike - (discountFactor * strike / Math.PI) * result;
-			}
-
-			optionPrices[optionIndex] = optionPrice;
-
-			/**
-			 * *********************
-			 * END
-			 * **********************
-			 */
-
-		}
-		/**
-		 * 4. Return prices
-		 */
 		return optionPrices;
 	}
 
@@ -472,7 +371,8 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			// TODO: expAffApproxPathPerCharFuncRealization[l] should only contain values for maturity-points, not for filler points!
 			double y = gridForIntegrationWithMidPoints.get(l);
 			Complex[] charFuncArs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
-			Complex[] expAffApproxPathPerCharFuncRealization = calculateExponentialAffineApproximationFullPath(timeGridForMGFApproximationCalculation, charFuncArs);;
+			Complex[] expAffApproxPathPerCharFuncRealization = calculateExponentialAffineApproximationFullPath(timeGridForMGFApproximationCalculation, charFuncArs);
+			;
 
 			// Get only maturities
 			for(int i = 0; i < maturitiesWithZero.length; i++) {
@@ -549,7 +449,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	// Method takes an existing volatility surface and creates a model implied vol-surface with the same structure
 	public VolatilityPointsSurface getImpliedVolSurface(VolatilityPointsSurface volatilityPointsSurface) throws Exception {
 		// Check if ...
-		assert(volatilityPointsSurface.getToday() == spotDate);
+		assert (volatilityPointsSurface.getToday() == spotDate);
 
 		LocalDate today = volatilityPointsSurface.getToday();
 		DayCountConvention dayCountConvention = volatilityPointsSurface.getDayCountConvention();
