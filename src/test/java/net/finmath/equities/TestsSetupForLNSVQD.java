@@ -80,7 +80,7 @@ public abstract class TestsSetupForLNSVQD {
 			1.53513925
 	};
 
-	double[] selectedParams = paramVectorCalibratedWPositiveKappa2;
+	double[] selectedParams = paramVectorCalibrated;
 
 	/**
 	 * Other
@@ -94,9 +94,9 @@ public abstract class TestsSetupForLNSVQD {
 			"2024-10-18",
 			"2024-11-15",
 			"2024-12-20",
-			"2025-03-21"/*,
+			"2025-03-21",
 			"2025-06-20",
-			"2025-09-19",
+			"2025-09-19"/*,
 			"2025-12-19",
 			"2026-06-19",
 			"2026-12-18",
@@ -108,9 +108,9 @@ public abstract class TestsSetupForLNSVQD {
 			, 0.994816096
 			, 0.991454403
 			, 0.982961371
-			/*, 0.973114616
+			, 0.973114616
 			, 0.96776706
-			, 0.962814667
+			/*, 0.962814667
 			, 0.949011402
 			, 0.938160121
 			, 0.923490121

@@ -213,4 +213,18 @@ public class LNSVQDUtils {
 		}
 		return datesArray;
 	}
+
+	public static double vanDerCorput(int n, int base) {
+		double result = 0.0;
+		double f = 1.0 / base;
+
+		while (n > 0) {
+			result += f * (n % base);
+			n /= base;
+			f /= base;
+		}
+
+		return result;
+	}
+
 }
