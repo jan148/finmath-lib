@@ -230,6 +230,10 @@ public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessMode
 										+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - discreteProcess[timeIndex - 1][componentIndex].get(index)) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT +
 								lnsvqdModel.getBeta() * brownianIncrement[0].get(index) + lnsvqdModel.getEpsilon() * brownianIncrement[1].get(index);
 						// if(realizationsCurrentTimePoint[index] < -5) {throw new RuntimeException("STOP");};
+						/*volPrevTransformed + ((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / volPrev - lnsvqdModel.getKappa1())
+								+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - volPrev) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT +
+								lnsvqdModel.getBeta() * brownianIncrements[j][0] + lnsvqdModel.getEpsilon() * brownianIncrements[j][1];*/
+
 					}
 					currentState[componentIndex] = lnsvqdModel.getRandomVariableForArray(realizationsCurrentTimePoint);
 				}

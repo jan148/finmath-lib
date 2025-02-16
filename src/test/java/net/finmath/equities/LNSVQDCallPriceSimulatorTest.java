@@ -1,16 +1,10 @@
 package net.finmath.equities;
 
 import net.finmath.equities.models.Black76Model;
-import net.finmath.equities.models.LNSVQD.LNSVQDCallPriceSimulator;
-import net.finmath.equities.models.LNSVQD.LNSVQDModel;
-import net.finmath.equities.models.LNSVQD.LNSVQDModelAnalyticalPricer;
-import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
+import net.finmath.equities.models.LNSVQD.*;
 import net.finmath.exception.CalculationException;
 import net.finmath.functions.AnalyticFormulas;
-import net.finmath.montecarlo.BrownianMotionFromMersenneRandomNumbers;
-import net.finmath.montecarlo.BrownianMotionFromRandomNumberGenerator;
-import net.finmath.montecarlo.RandomVariableFactory;
-import net.finmath.montecarlo.RandomVariableFromArrayFactory;
+import net.finmath.montecarlo.*;
 import net.finmath.montecarlo.assetderivativevaluation.MonteCarloLNSVQDModel;
 import net.finmath.montecarlo.assetderivativevaluation.products.EuropeanOption;
 import net.finmath.montecarlo.process.LNSVQDDiscretizationScheme;
@@ -48,9 +42,14 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 		double[][] pricesBS = new double[maturityGrid.length][strikes.length];
 		double[][] pricesMC = new double[maturityGrid.length][strikes.length];
+		double[][] pricesQMC = new double[maturityGrid.length][strikes.length];
 		double[][] pricesMCFinmath = new double[maturityGrid.length][strikes.length];
 		// Get analytical prices
 		double[] pricesAnalytical = lnsvqdModelAnalyticalPricer.getEuropeanOptionPrices(strikeMaturityPairs, true);
+
+		double[][] stdErrorsMc = new double[maturityGrid.length][strikes.length];
+		double[][] stdErrorsMcFinmath = new double[maturityGrid.length][strikes.length];
+		double[][] stdErrorsQMc = new double[maturityGrid.length][strikes.length];
 
 		for(int m = 0; m < maturityGrid.length; m++) {
 			double maturity = maturityGrid[m];
@@ -64,9 +63,10 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 				// BS value
 				pricesBS[m][s] = Black76Model.optionPrice(forward, strike, maturity, selectedParams[0], true, discountFactor);
 
-				List<Integer> seeds = random.ints(5).boxed().collect(Collectors.toList());
+				List<Integer> seeds = random.ints(10).boxed().collect(Collectors.toList());
 				double[] prices = new double[seeds.size()];
 				double[] pricesFm = new double[seeds.size()];
+				double[] pricesQ = new double[seeds.size()];
 
 				// For statistics
 				TDistribution tDistribution = new TDistribution(seeds.size() - 1);
@@ -77,43 +77,50 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 					double simulatedOptionPrice = lnsvqdCallPriceSimulator.getCallPrice(strike, maturity);
 					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
 
+					LNSVQDPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid);
+					lnsvqdPriceSimulatorQMC.precalculatePaths(seed);
+					double simulatedOptionPriceQMC = lnsvqdPriceSimulatorQMC.getCallPrice(strike, maturity);
+					pricesQ[seeds.indexOf(seed)] = simulatedOptionPriceQMC;
+
 					// Price for finmath implementation
 					// BrownianMotionFromMersenneRandomNumbers brownianMotion = new BrownianMotionFromMersenneRandomNumbers(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
-					BrownianMotionFromRandomNumberGenerator brownianMotion = new BrownianMotionFromRandomNumberGenerator(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
-					LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdModelAnalyticalPricer, brownianMotion);
+					BrownianMotionFromMersenneRandomNumbers brownianBridge = new BrownianMotionFromMersenneRandomNumbers(timeDiscretization, 2, numberOfPaths, seed, randomVariableFactory);
+					LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdModelAnalyticalPricer, brownianBridge);
 					MonteCarloLNSVQDModel monteCarloLNSVQDModel = new MonteCarloLNSVQDModel(lnsvqdDiscretizationScheme, seed);
 					EuropeanOption europeanOption = new EuropeanOption(maturity, strike, 1, 0);
 					pricesFm[seeds.indexOf(seed)] = europeanOption.getValue(monteCarloLNSVQDModel);
 				}
 
 				double averagePrice = Arrays.stream(prices).average().getAsDouble();
-				double averagePriceFm = Arrays.stream(prices).average().getAsDouble();
+				double varMC = Arrays.stream(prices).map(x -> Math.pow(x - averagePrice, 2)).sum() / (seeds.size() - 1);
+				double stdErrMC = Math.sqrt(varMC) / Math.sqrt(seeds.size());
+
+				double averagePriceFm = Arrays.stream(pricesFm).average().getAsDouble();
+				double varMcFm = Arrays.stream(pricesFm).map(x -> Math.pow(x - averagePriceFm, 2)).sum() / (seeds.size() - 1);
+				double stdErrMcFm = Math.sqrt(varMcFm) / Math.sqrt(seeds.size());
+
+				double averagePriceQMC = Arrays.stream(pricesQ).average().getAsDouble();
+				double varQMC = Arrays.stream(pricesQ).map(x -> Math.pow(x - averagePriceQMC, 2)).sum() / (seeds.size() - 1);
+				double stdErrQMC = Math.sqrt(varQMC) / Math.sqrt(seeds.size());
+
 				pricesMC[m][s] = averagePrice;
-				pricesMCFinmath[m][s] = averagePrice;
-				/*double relativeError = Math.abs(averagePrice - lnsvqdOptionValue) / lnsvqdOptionValue;
-				double stdError = standardDeviation.evaluate(prices);
+				pricesMCFinmath[m][s] = averagePriceFm;
+				pricesQMC[m][s] = averagePriceQMC;
 
-				double tQuantile = tDistribution.inverseCumulativeProbability(0.975);
-				double lowerConfidenceBound = averagePrice - tQuantile * stdError / seeds.size();
-				double upperConfidenceBound = averagePrice + tQuantile * stdError / seeds.size();*/
-
-				/*System.out.println("Average price: " + Arrays.stream(prices).average().getAsDouble() + "; Relative error: " + relativeError
-						+ "; Lower 95%-bound: " + lowerConfidenceBound
-						+ "; Upper 95%-bound: " + upperConfidenceBound + "\n"
-						+ "; Analytical price " + lnsvqdOptionValue
-						+ "Analytical price in interval: " + (lowerConfidenceBound <= lnsvqdOptionValue && lnsvqdOptionValue <= upperConfidenceBound));
-*/
-				/*relativeErrors[m] = relativeError;*/
+				stdErrorsMc[m][s] = stdErrMC;
+				stdErrorsMcFinmath[m][s] = stdErrMcFm;
+				stdErrorsQMc[m][s] = stdErrQMC;
 
 				System.out.println("ANA: " + pricesAnalytical[m * strikes.length + s] + "\t"
-						+ "MC: " + pricesMC[m][s] + "\t"
-						+ "MC finmath: " + pricesMCFinmath[m][s] + "\t"
+						+ "MC: " + pricesMC[m][s] + " (" + stdErrMC + ")" + "\t"
+						+ "MC finmath: " + pricesMCFinmath[m][s] + " (" + stdErrMcFm + ")" + "\t"
+						+ "QMC: " + pricesQMC[m][s] + " (" + stdErrQMC + ")" +"\t"
 						+ "BS: " + pricesBS[m][s]);
 			}
 
 		}
 		/**
-		 * Print
+		 * Print prices
 		 */
 		System.out.println("Analytical prices");
 		for(int m = 0; m < maturityGrid.length; m++) {
@@ -135,6 +142,16 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 			System.out.print("\n");
 		}
 
+		System.out.println("QMC prices");
+		for(int m = 0; m < maturityGrid.length; m++) {
+			double maturity = maturityGrid[m];
+			System.out.print(maturity + "\t");
+			for(int s = 0; s < strikes.length; s++) {
+				System.out.print(pricesQMC[m][s] + "\t");
+			}
+			System.out.print("\n");
+		}
+
 		System.out.println("BS prices");
 		for(int m = 0; m < maturityGrid.length; m++) {
 			double maturity = maturityGrid[m];
@@ -151,6 +168,39 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 			System.out.print(maturity + "\t");
 			for(int s = 0; s < strikes.length; s++) {
 				System.out.print(pricesMCFinmath[m][s] + "\t");
+			}
+			System.out.print("\n");
+		}
+
+		/**
+		 * Print standard error
+		 */
+		System.out.println("MC std.errors");
+		for(int m = 0; m < maturityGrid.length; m++) {
+			double maturity = maturityGrid[m];
+			System.out.print(maturity + "\t");
+			for(int s = 0; s < strikes.length; s++) {
+				System.out.print(stdErrorsMc[m][s] + "\t");
+			}
+			System.out.print("\n");
+		}
+
+		System.out.println("QMC std.errors");
+		for(int m = 0; m < maturityGrid.length; m++) {
+			double maturity = maturityGrid[m];
+			System.out.print(maturity + "\t");
+			for(int s = 0; s < strikes.length; s++) {
+				System.out.print(stdErrorsQMc[m][s] + "\t");
+			}
+			System.out.print("\n");
+		}
+
+		System.out.println("MC finmath std.errors");
+		for(int m = 0; m < maturityGrid.length; m++) {
+			double maturity = maturityGrid[m];
+			System.out.print(maturity + "\t");
+			for(int s = 0; s < strikes.length; s++) {
+				System.out.print(stdErrorsMcFinmath[m][s] + "\t");
 			}
 			System.out.print("\n");
 		}

@@ -24,7 +24,7 @@ public class SobolSequence implements RandomNumberGenerator {
 
 	private final int dimension;
 
-	private final SobolSequenceGenerator generator;
+	public final SobolSequenceGenerator generator;
 
 	/**
 	 * Constructs a Sobol sequence with given dimension.

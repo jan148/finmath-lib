@@ -361,7 +361,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 
 	@Override
 	public RandomVariable getNumeraire(MonteCarloProcess process, double time) {
-		return getRandomVariableForConstant(equityForwardStructure.getRepoCurve().getDiscountFactor(time));
+		return getRandomVariableForConstant(1. / equityForwardStructure.getRepoCurve().getDiscountFactor(time));
 	}
 
 	/**
