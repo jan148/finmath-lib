@@ -74,7 +74,7 @@ public abstract class TestsSetupForLNSVQD {
 	final double[] paramVectorCalibratedWPositiveKappa2 = new double[]{
 			0.13731067,
 			4,
-			2.1,
+			0.4,
 			0.14664391,
 			-1.4890642,
 			1.53513925
@@ -96,12 +96,12 @@ public abstract class TestsSetupForLNSVQD {
 			"2024-12-20",
 			"2025-03-21",
 			"2025-06-20",
-			"2025-09-19"/*,
+			"2025-09-19",
 			"2025-12-19",
 			"2026-06-19",
 			"2026-12-18",
 			"2027-06-18",
-			"2027-12-17"*/
+			"2027-12-17"
 	});
 	double[] discountFactors = new double[]{
 			0.997589468
@@ -110,11 +110,11 @@ public abstract class TestsSetupForLNSVQD {
 			, 0.982961371
 			, 0.973114616
 			, 0.96776706
-			/*, 0.962814667
+			, 0.962814667
 			, 0.949011402
 			, 0.938160121
 			, 0.923490121
-			, 0.91252815*/
+			, 0.91252815
 	};
 	YieldCurve yieldCurve = new YieldCurve("Discount curve"
 			, valuationDate
@@ -159,7 +159,7 @@ public abstract class TestsSetupForLNSVQD {
 			.mapToDouble(Double::doubleValue)
 			.toArray();
 	LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator =
-			new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGridForSimulation);
+			new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGridForSimulation, false);
 
 	/**
 	 * Create simulation model (finmath)
@@ -261,7 +261,8 @@ public abstract class TestsSetupForLNSVQD {
 		double[] ttms = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(ttms).mapToObj(ttm -> {
 			long days = Math.round(ttm * 365);
-			return valuationDate.plusDays(days);}).toArray(LocalDate[]::new);
+			return valuationDate.plusDays(days);
+		}).toArray(LocalDate[]::new);
 
 		// Initialize volatilityPoints
 		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();

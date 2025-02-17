@@ -1,7 +1,6 @@
 package net.finmath.equities.models.LNSVQD;
 
 import org.apache.commons.math3.analysis.UnivariateFunction;
-import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.univariate.BrentOptimizer;
@@ -11,7 +10,6 @@ import org.apache.commons.math3.random.MersenneTwister;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class LNSVQDCallPriceSimulator {
@@ -19,16 +17,17 @@ public class LNSVQDCallPriceSimulator {
 	int numberOfPaths;
 	double[] timeGrid;
 	double path[][][];
-	boolean isForwardEuler = false;
+	boolean isBackwardEuler = false;
 	UnivariateFunction zeta = x -> Math.exp(-x) * lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() - Math.exp(x) * lnsvqdModel.getKappa2()
 			- lnsvqdModel.getKappa1() + lnsvqdModel.getKappa2() * lnsvqdModel.getTheta() - 0.5 * lnsvqdModel.getTotalInstVar();
 
-	public LNSVQDCallPriceSimulator(LNSVQDModel lnsvqdModel, int numberOfPaths, double[] timeGrid) {
+	public LNSVQDCallPriceSimulator(LNSVQDModel lnsvqdModel, int numberOfPaths, double[] timeGrid, Boolean isBackwardEuler) {
 		this.lnsvqdModel = lnsvqdModel;
 		this.numberOfPaths = numberOfPaths;
 		this.timeGrid = timeGrid;
 		// Component, time, paths
 		this.path = new double[2][timeGrid.length][numberOfPaths];
+		this.isBackwardEuler = isBackwardEuler;
 	}
 
 	public double[][][] getTransformedPath() {
@@ -82,7 +81,7 @@ public class LNSVQDCallPriceSimulator {
 				double volPrevTransformed = Math.log(volPrev);
 				double volNewTransformed;
 
-				if(isForwardEuler) {
+				if(isBackwardEuler) {
 					UnivariateObjectiveFunction rootFunction = new UnivariateObjectiveFunction(
 							l -> Math.abs(-brownianIncrements[pathIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[pathIndex][1] * lnsvqdModel.getEpsilon())
 									- (zeta.value(l) * deltaT) - volPrevTransformed + l)

@@ -12,15 +12,13 @@ import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.univariate.BrentOptimizer;
 import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
-import org.apache.commons.math3.random.MersenneTwister;
-import org.apache.commons.math3.random.SobolSequenceGenerator;
 
 import java.util.Arrays;
 
 public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 
-	public LNSVQDPriceSimulatorQMC(LNSVQDModel lnsvqdModel, int numberOfPaths, double[] timeGrid) {
-		super(lnsvqdModel, numberOfPaths, timeGrid);
+	public LNSVQDPriceSimulatorQMC(LNSVQDModel lnsvqdModel, int numberOfPaths, double[] timeGrid, Boolean isBackwardEuler) {
+		super(lnsvqdModel, numberOfPaths, timeGrid, isBackwardEuler);
 	}
 
 	public void precalculatePaths(int seed) {
@@ -68,7 +66,7 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 				double volPrevTransformed = Math.log(volPrev);
 				double volNewTransformed;
 
-				if(isForwardEuler) {
+				if(isBackwardEuler) {
 					UnivariateObjectiveFunction rootFunction = new UnivariateObjectiveFunction(
 							l -> Math.abs(-brownianIncrements[pathIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[pathIndex][1] * lnsvqdModel.getEpsilon())
 									- (zeta.value(l) * deltaT) - volPrevTransformed + l)

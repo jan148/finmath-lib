@@ -449,7 +449,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	// Method takes an existing volatility surface and creates a model implied vol-surface with the same structure
 	public VolatilityPointsSurface getImpliedVolSurface(VolatilityPointsSurface volatilityPointsSurface) throws Exception {
 		// Check if ...
-		assert (volatilityPointsSurface.getToday() == spotDate);
+		assert (volatilityPointsSurface.getToday() == spotDate) : "Expected spotDate " + spotDate + ", but got " + volatilityPointsSurface.getToday();;
 
 		LocalDate today = volatilityPointsSurface.getToday();
 		DayCountConvention dayCountConvention = volatilityPointsSurface.getDayCountConvention();

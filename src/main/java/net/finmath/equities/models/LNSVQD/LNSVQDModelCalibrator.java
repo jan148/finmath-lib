@@ -19,7 +19,6 @@ import java.util.stream.IntStream;
  */
 
 public class LNSVQDModelCalibrator {
-
 	static double shiftSize = 1E-8;
 
 	public static double[] calibrate(final double[] initialVolatilityParameters,

@@ -72,12 +72,12 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 				TDistribution tDistribution = new TDistribution(seeds.size() - 1);
 
 				for(int seed : seeds) {
-					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid);
+					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, true);
 					lnsvqdCallPriceSimulator.precalculatePaths(seed);
 					double simulatedOptionPrice = lnsvqdCallPriceSimulator.getCallPrice(strike, maturity);
 					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
 
-					LNSVQDPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid);
+					LNSVQDPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, true);
 					lnsvqdPriceSimulatorQMC.precalculatePaths(seed);
 					double simulatedOptionPriceQMC = lnsvqdPriceSimulatorQMC.getCallPrice(strike, maturity);
 					pricesQ[seeds.indexOf(seed)] = simulatedOptionPriceQMC;
@@ -216,7 +216,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 		int seed = 1;
 
-		LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid);
+		LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
 		lnsvqdCallPriceSimulator.precalculatePaths(seed);
 		double[][][] transformedPaths = lnsvqdCallPriceSimulator.getTransformedPath();
 
