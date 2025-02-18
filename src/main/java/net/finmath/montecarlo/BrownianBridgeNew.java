@@ -134,14 +134,21 @@ public class BrownianBridgeNew implements BrownianMotion {
 			int timeIndexLaterTimeStep = schedulingArray[j][2];
 			double timeLater = timeDiscretization.getTime(timeIndexLaterTimeStep);
 
-			double fac = j == 1 ? 1 : (time - timeEarlier) / (timeLater - timeEarlier);
+			double fac = (time - timeEarlier) / (timeLater - timeEarlier);
 
 			for(int componentIndex = 0; componentIndex < 2; componentIndex++) {
 				RandomVariable standardNormal = generator.getBrownianIncrement(j - 1, componentIndex);
-				brownianMotion[timeIndex][componentIndex] =
-						brownianMotion[timeIndexEarlierTimeStep][componentIndex]
-								.add(brownianMotion[timeIndexLaterTimeStep][componentIndex].sub(brownianMotion[timeIndexEarlierTimeStep][componentIndex]).mult(fac))
-								.add(standardNormal.mult(fac * (timeLater - time)));
+				/*LNSVQDUtils.printArrayVertical(standardNormal.getRealizations());*/
+				if(j == 1) {
+					brownianMotion[timeIndex][componentIndex] =
+							brownianMotion[timeIndexEarlierTimeStep][componentIndex]
+									.add(standardNormal.mult(Math.sqrt(time)));
+				} else {
+					brownianMotion[timeIndex][componentIndex] =
+							brownianMotion[timeIndexEarlierTimeStep][componentIndex]
+									.add(brownianMotion[timeIndexLaterTimeStep][componentIndex].sub(brownianMotion[timeIndexEarlierTimeStep][componentIndex]).mult(fac))
+									.add(standardNormal.mult(Math.sqrt(fac * (timeLater - time))));
+				}
 			}
 		}
 

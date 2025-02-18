@@ -71,8 +71,8 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 				for(int seed : seeds) {
 					// Normal MC
 					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-					/*lnsvqdCallPriceSimulator.precalculatePaths(seed);*/
-					double simulatedOptionPrice = 123456789; // lnsvqdCallPriceSimulator.getCallPrice(strike, maturity);
+					lnsvqdCallPriceSimulator.precalculatePaths(seed);
+					double simulatedOptionPrice = lnsvqdCallPriceSimulator.getCallPrice(strike, maturity);
 					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
 
 					// QMC

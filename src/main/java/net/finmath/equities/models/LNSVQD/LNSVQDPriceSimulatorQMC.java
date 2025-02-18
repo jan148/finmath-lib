@@ -20,7 +20,7 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 	}
 
 	public void precalculatePaths(int seed) {
-		int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(timeGrid.length);
+		final int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(timeGrid.length);
 
 		TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
 		// Dim = 2 * (timeGrid - 1)

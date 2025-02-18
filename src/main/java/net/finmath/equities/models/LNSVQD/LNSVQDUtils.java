@@ -113,6 +113,12 @@ public class LNSVQDUtils {
 		System.out.print("\n");
 	}
 
+	public static void printArrayVertical(double[] array) {
+		for(double element : array) {
+			System.out.println(element);
+		}
+	}
+
 	public static void printPricesFromMaturityStrikeGrid(double[] maturities, double[] strikes, double[] prices) {
 		for(int s = 0; s < strikes.length; s++) {
 			System.out.print("\t" + strikes[s]);

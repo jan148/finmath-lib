@@ -73,10 +73,10 @@ public class LNSVQDUtilsTest {
 	// Creates a schedule for an index list 0, ..., numberOfPoints - 1
 	@Test
 	public void createSchedulingArrayTest() throws Exception {
-		int numberOfPoints = 22;
+		int numberOfPoints = 19;
 		int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(numberOfPoints);
 		for(int k = 0; k < numberOfPoints; k++) {
-			System.out.println(k + " /  " + schedulingArray[k][0] + " /  " + schedulingArray[k][1] + " /  " + schedulingArray[k][2]);
+			System.out.println(k + " \t  " + schedulingArray[k][0] + " \t  " + schedulingArray[k][1] + " \t  " + schedulingArray[k][2]);
 		}
 	}
 
