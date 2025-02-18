@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 public class LNSVQDUtils {
@@ -214,7 +215,9 @@ public class LNSVQDUtils {
 		return datesArray;
 	}
 
-	public static double vanDerCorput(int n, int base) {
+	public static double modifiedVanDerCorput(int n, int base) {
+		int index = n;
+
 		double result = 0.0;
 		double f = 1.0 / base;
 
@@ -224,7 +227,68 @@ public class LNSVQDUtils {
 			f /= base;
 		}
 
+		// That's the modification
+		if(index == 0) {result = 1;}
+
 		return result;
+	}
+
+	/**
+	 *
+	 * QMC-specific utils
+	 *
+	 */
+	// Assumption: Reorder 0, ..., n with van-der-Corput
+	public static int[] sortTimeIndices(int numberOfPoints) {
+		double highestIndex = numberOfPoints - 1;
+
+		List<Integer> sortedIndices = new ArrayList<>();
+
+		List<Integer> indicedAlreadyAssigned = new ArrayList<Integer>();
+
+		sortedIndices.add(0);
+		indicedAlreadyAssigned.add(0);
+
+		sortedIndices.add(numberOfPoints - 1);
+		indicedAlreadyAssigned.add(numberOfPoints - 1);
+
+		for(int k = 2; k < numberOfPoints; k++) {
+			double vdcNumber = LNSVQDUtils.modifiedVanDerCorput(k - 1, 2);
+			int idealIndexMin = (int) Math.floor(vdcNumber * highestIndex);
+			// int idealIndexMax = (int) Math.ceil(vdcNumber * highestNumber);
+			int selectedIndex = idealIndexMin;
+			while(indicedAlreadyAssigned.indexOf(selectedIndex) != -1) {
+				int altIndexMin = selectedIndex - 1;
+				int altIndexMax = selectedIndex + 1;
+				if(indicedAlreadyAssigned.indexOf(altIndexMin) == -1 && altIndexMin >= 0) {selectedIndex = altIndexMin; break;}
+				if(indicedAlreadyAssigned.indexOf(altIndexMax) == -1 && altIndexMax <= highestIndex) {selectedIndex = altIndexMax; break;}
+				if(altIndexMin > 0) {selectedIndex = altIndexMin;}
+				if(altIndexMax < highestIndex) {selectedIndex = altIndexMax;}
+			}
+			sortedIndices.add(selectedIndex);
+			indicedAlreadyAssigned.add(selectedIndex);
+		}
+		int[] sortedArray = sortedIndices.stream().mapToInt(Integer::intValue).toArray();
+		return sortedArray;
+	}
+
+	// [][]
+	public static int[][] createSchedulingArray(int numberOfPoints) {
+		int[][] schedulingArray = new int[numberOfPoints][3];
+		int[] sortedArray = LNSVQDUtils.sortTimeIndices(numberOfPoints);
+
+		schedulingArray[0] = new int[]{0, 0, 0};
+		schedulingArray[1] = new int[]{numberOfPoints - 1, 0, 0};
+
+		for(int j = 2; j < numberOfPoints; j++) {
+			int timeIndex = sortedArray[j];
+			int[] arraySlice = Arrays.copyOfRange(sortedArray, 0, j);
+			int min = Arrays.stream(arraySlice).filter(x -> x < timeIndex).max().getAsInt();
+			int max = Arrays.stream(arraySlice).filter(x -> x > timeIndex).min().getAsInt();
+			schedulingArray[j] = new int[]{timeIndex, min, max};
+		}
+
+		return schedulingArray;
 	}
 
 }

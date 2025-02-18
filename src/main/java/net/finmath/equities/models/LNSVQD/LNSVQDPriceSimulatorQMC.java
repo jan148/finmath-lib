@@ -1,8 +1,6 @@
 package net.finmath.equities.models.LNSVQD;
 
-import net.finmath.montecarlo.BrownianBridge;
-import net.finmath.montecarlo.BrownianMotion;
-import net.finmath.montecarlo.BrownianMotionFromRandomNumberGenerator;
+import net.finmath.montecarlo.*;
 import net.finmath.randomnumbers.SobolSequence;
 import net.finmath.stochastic.RandomVariable;
 import net.finmath.time.TimeDiscretization;
@@ -14,29 +12,28 @@ import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
-
 	public LNSVQDPriceSimulatorQMC(LNSVQDModel lnsvqdModel, int numberOfPaths, double[] timeGrid, Boolean isBackwardEuler) {
 		super(lnsvqdModel, numberOfPaths, timeGrid, isBackwardEuler);
 	}
 
 	public void precalculatePaths(int seed) {
+		int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(timeGrid.length);
+
 		TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
 		// Dim = 2 * (timeGrid - 1)
 		SobolSequence sobolSequenceGenerator = new SobolSequence(2 * (timeGrid.length - 1));
 		sobolSequenceGenerator.generator.skipTo(Math.abs(seed) * numberOfPaths);
 
-		BrownianMotion generator = new BrownianMotionFromRandomNumberGenerator(timeDiscretization, 2, numberOfPaths, sobolSequenceGenerator);
+		TimeDiscretization timeDiscretizationForGenerator = new TimeDiscretizationFromArray(
+				IntStream.range(0, timeDiscretization.getNumberOfTimes()).mapToDouble(i -> (double) i).toArray()
+		); // Ensures std.normal incs
+		BrownianMotion generator = new BrownianMotionFromRandomNumberGenerator(timeDiscretizationForGenerator, 2, numberOfPaths, sobolSequenceGenerator);
 
 		RandomVariable[] start = new RandomVariable[]{generator.getRandomVariableForConstant(0), generator.getRandomVariableForConstant(0)};
-		TimeDiscretization timeDiscretizationForEnd = new TimeDiscretizationFromArray(timeGrid[0], timeGrid[timeGrid.length - 1]);
-		// Dim = 2 * (timeGrid - 1)
-		SobolSequence sobolSequenceGeneratorForEnd = new SobolSequence(2);
-		sobolSequenceGeneratorForEnd.generator.skipTo(Math.abs(seed) * numberOfPaths);
-		BrownianMotion generatorForEnd = new BrownianMotionFromRandomNumberGenerator(timeDiscretizationForEnd, 2, numberOfPaths, sobolSequenceGeneratorForEnd);
-		RandomVariable[] end = new RandomVariable[]{generatorForEnd.getBrownianIncrement(0, 0), generatorForEnd.getBrownianIncrement(0, 1)};
-		BrownianBridge brownianBridge = new BrownianBridge(generator, start, end);
+		BrownianBridgeNew brownianBridge = new BrownianBridgeNew(generator, start, timeDiscretization, schedulingArray);
 
 		BrentOptimizer brentOptimizer = new BrentOptimizer(1e-8, 1e-8);
 
@@ -50,7 +47,6 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 
 		for(int i = 1; i < timeGrid.length; i++) {
 			double deltaT = timeGrid[i] - timeGrid[i - 1];
-			// double sqrtDeltaT = Math.sqrt(deltaT);
 			double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(timeGrid[i - 1]);
 			double discountFactorCurrent = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(timeGrid[i]);
 			double[][] brownianIncrements = new double[numberOfPaths][2];
@@ -59,7 +55,7 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 				int pathIndex = j;
 
 				brownianIncrements[j][0] = brownianBridge.getBrownianIncrement(i - 1, 0).get(j);
-				brownianIncrements[j][1] =brownianBridge.getBrownianIncrement(i - 1, 1).get(j);
+				brownianIncrements[j][1] = brownianBridge.getBrownianIncrement(i - 1, 1).get(j);
 
 				// Vol path
 				double volPrev = path[1][i - 1][j];
@@ -94,4 +90,7 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 			}
 		}
 	}
+
+
+
 }

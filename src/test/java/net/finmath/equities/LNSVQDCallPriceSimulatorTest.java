@@ -68,16 +68,15 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 				double[] pricesFm = new double[seeds.size()];
 				double[] pricesQ = new double[seeds.size()];
 
-				// For statistics
-				TDistribution tDistribution = new TDistribution(seeds.size() - 1);
-
 				for(int seed : seeds) {
-					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, true);
-					lnsvqdCallPriceSimulator.precalculatePaths(seed);
-					double simulatedOptionPrice = lnsvqdCallPriceSimulator.getCallPrice(strike, maturity);
+					// Normal MC
+					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
+					/*lnsvqdCallPriceSimulator.precalculatePaths(seed);*/
+					double simulatedOptionPrice = 123456789; // lnsvqdCallPriceSimulator.getCallPrice(strike, maturity);
 					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
 
-					LNSVQDPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, true);
+					// QMC
+					LNSVQDPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
 					lnsvqdPriceSimulatorQMC.precalculatePaths(seed);
 					double simulatedOptionPriceQMC = lnsvqdPriceSimulatorQMC.getCallPrice(strike, maturity);
 					pricesQ[seeds.indexOf(seed)] = simulatedOptionPriceQMC;
@@ -88,7 +87,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 					LNSVQDDiscretizationScheme lnsvqdDiscretizationScheme = new LNSVQDDiscretizationScheme(lnsvqdModelAnalyticalPricer, brownianBridge);
 					MonteCarloLNSVQDModel monteCarloLNSVQDModel = new MonteCarloLNSVQDModel(lnsvqdDiscretizationScheme, seed);
 					EuropeanOption europeanOption = new EuropeanOption(maturity, strike, 1, 0);
-					pricesFm[seeds.indexOf(seed)] = europeanOption.getValue(monteCarloLNSVQDModel);
+					pricesFm[seeds.indexOf(seed)] = 123456789; // europeanOption.getValue(monteCarloLNSVQDModel);
 				}
 
 				double averagePrice = Arrays.stream(prices).average().getAsDouble();

@@ -54,5 +54,31 @@ public class LNSVQDUtilsTest {
 		System.out.println(listWithMidPoints);
 	}
 
+	@Test
+	public void printVDCNumbers() throws Exception {
+		for(int j = 0; j < 100; j++) {
+			System.out.println(LNSVQDUtils.modifiedVanDerCorput(j, 2));
+		}
+	}
+
+	@Test
+	public void sortListTest() throws Exception {
+		int numberOfPoints = 22;
+		int[] sortedInts = LNSVQDUtils.sortTimeIndices(numberOfPoints);
+		for(int k = 0; k < numberOfPoints; k++) {
+			System.out.println(k + " /  " + sortedInts[k]);
+		}
+	}
+
+	// Creates a schedule for an index list 0, ..., numberOfPoints - 1
+	@Test
+	public void createSchedulingArrayTest() throws Exception {
+		int numberOfPoints = 22;
+		int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(numberOfPoints);
+		for(int k = 0; k < numberOfPoints; k++) {
+			System.out.println(k + " /  " + schedulingArray[k][0] + " /  " + schedulingArray[k][1] + " /  " + schedulingArray[k][2]);
+		}
+	}
+
 
 }
