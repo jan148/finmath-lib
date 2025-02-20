@@ -142,9 +142,10 @@ public abstract class TestsSetupForLNSVQD {
 	 */
 	int numberOfPaths = 100000;
 	// TODO: Discounts dates should be decoupled from maturities
-	double[] maturityGrid = Arrays.stream(discountDates)
+	/*double[] maturityGrid = Arrays.stream(discountDates)
 			.mapToDouble(date -> dayCountConvention.getDaycountFraction(valuationDate, date))
-			.toArray();
+			.toArray();*/
+	double[] maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 	int numberPointsToInsert = (int) (maturityGrid[maturityGrid.length - 1] * 365 * 2 - maturityGrid.length);
 	List<Double> timeGridForSimulationList;
 	{
@@ -257,7 +258,7 @@ public abstract class TestsSetupForLNSVQD {
 	}
 
 
-	private void setTargetSurfaceHeston() {
+	public void setTargetSurfaceHeston() {
 		double[] ttms = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(ttms).mapToObj(ttm -> {
 			long days = Math.round(ttm * 365);
@@ -305,9 +306,24 @@ public abstract class TestsSetupForLNSVQD {
 		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.20, 0.128339944, spot0));
 		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.40, 0.133914086, spot0));
 
-
 		// Create volatility surface
 		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);
+
+		// Redefine the maturityGrid and the simulation grid
+		maturityGrid = Arrays.stream(dates).mapToDouble(date -> dayCountConvention.getDaycountFraction(valuationDate, date)).toArray();
+		int numberPointsToInsert = (int) (maturityGrid[maturityGrid.length - 1] * 365 * 2 - maturityGrid.length);
+		List<Double> timeGridForSimulationList;
+		{
+			try {
+				timeGridForSimulationList = LNSVQDUtils.addTimePointsToArray
+						(maturityGrid, numberPointsToInsert, 0, maturityGrid[maturityGrid.length - 1] - 1E-18, true);
+			} catch(Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		timeGridForSimulation = timeGridForSimulationList.stream()
+				.mapToDouble(Double::doubleValue)
+				.toArray();
 	}
 
 	private VolatilityPoint makeVolatilityPoint(String date, double percentage, double volatility, double spot) {

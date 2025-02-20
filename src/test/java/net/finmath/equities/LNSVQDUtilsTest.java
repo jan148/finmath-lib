@@ -80,5 +80,11 @@ public class LNSVQDUtilsTest {
 		}
 	}
 
+	@Test
+	public void checkBinString() {
+		String x = LNSVQDUtils.getBinaryRepresentation(0.6763);
+		System.out.println(x);
+	}
+
 
 }

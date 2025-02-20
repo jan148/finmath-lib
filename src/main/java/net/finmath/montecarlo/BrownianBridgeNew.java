@@ -7,14 +7,13 @@
 package net.finmath.montecarlo;
 
 import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
+import net.finmath.randomnumbers.SobolSequence;
 import net.finmath.stochastic.RandomVariable;
 import net.finmath.time.TimeDiscretization;
+import org.apache.commons.math3.random.SobolSequenceGenerator;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class implements a Brownian bridge, i.e., samples of realizations of a Brownian motion
@@ -56,6 +55,7 @@ public class BrownianBridgeNew implements BrownianMotion {
 	private final TimeDiscretization timeDiscretization;
 
 	private transient RandomVariable[][] brownianIncrements;
+	private transient double[][][] brownianIncrementsArray;
 	private transient Object brownianIncrementsLazyInitLock = new Object();
 	private int[][] schedulingArray;
 
@@ -107,6 +107,21 @@ public class BrownianBridgeNew implements BrownianMotion {
 		return brownianIncrements[timeIndex][factor];
 	}
 
+	public double[] getBrownianIncrementArr(final int timeIndex, final int factor, SobolSequence sobolSequenceGenerator, int seed) {
+		// Thread safe lazy initialization
+		synchronized(brownianIncrementsLazyInitLock) {
+			if(brownianIncrementsArray == null) {
+				doGenerateBrownianMotionNewFirstOverPaths(schedulingArray, sobolSequenceGenerator, seed);
+			}
+		}
+
+		/*
+		 *  For performance reasons we return directly the stored data (no defensive copy).
+		 *  We return an immutable object to ensure that the receiver does not alter the data.
+		 */
+		return brownianIncrementsArray[timeIndex][factor];
+	}
+
 	/**
 	 * Lazy initialization of brownianIncrement. Synchronized to ensure thread safety of lazy init.
 	 */
@@ -155,6 +170,167 @@ public class BrownianBridgeNew implements BrownianMotion {
 		for(int j = 0; j < brownianIncrements.length; j++) {
 			for(int i = 0; i < brownianIncrements[0].length; i++)
 				brownianIncrements[j][i] = brownianMotion[j + 1][i].sub(brownianMotion[j][i]);
+		}
+	}
+
+	private void doGenerateBrownianMotionNew(int[][] schedulingArray) {
+		if(brownianIncrementsArray != null) {
+			return;    // Nothing to do
+		}
+
+		// Allocate memory
+		brownianIncrementsArray = new double[getTimeDiscretization().getNumberOfTimeSteps()][generator.getNumberOfFactors()][getNumberOfPaths()];
+
+		/**
+		 * STEP 1: Create disc. Brownian motion
+		 */
+		/*RandomVariable[][] brownianMotion = new RandomVariable[getTimeDiscretization().getNumberOfTimes()][generator.getNumberOfFactors()];
+		brownianMotion[0] = start;*/
+
+		double[][][] brownianMotionArr = new double[getTimeDiscretization().getNumberOfTimes()][generator.getNumberOfFactors()][getNumberOfPaths()];
+		double[][] initArray = new double[generator.getNumberOfFactors()][getNumberOfPaths()];
+		for(int i = 0; i < initArray.length; i++) {
+			Arrays.fill(initArray[i], 0);  // Fill each row with 0s
+		}
+		brownianMotionArr[0] = initArray;
+
+		for(int j = 1; j < brownianMotionArr.length; j++) {
+			int timeIndex = schedulingArray[j][0];
+			double time = timeDiscretization.getTime(timeIndex);
+
+			int timeIndexEarlierTimeStep = schedulingArray[j][1];
+			double timeEarlier = timeDiscretization.getTime(timeIndexEarlierTimeStep);
+
+			int timeIndexLaterTimeStep = schedulingArray[j][2];
+			double timeLater = timeDiscretization.getTime(timeIndexLaterTimeStep);
+
+			double fac = (time - timeEarlier) / (timeLater - timeEarlier);
+
+			for(int componentIndex = 0; componentIndex < 2; componentIndex++) {
+				double[] standardNormal = generator.getBrownianIncrement(j - 1, componentIndex).getRealizations();
+				/*LNSVQDUtils.printArrayVertical(standardNormal.getRealizations());*/
+				for(int p = 0; p < getNumberOfPaths(); p++) {
+					if(j == 1) {
+						/*brownianMotion[timeIndex][componentIndex] =
+								brownianMotion[timeIndexEarlierTimeStep][componentIndex]
+										.add(standardNormal.mult(Math.sqrt(time)));*/
+						brownianMotionArr[timeIndex][componentIndex][p] =
+								brownianMotionArr[timeIndexEarlierTimeStep][componentIndex][p] + standardNormal[p] * Math.sqrt(time);
+					} else {
+						/*brownianMotion[timeIndex][componentIndex] =
+								brownianMotion[timeIndexEarlierTimeStep][componentIndex]
+										.add(brownianMotion[timeIndexLaterTimeStep][componentIndex].sub(brownianMotion[timeIndexEarlierTimeStep][componentIndex]).mult(fac))
+										.add(standardNormal.mult(Math.sqrt(fac * (timeLater - time))));*/
+						brownianMotionArr[timeIndex][componentIndex][p] =
+								brownianMotionArr[timeIndexEarlierTimeStep][componentIndex][p]
+										+ ((brownianMotionArr[timeIndexLaterTimeStep][componentIndex][p] - brownianMotionArr[timeIndexEarlierTimeStep][componentIndex][p]) * fac)
+										+ (standardNormal[p] * Math.sqrt(fac * (timeLater - time)));
+					}
+				}
+			}
+		}
+
+		double[] brownianMotionLastTime; //  = brownianMotion[j + 1][i].getRealizations();
+		double[] brownianMotionCurrentTime;
+		for(int j = 0; j < getTimeDiscretization().getNumberOfTimeSteps(); j++) {
+			for(int i = 0; i < generator.getNumberOfFactors(); i++) {
+				brownianMotionLastTime = brownianMotionArr[j][i];
+				brownianMotionCurrentTime = brownianMotionArr[j + 1][i];
+				// brownianIncrements[j][i] = brownianMotion[j + 1][i].sub(brownianMotion[j][i]);
+				for(int p = 0; p < getNumberOfPaths(); p++) {
+					brownianIncrementsArray[j][i][p] = brownianMotionCurrentTime[p] - brownianMotionLastTime[p];
+				}
+			}
+		}
+	}
+
+	private void doGenerateBrownianMotionNewFirstOverPaths(int[][] schedulingArray, SobolSequence sobolSequenceGenerator, int seed) {
+		Random random = new Random((long) seed); // Convert seed to long
+		double scrambleNumber =  random.nextDouble();
+
+		if(brownianIncrementsArray != null) {
+			return;    // Nothing to do
+		}
+
+		// Allocate memory
+		brownianIncrementsArray = new double[getTimeDiscretization().getNumberOfTimeSteps()][generator.getNumberOfFactors()][getNumberOfPaths()];
+
+		/**
+		 * STEP 1: Create disc. Brownian motion
+		 */
+		/*RandomVariable[][] brownianMotion = new RandomVariable[getTimeDiscretization().getNumberOfTimes()][generator.getNumberOfFactors()];
+		brownianMotion[0] = start;*/
+
+		double[][][] brownianMotionArr = new double[getTimeDiscretization().getNumberOfTimes()][generator.getNumberOfFactors()][getNumberOfPaths()];
+		double[][] initArray = new double[generator.getNumberOfFactors()][getNumberOfPaths()];
+		for(int i = 0; i < initArray.length; i++) {
+			Arrays.fill(initArray[i], 0);  // Fill each row with 0s
+		}
+		brownianMotionArr[0] = initArray;
+
+		for(int p = 0; p < getNumberOfPaths(); p++) {
+			double[] vec = sobolSequenceGenerator.generator.nextVector();
+			double[] standardNormals = LNSVQDUtils.getStdNormalsFromUnifVec(vec, scrambleNumber);
+			double[] standardAsset = new double[standardNormals.length / 2];
+			double[] standardVol = new double[standardNormals.length / 2];
+			for(int o = 0; o < standardNormals.length / 2; o++) {
+				standardAsset[o] = standardNormals[2 * o];
+				standardVol[o] = standardNormals[2 * o + 1];
+			}
+
+			/*LNSVQDUtils.printArrayVertical(standardNormals);*/
+
+			for(int j = 1; j < brownianMotionArr.length; j++) {
+				int timeIndex = schedulingArray[j][0];
+				double time = timeDiscretization.getTime(timeIndex);
+
+				int timeIndexEarlierTimeStep = schedulingArray[j][1];
+				double timeEarlier = timeDiscretization.getTime(timeIndexEarlierTimeStep);
+
+				int timeIndexLaterTimeStep = schedulingArray[j][2];
+				double timeLater = timeDiscretization.getTime(timeIndexLaterTimeStep);
+
+				double fac = (time - timeEarlier) / (timeLater - timeEarlier);
+
+				for(int componentIndex = 0; componentIndex < 2; componentIndex++) {
+					double[] standardNormal;
+					if(componentIndex == 0) {
+						standardNormal = standardAsset;
+					} else {
+						standardNormal = standardVol;
+					}
+
+					if(j == 1) {
+						/*brownianMotion[timeIndex][componentIndex] =
+								brownianMotion[timeIndexEarlierTimeStep][componentIndex]
+										.add(standardNormal.mult(Math.sqrt(time)));*/
+						brownianMotionArr[timeIndex][componentIndex][p] =
+								brownianMotionArr[timeIndexEarlierTimeStep][componentIndex][p] + standardNormal[j - 1] * Math.sqrt(time);
+					} else {
+						/*brownianMotion[timeIndex][componentIndex] =
+								brownianMotion[timeIndexEarlierTimeStep][componentIndex]
+										.add(brownianMotion[timeIndexLaterTimeStep][componentIndex].sub(brownianMotion[timeIndexEarlierTimeStep][componentIndex]).mult(fac))
+										.add(standardNormal.mult(Math.sqrt(fac * (timeLater - time))));*/
+						brownianMotionArr[timeIndex][componentIndex][p] =
+								brownianMotionArr[timeIndexEarlierTimeStep][componentIndex][p]
+										+ ((brownianMotionArr[timeIndexLaterTimeStep][componentIndex][p] - brownianMotionArr[timeIndexEarlierTimeStep][componentIndex][p]) * fac)
+										+ (standardNormal[j - 1] * Math.sqrt(fac * (timeLater - time)));
+					}
+				}
+			}
+		}
+
+		double[] brownianMotionLastTime; //  = brownianMotion[j + 1][i].getRealizations();
+		double[] brownianMotionCurrentTime;
+		for(int j = 0; j < getTimeDiscretization().getNumberOfTimeSteps(); j++) {
+			for(int i = 0; i < generator.getNumberOfFactors(); i++) {
+				brownianMotionLastTime = brownianMotionArr[j][i];
+				brownianMotionCurrentTime = brownianMotionArr[j + 1][i];
+				// brownianIncrements[j][i] = brownianMotion[j + 1][i].sub(brownianMotion[j][i]);
+				for(int p = 0; p < getNumberOfPaths(); p++) {
+					brownianIncrementsArray[j][i][p] = brownianMotionCurrentTime[p] - brownianMotionLastTime[p];
+				}
+			}
 		}
 	}
 

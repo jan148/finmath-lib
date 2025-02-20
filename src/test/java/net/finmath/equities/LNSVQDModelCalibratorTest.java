@@ -29,7 +29,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 		calibratedParameters = LNSVQDModelCalibrator.calibrate(selectedParams, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
 
 		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
-		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
+		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface, null);
 		impliedVolSurface.printVolSurfaceForOutput();
 	}
 
@@ -51,7 +51,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 		calibratedParameters = LNSVQDModelCalibrator.calibrate(selectedParams, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
 
 		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
-		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface);
+		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface, null);
 		impliedVolSurface.printVolSurfaceForOutput();
 	}
 
@@ -73,7 +73,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 					ttm, (int) Math.round(ttm * 365.));
 			LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, 100000, timeGrid, false);
 			lnsvqdCallPriceSimulator.precalculatePaths(35425);
-			double price = lnsvqdCallPriceSimulator.getCallPrice(strike, ttm);
+			double price = lnsvqdCallPriceSimulator.getCallPrice(strike, ttm, 1); // TODO: Change!
 			double impliedVol = Black76Model.optionImpliedVolatility(forward, strike, ttm, price / discFac, true);
 			System.out.println("MC implied vols" );{
 				System.out.print(maturity + "\t" + strike + "\t" + impliedVol);

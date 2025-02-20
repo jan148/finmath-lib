@@ -1,5 +1,6 @@
 package net.finmath.equities.models.LNSVQD;
 
+import net.finmath.functions.NormalDistribution;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 
@@ -295,6 +296,53 @@ public class LNSVQDUtils {
 		}
 
 		return schedulingArray;
+	}
+
+	public static double[] getStdNormalsFromUnifVec(double[] vecOfUnifroms, double scambleNumber) {
+		String scambleNumberBinary = getBinaryRepresentation(scambleNumber);
+
+		double[] stdNormals = new double[vecOfUnifroms.length];
+		for(int j= 0; j < stdNormals.length; j++) {
+			String initialUniformBinary = getBinaryRepresentation(vecOfUnifroms[j]);
+			String xOr = xOr(scambleNumberBinary, initialUniformBinary);
+			double result = getNumFromBin(xOr);
+			stdNormals[j] = NormalDistribution.inverseCumulativeDistribution(result);
+		}
+		return stdNormals;
+	}
+
+	public static String getBinaryRepresentation(double x) {
+		int numberBits = 15;
+		double num = x;
+		StringBuilder sb = new StringBuilder();
+		for(int i = 1; i < numberBits + 1; i++) {
+			double comp = Math.pow(2, -i);
+			if(num >= comp) {
+				sb.append("1");
+				num -= comp;
+			} else {
+				sb.append("0");
+			}
+		}
+		return sb.toString();
+	}
+
+	public static String xOr(String a, String b) {
+		StringBuilder result = new StringBuilder();
+		for (int i = 0; i < a.length(); i++) {
+			char bitA = a.charAt(i);
+			char bitB = b.charAt(i);
+			result.append((bitA == bitB) ? '0' : '1'); // XOR logic: 0^0=0, 1^1=0, 0^1=1, 1^0=1
+		}
+		return result.toString();
+	}
+
+	public static double getNumFromBin(String binaryString) {
+		double x = 0;
+		for(int i = 0; i < binaryString.length(); i++) {
+			x += Math.pow(2, -(i + 1)) * (binaryString.charAt(i) - '0');
+		}
+		return x;
 	}
 
 }

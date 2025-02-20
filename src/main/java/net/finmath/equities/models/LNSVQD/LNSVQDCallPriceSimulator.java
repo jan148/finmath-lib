@@ -1,5 +1,6 @@
 package net.finmath.equities.models.LNSVQD;
 
+import net.finmath.equities.models.Black76Model;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
@@ -110,14 +111,35 @@ public class LNSVQDCallPriceSimulator {
 		}
 	}
 
-	public double getCallPrice(double strike, double maturity) throws Exception {
+	public double getCallPrice(double strike, double maturity, int callPutSign) throws Exception {
 		List<Double> list = Arrays.stream(timeGrid).boxed().collect(Collectors.toList());
 		int matIndex = list.indexOf(maturity);
 		if(matIndex == -1) {throw new Exception("Maturity not found!");}
 		double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(maturity); // Todo: Change (not index 0)!
 		double expectationAtMaturity = Arrays.stream(path[0][matIndex])
-				.map(x -> Math.max(x - strike, 0)).average().getAsDouble();
+				.map(x -> Math.max(callPutSign * (x - strike), 0)).average().getAsDouble();
 		double price = expectationAtMaturity * discountFactor;
 		return price;
+	}
+
+	public double getImpliedVol(double strike, double maturity) throws Exception {
+		double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
+		double forward = lnsvqdModel.equityForwardStructure.getForward(maturity) * lnsvqdModel.getSpot0();
+
+		int callPutSign;
+		if(strike > forward) {
+			callPutSign = 1;
+		} else {
+			callPutSign = -1;
+		}
+		double price = getCallPrice(strike, maturity, callPutSign);
+
+		double impliedVol;
+		if(strike > forward) {
+			impliedVol = Black76Model.optionImpliedVolatility(forward, strike, maturity, price / discountFactor, true);
+		} else {
+			impliedVol = Black76Model.optionImpliedVolatility(forward, strike, maturity, price / discountFactor, false);
+		}
+		return impliedVol;
 	}
 }

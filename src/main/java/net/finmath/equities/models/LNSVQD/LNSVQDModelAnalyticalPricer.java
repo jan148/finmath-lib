@@ -447,7 +447,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * ***************************************************+
 	 */
 	// Method takes an existing volatility surface and creates a model implied vol-surface with the same structure
-	public VolatilityPointsSurface getImpliedVolSurface(VolatilityPointsSurface volatilityPointsSurface) throws Exception {
+	public VolatilityPointsSurface getImpliedVolSurface(VolatilityPointsSurface volatilityPointsSurface, double[] maturities) throws Exception {
 		// Check if ...
 		assert (volatilityPointsSurface.getToday() == spotDate) : "Expected spotDate " + spotDate + ", but got " + volatilityPointsSurface.getToday();;
 
@@ -459,7 +459,8 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		for(VolatilityPoint volatilityPoint : volatilityPointsSurface.getVolatilityPoints()) {
 			LocalDate maturity = volatilityPoint.getDate();
 			double strike = volatilityPoint.getStrike();
-			double ttm = dayCountConvention.getDaycountFraction(today, maturity);
+			double ttm = maturities == null ?  dayCountConvention.getDaycountFraction(today, maturity)
+					: maturities[volatilityPointsSurface.getNumberOfVolatilityPoints() / maturities.length];
 			strikeMaturityPairs.add(new Pair<>(ttm, strike));
 		}
 
@@ -469,14 +470,15 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		for(int i = 0; i < uS.length; i++) {
 			LocalDate maturity = volatilityPointsSurface.getVolatilityPoints().get(i).getDate();
 			double strike = volatilityPointsSurface.getVolatilityPoints().get(i).getStrike();
-			double ttm = dayCountConvention.getDaycountFraction(today, maturity);
+			double ttm = maturities == null ? dayCountConvention.getDaycountFraction(today, maturity)
+					: maturities[volatilityPointsSurface.getNumberOfVolatilityPoints() % maturities.length];;
 			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
 			double forward = equityForwardStructure.getForward(ttm) * spot0;
 
 			double impliedVol;
 			double u = uS[i];
 			// Use put-prices for itm-call region
-			if(strike < forward) {
+			if(strike > forward) {
 				double price = spot0 - u;
 				impliedVol = Black76Model.optionImpliedVolatility(forward, strike, ttm, price / discountFactor, true);
 			} else {

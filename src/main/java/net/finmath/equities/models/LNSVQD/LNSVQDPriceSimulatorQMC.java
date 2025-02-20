@@ -27,6 +27,9 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 		SobolSequence sobolSequenceGenerator = new SobolSequence(2 * (timeGrid.length - 1));
 		sobolSequenceGenerator.generator.skipTo(Math.abs(seed) * numberOfPaths);
 
+		SobolSequence sobolSequenceGenerator2 = new SobolSequence(2 * (timeGrid.length - 1));
+		sobolSequenceGenerator2.generator.skipTo(Math.abs(seed) * numberOfPaths);
+
 		TimeDiscretization timeDiscretizationForGenerator = new TimeDiscretizationFromArray(
 				IntStream.range(0, timeDiscretization.getNumberOfTimes()).mapToDouble(i -> (double) i).toArray()
 		); // Ensures std.normal incs
@@ -54,8 +57,11 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 			for(int j = 0; j < numberOfPaths; j++) {
 				int pathIndex = j;
 
-				brownianIncrements[j][0] = brownianBridge.getBrownianIncrement(i - 1, 0).get(j);
-				brownianIncrements[j][1] = brownianBridge.getBrownianIncrement(i - 1, 1).get(j);
+				/*brownianIncrements[j][0] = brownianBridge.getBrownianIncrement(i - 1, 0).get(j);
+				brownianIncrements[j][1] = brownianBridge.getBrownianIncrement(i - 1, 1).get(j);*/
+
+				brownianIncrements[j][0] = brownianBridge.getBrownianIncrementArr(i - 1, 0, sobolSequenceGenerator2, seed)[j];
+				brownianIncrements[j][1] = brownianBridge.getBrownianIncrementArr(i - 1, 1, sobolSequenceGenerator2, seed)[j];
 
 				// Vol path
 				double volPrev = path[1][i - 1][j];
