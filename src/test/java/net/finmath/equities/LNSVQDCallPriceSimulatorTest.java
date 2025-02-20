@@ -232,7 +232,8 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 		for(int m = 0; m < maturityGrid.length; m++) {
 			for(int s = 0; s < numStrikesPerMaturity; s++) {
 				VolatilityPoint volatilityPoint = volatilityPointsSurface.getVolatilityPoints().get(m * numStrikesPerMaturity + s);
-				double maturity = maturityGrid[m];
+				LocalDate date = volatilityPoint.getDate();
+				double maturity = dayCountConvention.getDaycountFraction(valuationDate, date);
 				double strike = volatilityPoint.getStrike();
 				double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
 						maturity, (int) (Math.round(maturity * 365.) * 1));
@@ -270,10 +271,12 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 				double averagePrice = Arrays.stream(prices).average().getAsDouble();
 				double varMC = Arrays.stream(prices).map(x -> Math.pow(x - averagePrice, 2)).sum() / (seeds.size() - 1);
 				double stdErrMC = Math.sqrt(varMC) / Math.sqrt(seeds.size());
+				double[] confidenceIntervalMC = LNSVQDUtils.getConfidenceInterval(prices, 0.05);
 
 				double averagePriceQMC = Arrays.stream(pricesQ).average().getAsDouble();
 				double varQMC = Arrays.stream(pricesQ).map(x -> Math.pow(x - averagePriceQMC, 2)).sum() / (seeds.size() - 1);
 				double stdErrQMC = Math.sqrt(varQMC) / Math.sqrt(seeds.size());
+				double[] confidenceIntervalQMC = LNSVQDUtils.getConfidenceInterval(pricesQ, 0.05);
 
 				pricesMC[m][s] = averagePrice;
 				pricesQMC[m][s] = averagePriceQMC;
@@ -281,13 +284,9 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 				stdErrorsMc[m][s] = stdErrMC;
 				stdErrorsQMc[m][s] = stdErrQMC;
 
-				System.out.println("ANA: " + pricesAnalytical[m * numStrikesPerMaturity + s] + "\t"
-						+ "MC: " + pricesMC[m][s] + " (" + stdErrMC + ")" + "\t"
-						+ "QMC: " + pricesQMC[m][s] + " (" + stdErrQMC + ")" +"\t");
-
-				/*System.out.println(pricesAnalytical[m * numStrikesPerMaturity + s] + "\t"
-						+ pricesMC[m][s] + "\t"
-						+ pricesQMC[m][s]  + "\t");*/
+				System.out.println(pricesAnalytical[m * numStrikesPerMaturity + s] + "\t"
+						+ pricesMC[m][s] + "\t" + stdErrMC + "\t" + confidenceIntervalMC[0] + "\t" + confidenceIntervalMC[1] + "\t"
+						+ pricesQMC[m][s] + "\t" + stdErrQMC + "\t" + confidenceIntervalQMC[0] + "\t" + confidenceIntervalQMC[1] + "\t");
 			}
 		}
 		/**

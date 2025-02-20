@@ -2,7 +2,9 @@ package net.finmath.equities.models.LNSVQD;
 
 import net.finmath.functions.NormalDistribution;
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.distribution.TDistribution;
 import org.apache.commons.math3.util.Pair;
+import org.apache.commons.math3.stat.StatUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -241,6 +243,21 @@ public class LNSVQDUtils {
 	}
 
 	/**
+	 * Stats inference
+	 */
+	public static double[] getConfidenceInterval(double[] vals, double error) {
+		double[] bounds = new double[2];
+		double mean = StatUtils.mean(vals);
+		double populationVariance = StatUtils.populationVariance(vals, mean);
+		int n = vals.length;
+		TDistribution tDist = new TDistribution(n-1);
+		double c = tDist.inverseCumulativeProbability(1.0 - error / 2);
+		bounds[0] = mean - c * Math.sqrt(populationVariance) / Math.sqrt(n);
+		bounds[1] = mean + c * Math.sqrt(populationVariance) / Math.sqrt(n);
+		return bounds;
+	}
+
+	/**
 	 *
 	 * QMC-specific utils
 	 *
@@ -294,7 +311,6 @@ public class LNSVQDUtils {
 			int max = Arrays.stream(arraySlice).filter(x -> x > timeIndex).min().getAsInt();
 			schedulingArray[j] = new int[]{timeIndex, min, max};
 		}
-
 		return schedulingArray;
 	}
 
@@ -312,7 +328,7 @@ public class LNSVQDUtils {
 	}
 
 	public static String getBinaryRepresentation(double x) {
-		int numberBits = 15;
+		int numberBits = 20;
 		double num = x;
 		StringBuilder sb = new StringBuilder();
 		for(int i = 1; i < numberBits + 1; i++) {
@@ -332,7 +348,7 @@ public class LNSVQDUtils {
 		for (int i = 0; i < a.length(); i++) {
 			char bitA = a.charAt(i);
 			char bitB = b.charAt(i);
-			result.append((bitA == bitB) ? '0' : '1'); // XOR logic: 0^0=0, 1^1=0, 0^1=1, 1^0=1
+			result.append((bitA == bitB) ? '0' : '1');
 		}
 		return result.toString();
 	}

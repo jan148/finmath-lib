@@ -140,7 +140,7 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create simulation model (not finmath)
 	 */
-	int numberOfPaths = 100000;
+	int numberOfPaths = 150000;
 	// TODO: Discounts dates should be decoupled from maturities
 	/*double[] maturityGrid = Arrays.stream(discountDates)
 			.mapToDouble(date -> dayCountConvention.getDaycountFraction(valuationDate, date))
@@ -148,6 +148,7 @@ public abstract class TestsSetupForLNSVQD {
 	double[] maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 	int numberPointsToInsert = (int) (maturityGrid[maturityGrid.length - 1] * 365 * 2 - maturityGrid.length);
 	List<Double> timeGridForSimulationList;
+
 	{
 		try {
 			timeGridForSimulationList = LNSVQDUtils.addTimePointsToArray
@@ -156,6 +157,7 @@ public abstract class TestsSetupForLNSVQD {
 			throw new RuntimeException(e);
 		}
 	}
+
 	double[] timeGridForSimulation = timeGridForSimulationList.stream()
 			.mapToDouble(Double::doubleValue)
 			.toArray();
@@ -181,7 +183,7 @@ public abstract class TestsSetupForLNSVQD {
 	 * ***************************************************+
 	 */
 	@BeforeEach
-	public void init(){
+	public void init() {
 		setTargetSurfaceHeston();
 	}
 
@@ -267,12 +269,6 @@ public abstract class TestsSetupForLNSVQD {
 
 		// Initialize volatilityPoints
 		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();
-		/*0.401531086	0.262002147	0.147047443	0.131142026	0.182123154
-		0.33754687	0.23199757	0.145062873	0.117617253	0.147591954
-		0.30729848	0.218394871	0.146522784	0.117841898	0.137581478
-		0.293414523	0.213139202	0.149207569	0.120862294	0.134960126
-		0.280989633	0.20937458	0.15356843	0.126817863	0.135592582
-		0.269761611	0.204298557	0.153865947	0.128339944	0.133914086*/
 
 		// Create and adf volatility points
 		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 0.60, 0.401531086, spot0));
@@ -313,13 +309,11 @@ public abstract class TestsSetupForLNSVQD {
 		maturityGrid = Arrays.stream(dates).mapToDouble(date -> dayCountConvention.getDaycountFraction(valuationDate, date)).toArray();
 		int numberPointsToInsert = (int) (maturityGrid[maturityGrid.length - 1] * 365 * 2 - maturityGrid.length);
 		List<Double> timeGridForSimulationList;
-		{
-			try {
-				timeGridForSimulationList = LNSVQDUtils.addTimePointsToArray
-						(maturityGrid, numberPointsToInsert, 0, maturityGrid[maturityGrid.length - 1] - 1E-18, true);
-			} catch(Exception e) {
-				throw new RuntimeException(e);
-			}
+		try {
+			timeGridForSimulationList = LNSVQDUtils.addTimePointsToArray
+					(maturityGrid, numberPointsToInsert, 0, maturityGrid[maturityGrid.length - 1] - 1E-18, true);
+		} catch(Exception e) {
+			throw new RuntimeException(e);
 		}
 		timeGridForSimulation = timeGridForSimulationList.stream()
 				.mapToDouble(Double::doubleValue)

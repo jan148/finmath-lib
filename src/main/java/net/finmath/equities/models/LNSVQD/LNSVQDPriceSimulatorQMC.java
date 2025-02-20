@@ -23,20 +23,8 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 		final int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(timeGrid.length);
 
 		TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
-		// Dim = 2 * (timeGrid - 1)
-		SobolSequence sobolSequenceGenerator = new SobolSequence(2 * (timeGrid.length - 1));
-		sobolSequenceGenerator.generator.skipTo(Math.abs(seed) * numberOfPaths);
 
-		SobolSequence sobolSequenceGenerator2 = new SobolSequence(2 * (timeGrid.length - 1));
-		sobolSequenceGenerator2.generator.skipTo(Math.abs(seed) * numberOfPaths);
-
-		TimeDiscretization timeDiscretizationForGenerator = new TimeDiscretizationFromArray(
-				IntStream.range(0, timeDiscretization.getNumberOfTimes()).mapToDouble(i -> (double) i).toArray()
-		); // Ensures std.normal incs
-		BrownianMotion generator = new BrownianMotionFromRandomNumberGenerator(timeDiscretizationForGenerator, 2, numberOfPaths, sobolSequenceGenerator);
-
-		RandomVariable[] start = new RandomVariable[]{generator.getRandomVariableForConstant(0), generator.getRandomVariableForConstant(0)};
-		BrownianBridgeNew brownianBridge = new BrownianBridgeNew(generator, start, timeDiscretization, schedulingArray);
+		BrownianBridgeNew brownianBridge = new BrownianBridgeNew(timeDiscretization, schedulingArray, numberOfPaths);
 
 		BrentOptimizer brentOptimizer = new BrentOptimizer(1e-8, 1e-8);
 
@@ -57,11 +45,8 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 			for(int j = 0; j < numberOfPaths; j++) {
 				int pathIndex = j;
 
-				/*brownianIncrements[j][0] = brownianBridge.getBrownianIncrement(i - 1, 0).get(j);
-				brownianIncrements[j][1] = brownianBridge.getBrownianIncrement(i - 1, 1).get(j);*/
-
-				brownianIncrements[j][0] = brownianBridge.getBrownianIncrementArr(i - 1, 0, sobolSequenceGenerator2, seed)[j];
-				brownianIncrements[j][1] = brownianBridge.getBrownianIncrementArr(i - 1, 1, sobolSequenceGenerator2, seed)[j];
+				brownianIncrements[j][0] = brownianBridge.getBrownianIncrementArr(i - 1, 0, seed)[j];
+				brownianIncrements[j][1] = brownianBridge.getBrownianIncrementArr(i - 1, 1, seed)[j];
 
 				// Vol path
 				double volPrev = path[1][i - 1][j];
