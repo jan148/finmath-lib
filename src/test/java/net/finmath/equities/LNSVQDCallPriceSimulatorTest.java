@@ -236,7 +236,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 				double maturity = dayCountConvention.getDaycountFraction(valuationDate, date);
 				double strike = volatilityPoint.getStrike();
 				double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
-						maturity, (int) (Math.round(maturity * 365.) * 1));
+						maturity, (int) (Math.round(maturity * 365.) * 1.5));
 
 				List<Integer> seeds = random.ints(10).boxed().collect(Collectors.toList());
 				double[] prices = new double[seeds.size()];
@@ -244,8 +244,8 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 				for(int seed : seeds) {
 					// Normal MC
-					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-					lnsvqdCallPriceSimulator.precalculatePaths(seed);
+					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, true);
+					lnsvqdCallPriceSimulator.precalculatePathsNew(seed);
 					double simulatedOptionPrice;
 					try{
 						simulatedOptionPrice = lnsvqdCallPriceSimulator.getImpliedVol(strike, maturity);

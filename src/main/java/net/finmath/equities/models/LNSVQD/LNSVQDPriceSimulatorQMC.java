@@ -30,7 +30,7 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 
 		double spotPathAt0[] = new double[numberOfPaths];
 		double volPathAt0[] = new double[numberOfPaths];
-		Arrays.fill(spotPathAt0, lnsvqdModel.getSpot0());
+		Arrays.fill(spotPathAt0, Math.log(lnsvqdModel.getSpot0()));
 		Arrays.fill(volPathAt0, lnsvqdModel.getSigma0());
 
 		path[0][0] = spotPathAt0;
@@ -38,8 +38,6 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 
 		for(int i = 1; i < timeGrid.length; i++) {
 			double deltaT = timeGrid[i] - timeGrid[i - 1];
-			double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(timeGrid[i - 1]);
-			double discountFactorCurrent = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(timeGrid[i]);
 			double[][] brownianIncrements = new double[numberOfPaths][2];
 			// Fill Paths
 			for(int j = 0; j < numberOfPaths; j++) {
@@ -73,11 +71,9 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 				}
 				path[1][i][j] = Math.exp(volNewTransformed);
 
-				// Vol path
+				// VAssetol path
 				double assetPrev = path[0][i - 1][j];
-				double assetTransformed = Math.log(assetPrev * discountFactor);
-				assetTransformed += Math.pow(volPrev, 2) * (-0.5) * deltaT + volPrev * brownianIncrements[j][0];
-				path[0][i][j] = Math.exp(assetTransformed) / discountFactorCurrent;
+				path[0][i][j] = assetPrev + Math.pow(volPrev, 2) * (-0.5) * deltaT + volPrev * brownianIncrements[j][0];
 			}
 		}
 	}

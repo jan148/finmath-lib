@@ -140,7 +140,7 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create simulation model (not finmath)
 	 */
-	int numberOfPaths = 150000;
+	int numberOfPaths = 100000;
 	// TODO: Discounts dates should be decoupled from maturities
 	/*double[] maturityGrid = Arrays.stream(discountDates)
 			.mapToDouble(date -> dayCountConvention.getDaycountFraction(valuationDate, date))
