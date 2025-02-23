@@ -26,7 +26,7 @@ public class LNSVQDModelCalibrator {
 	                                 LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer,
 	                                 VolatilityPointsSurface volatilitySurface) throws Exception {
 		System.out.println("-------------------------------------");
-		final double[] initX = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilitySurface, null).getVolatilityPoints()
+		final double[] initX = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
 				.stream()
 				.mapToDouble(VolatilityPoint::getVolatility)
 				.toArray();
@@ -79,7 +79,7 @@ public class LNSVQDModelCalibrator {
 			lnsvqdModelAnalyticalPricer.setVolatilityParameters(paramsFull);
 			double[] impliedVols;
 			try {
-				impliedVols = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilitySurface, null).getVolatilityPoints()
+				impliedVols = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
 						.stream()
 						.mapToDouble(VolatilityPoint::getVolatility)
 						.toArray();
@@ -96,7 +96,7 @@ public class LNSVQDModelCalibrator {
 				paramsFullShifted[parameterIndices[j]] = paramsFullShifted[parameterIndices[j]] + shiftSize;
 				lnsvqdModelAnalyticalPricer.setVolatilityParameters(paramsFullShifted);
 				try {
-					forwardShiftedValues[j] = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilitySurface, null).getVolatilityPoints()
+					forwardShiftedValues[j] = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
 							.stream()
 							.mapToDouble(VolatilityPoint::getVolatility)
 							.toArray();
@@ -143,7 +143,7 @@ public class LNSVQDModelCalibrator {
 
 		// Retrieve the optimal value (cost function value)
 		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
-		double[] endX = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilitySurface, null).getVolatilityPoints()
+		double[] endX = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
 				.stream()
 				.mapToDouble(VolatilityPoint::getVolatility)
 				.toArray();

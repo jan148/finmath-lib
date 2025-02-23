@@ -30,11 +30,19 @@ public abstract class TestsSetupForLNSVQD {
 	 * Time params
 	 */
 	LocalDate valuationDate = LocalDate.parse("2024-09-30");
-	double spot0 = 1; // 19324.93;
+	double spot0 = 67843.219; // 1 ;// 19324.93;
 
 	/**
 	 * Create analytical model
 	 */
+	final double[] paramVectorBitcoin = new double[]{
+			0.8376,
+			3.1844,
+			3.058,
+			1.0413,
+			0.1514,
+			1.8458
+	};
 	final double[] paramBlackScholes = new double[]{
 			0.2,
 			0,
@@ -80,7 +88,7 @@ public abstract class TestsSetupForLNSVQD {
 			1.53513925
 	};
 
-	double[] selectedParams = paramVectorCalibrated;
+	double[] selectedParams = paramVectorBitcoin;
 
 	/**
 	 * Other
@@ -103,6 +111,7 @@ public abstract class TestsSetupForLNSVQD {
 			"2027-06-18",
 			"2027-12-17"
 	});
+
 	double[] discountFactors = new double[]{
 			0.997589468
 			, 0.994816096
@@ -116,15 +125,26 @@ public abstract class TestsSetupForLNSVQD {
 			, 0.923490121
 			, 0.91252815
 	};
+
+	double ttmBTC = 0.10122575874485597;
+	LocalDate maturityBTC = valuationDate.plusDays((long) (365. * ttmBTC) + 1); // TODO: Change! Set manually
+	LocalDate[] discountDatesBTC = new LocalDate[]{
+			maturityBTC
+	};
+	double[] discountFactorsBTC = new double[]{
+			1.
+	};
+	double impTTM = dayCountConvention.getDaycountFraction(valuationDate, maturityBTC);
+
 	YieldCurve yieldCurve = new YieldCurve("Discount curve"
 			, valuationDate
 			, dayCountConvention
-			, discountDates
-			, discountFactors);
+			, discountDatesBTC
+			, discountFactorsBTC);
 
 	AffineDividend[] affineDividends = new AffineDividend[]{new AffineDividend(valuationDate, 0., 0.)};
 	AffineDividendStream affineDividendStream = new AffineDividendStream(affineDividends);
-	EquityForwardStructure equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, 1, yieldCurve, affineDividendStream, dayCountConvention);
+	EquityForwardStructure equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, yieldCurve, affineDividendStream, dayCountConvention);
 
 	LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer =
 			new LNSVQDModelAnalyticalPricer(
@@ -140,12 +160,12 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create simulation model (not finmath)
 	 */
-	int numberOfPaths = 50000;
+	int numberOfPaths = 100000;
 	// TODO: Discounts dates should be decoupled from maturities
 	/*double[] maturityGrid = Arrays.stream(discountDates)
 			.mapToDouble(date -> dayCountConvention.getDaycountFraction(valuationDate, date))
 			.toArray();*/
-	double[] maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
+	double[] maturityGrid = new double[]{0.10122575874485597};// new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 	int numberPointsToInsert = (int) (maturityGrid[maturityGrid.length - 1] * 365 * 2 - maturityGrid.length);
 	List<Double> timeGridForSimulationList;
 

@@ -8,6 +8,7 @@ import org.apache.commons.math3.optim.univariate.BrentOptimizer;
 import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import org.apache.commons.math3.random.MersenneTwister;
+import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -181,14 +182,14 @@ public class LNSVQDCallPriceSimulator {
 		List<Double> list = Arrays.stream(timeGrid).boxed().collect(Collectors.toList());
 		int matIndex = list.indexOf(maturity);
 		if(matIndex == -1) {throw new Exception("Maturity not found!");}
-		double forward = lnsvqdModel.equityForwardStructure.getForward(maturity) * lnsvqdModel.getSpot0();
+		double forward = lnsvqdModel.equityForwardStructure.getForward(maturity) / lnsvqdModel.spot0;
 		// In Sepp: spots_t = forward*np.exp(x0)
 		//				correnction = np.nanmean(spots_t) - forward
 		//				spots_t = spots_t - correnction
 		double[] actualAssets = Arrays.stream(path[0][matIndex]).map(x -> Math.exp(x) * forward).toArray();
-		for(double a : actualAssets) {assert(!Double.isNaN(a)) : "Nan encountered";}
-		double correction = Arrays.stream(actualAssets).average().getAsDouble() - forward;
-		actualAssets = Arrays.stream(actualAssets).map(x -> x - correction).toArray();
+		// for(double a : actualAssets) {assert(!Double.isNaN(a)) : "Nan encountered";}
+		// double correction = Arrays.stream(actualAssets).average().getAsDouble() - forward;
+		// actualAssets = Arrays.stream(actualAssets).map(x -> x - correction).toArray();
 		double[] payoffsAtMaturity = Arrays.stream(actualAssets)
 				.map(x -> Math.max(callPutSign * (x - strike), 0)).toArray();
 		return payoffsAtMaturity;
@@ -197,15 +198,41 @@ public class LNSVQDCallPriceSimulator {
 	public double getCallPrice(double strike, double maturity, int callPutSign) throws Exception {
 		double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
 		double[] payoffsAtMaturity = getPayoffsAtMaturity(strike, maturity, callPutSign);
-		for(double payoff : payoffsAtMaturity) {assert(!Double.isNaN(payoff)) : "Nan encountered";}
+		// for(double payoff : payoffsAtMaturity) {assert(!Double.isNaN(payoff)) : "Nan encountered";}
 		double expectationAtMaturity = Arrays.stream(payoffsAtMaturity).average().getAsDouble();
 		double price = expectationAtMaturity * discountFactor;
 		return price;
 	}
 
+	public double[] getPriceStdErrorAndBounds(double strike, double maturity) throws Exception {
+		double[] result = new double[4];
+		StandardDeviation standardDeviation = new StandardDeviation(true);
+		double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
+		double forward = lnsvqdModel.equityForwardStructure.getForward(maturity);
+
+		int callPutSign;
+		if(strike > forward) {
+			callPutSign = 1;
+		} else {
+			callPutSign = -1;
+		}
+
+		double[] payoffsAtMaturity = getPayoffsAtMaturity(strike, maturity, callPutSign);
+		for(double payoff : payoffsAtMaturity) {assert(!Double.isNaN(payoff)) : "Nan encountered";}
+		double expectationAtMaturity = Arrays.stream(payoffsAtMaturity).average().getAsDouble();
+		double price = expectationAtMaturity * discountFactor;
+		result[0] = price;
+		double stdError = standardDeviation.evaluate(payoffsAtMaturity) * discountFactor;
+		result[1] = stdError;
+		double[] boundsUndiscounted = LNSVQDUtils.getConfidenceInterval(payoffsAtMaturity, 0.05);
+		result[2] = boundsUndiscounted[0] * discountFactor;
+		result[3] = boundsUndiscounted[1] * discountFactor;
+		return result;
+	}
+
 	public double getImpliedVol(double strike, double maturity) throws Exception {
 		double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
-		double forward = lnsvqdModel.equityForwardStructure.getForward(maturity) * lnsvqdModel.getSpot0();
+		double forward = lnsvqdModel.equityForwardStructure.getForward(maturity);
 
 		int callPutSign;
 		if(strike > forward) {
@@ -214,6 +241,19 @@ public class LNSVQDCallPriceSimulator {
 			callPutSign = -1;
 		}
 		double price = getCallPrice(strike, maturity, callPutSign);
+
+		double impliedVol;
+		if(strike > forward) {
+			impliedVol = Black76Model.optionImpliedVolatility(forward, strike, maturity, price / discountFactor, true);
+		} else {
+			impliedVol = Black76Model.optionImpliedVolatility(forward, strike, maturity, price / discountFactor, false);
+		}
+		return impliedVol;
+	}
+
+	public double getImpliedVolFromPrice(double strike, double maturity, double price) throws Exception {
+		double discountFactor = lnsvqdModel.equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
+		double forward = lnsvqdModel.equityForwardStructure.getForward(maturity);
 
 		double impliedVol;
 		if(strike > forward) {

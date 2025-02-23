@@ -29,7 +29,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 		calibratedParameters = LNSVQDModelCalibrator.calibrate(selectedParams, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
 
 		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
-		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface, null);
+		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilityPointsSurface, null);
 		impliedVolSurface.printVolSurfaceForOutput();
 	}
 
@@ -51,7 +51,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 		calibratedParameters = LNSVQDModelCalibrator.calibrate(selectedParams, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
 
 		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
-		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurface(volatilityPointsSurface, null);
+		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilityPointsSurface, null);
 		impliedVolSurface.printVolSurfaceForOutput();
 	}
 
