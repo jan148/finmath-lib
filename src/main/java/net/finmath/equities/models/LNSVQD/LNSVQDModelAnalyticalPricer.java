@@ -30,11 +30,12 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	// 2. For unbounded integration
 	// Integration bounds params
 	public final double lowerBound = 0;
-	public final double upperBound = 100;
+	public final double upperBound = 100; // 100;
 	List<Double> yGridForIntegration = new ArrayList<>();
 
 	// finmath integrator
-	SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, (int) upperBound * 10, false);
+	int numberOfEvaluationPoints = (int) upperBound * 10;
+	SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, numberOfEvaluationPoints, false);
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate valuationDate, EquityForwardStructure equityForwardStructure) {
 		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate, equityForwardStructure);
@@ -45,7 +46,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		// Next lines adapted from finmath's Simpson implementation
 		final double range = upperBound - lowerBound;
 
-		final int numberOfEvaluationPoints = (int) upperBound * 10; // Need to change this in accordance with LNSVQD pricer
 		final int numberOfDoubleSizeIntervals = (int) ((numberOfEvaluationPoints - 1) / 2.0);
 
 		final double doubleInterval = range / numberOfDoubleSizeIntervals;
@@ -76,7 +76,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		// Next lines adapted from finmath's Simpson implementation
 		final double range = upperBound - lowerBound;
 
-		final int numberOfEvaluationPoints = (int) upperBound * 10; // Need to change this in accordance with LNSVQD pricer
 		final int numberOfDoubleSizeIntervals = (int) ((numberOfEvaluationPoints - 1) / 2.0);
 
 		final double doubleInterval = range / numberOfDoubleSizeIntervals;

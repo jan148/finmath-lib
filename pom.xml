@@ -206,7 +206,9 @@
 				<version>${maven.compiler-plugin.version}</version>
 				<configuration>
 					<fork>true</fork>
-				</configuration>
+                    <source>16</source>
+                    <target>16</target>
+                </configuration>
 			</plugin>
 
 			<plugin>

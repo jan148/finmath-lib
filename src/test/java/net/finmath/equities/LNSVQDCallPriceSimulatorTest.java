@@ -56,7 +56,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 		for(int m = 0; m < maturityGrid.length; m++) {
 			double maturity = maturityGrid[m];
 			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
-			double forward = spot0 / discountFactor;
+			double forward = equityForwardStructure.getForward(maturity);
 			double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
 					maturity, (int) Math.round(maturity * 365.));
 			for(int s = 0; s < strikes.length; s++) {
@@ -73,7 +73,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 				for(int seed : seeds) {
 					// Normal MC
 					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-					lnsvqdCallPriceSimulator.precalculatePaths(seed);
+					lnsvqdCallPriceSimulator.precalculatePathsNew(seed);
 					double simulatedOptionPrice = lnsvqdCallPriceSimulator.getCallPrice(strike, maturity,1);
 					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
 
@@ -236,7 +236,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 				double maturity = dayCountConvention.getDaycountFraction(valuationDate, date);
 				double strike = volatilityPoint.getStrike();
 				double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
-						maturity, (int) (Math.round(maturity * 365.) * 1.5));
+						maturity, (int) (Math.round(maturity * 365.) * 1));
 
 				List<Integer> seeds = random.ints(10).boxed().collect(Collectors.toList());
 				double[] prices = new double[seeds.size()];
@@ -244,7 +244,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 				for(int seed : seeds) {
 					// Normal MC
-					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, true);
+					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
 					lnsvqdCallPriceSimulator.precalculatePathsNew(seed);
 					double simulatedOptionPrice;
 					try{
