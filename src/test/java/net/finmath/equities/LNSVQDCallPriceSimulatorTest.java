@@ -8,10 +8,12 @@ import net.finmath.montecarlo.*;
 import net.finmath.montecarlo.assetderivativevaluation.MonteCarloLNSVQDModel;
 import net.finmath.montecarlo.assetderivativevaluation.products.EuropeanOption;
 import net.finmath.montecarlo.process.LNSVQDDiscretizationScheme;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.util.Pair;
 import org.junit.Test;
 
+import java.time.Duration;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -64,7 +66,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 				for(int seed : seeds) {
 					// Normal MC
 					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-					lnsvqdCallPriceSimulator.precalculatePathsNew(seed);
+					lnsvqdCallPriceSimulator.precalculatePaths(seed);
 					double simulatedOptionPrice = lnsvqdCallPriceSimulator.getCallPrice(strike, maturity, 1);
 					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
 
@@ -202,7 +204,8 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 	@Test
 	public void getImpliedVolsForHestonTarget() throws Exception {
-		setTargetSurfaceHeston();
+		/*setTargetSurfaceHeston();*/
+		setTargetSurfaceBTC();
 
 		// Get option values
 		int numStrikesPerMaturity = volatilityPointsSurface.getNumberOfVolatilityPoints() / maturityGrid.length;
@@ -210,16 +213,20 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 		double[][] pricesMC = new double[maturityGrid.length][numStrikesPerMaturity];
 		double[][] pricesQMC = new double[maturityGrid.length][numStrikesPerMaturity];
 		// Get analytical prices
+		StopWatch sw = StopWatch.createStarted();
 		double[] pricesAnalytical = lnsvqdModelAnalyticalPricer
 				.getImpliedVolSurfaceFromVolSurface(volatilityPointsSurface, null)
 				.getVolatilityPoints()
 				.stream()
 				.mapToDouble(volPoints -> volPoints.getVolatility())
 				.toArray();
+		sw.stop();
+		System.out.println("time: " + sw.getTime()); // formatted string like "12.3 ms"
 
 		double[][] stdErrorsMc = new double[maturityGrid.length][numStrikesPerMaturity];
 		double[][] stdErrorsQMc = new double[maturityGrid.length][numStrikesPerMaturity];
 
+		random.setSeed(7843657);
 		for(int m = 0; m < maturityGrid.length; m++) {
 			for(int s = 0; s < numStrikesPerMaturity; s++) {
 				VolatilityPoint volatilityPoint = volatilityPointsSurface.getVolatilityPoints().get(m * numStrikesPerMaturity + s);
@@ -227,23 +234,32 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 				double maturity = dayCountConvention.getDaycountFraction(valuationDate, date);
 				double strike = volatilityPoint.getStrike();
 				double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
-						maturity, (int) (Math.round(maturity * 365.) * 1));
+						maturity, (int) (Math.round(maturity * 365.) * 2));
 
-				List<Integer> seeds = random.ints(1).boxed().collect(Collectors.toList());
+
+				List<Integer> seeds = random.ints(7).boxed().collect(Collectors.toList());
 				double[] prices = new double[seeds.size()];
 				double[] pricesQ = new double[seeds.size()];
 
 				for(int seed : seeds) {
 					// Normal MC
+					// StopWatch sw1 = StopWatch.createStarted();
 					LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-					lnsvqdCallPriceSimulator.precalculatePathsNew(seed);
+					lnsvqdCallPriceSimulator.precalculatePaths(seed);
+					// sw1.stop();
+					// System.out.println("time MC: " + sw1.getTime());
 					double simulatedOptionPrice;
 					try {
+						// sw1.reset();
+						// sw1.start();
 						simulatedOptionPrice = lnsvqdCallPriceSimulator.getImpliedVol(strike, maturity);
+						// sw1.stop();
+						// System.out.println("time MC: " + sw1.getTime());
 					} catch(AssertionError e) {
-						System.err.println("Caught AssertionError: " + e.getMessage());
+						// System.err.println("Caught AssertionError: " + e.getMessage());
 						simulatedOptionPrice = 1000000;
 					}
+
 					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
 
 					// QMC
@@ -378,7 +394,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 				// Normal MC
 				LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-				lnsvqdCallPriceSimulator.precalculatePathsNew(seed);
+				lnsvqdCallPriceSimulator.precalculatePaths(seed);
 				try {
 					double[] priceStdErrorAndBounds = lnsvqdCallPriceSimulator.getPriceStdErrorAndBounds(strike, maturity);
 					double price = priceStdErrorAndBounds[0];
@@ -479,7 +495,6 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 	@Test
 	public void testBitcoin() throws Exception {
 		ArrayList<Pair<Double, Double>> strikeMatPairs = new ArrayList<>();
-		double forward = equityForwardStructure.getForward(maturityBTC);
 		/*45000.,  48000.,  55000.,  58000.,  64000.,  65000.,  70000.,
 				75000.,  80000.,  85000.,  90000., 100000., 120000.]),)*/
 		strikeMatPairs.add(new Pair<Double, Double>(0.10122575874485597, 45000.));
@@ -527,7 +542,7 @@ public class LNSVQDCallPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 				// Normal MC
 				LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, true);
-				lnsvqdCallPriceSimulator.precalculatePathsNew(seed);
+				lnsvqdCallPriceSimulator.precalculatePaths(seed);
 				try {
 					double[] priceStdErrorAndBounds = lnsvqdCallPriceSimulator.getPriceStdErrorAndBounds(strike, maturity);
 					double price = priceStdErrorAndBounds[0];

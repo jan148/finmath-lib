@@ -16,6 +16,7 @@ import net.finmath.time.TimeDiscretization;
 import net.finmath.time.TimeDiscretizationFromArray;
 import net.finmath.time.daycount.DayCountConvention;
 import net.finmath.time.daycount.DayCountConvention_ACT_365;
+import org.apache.commons.math3.util.Pair;
 import org.junit.jupiter.api.BeforeEach;
 
 import java.time.LocalDate;
@@ -338,6 +339,39 @@ public abstract class TestsSetupForLNSVQD {
 		timeGridForSimulation = timeGridForSimulationList.stream()
 				.mapToDouble(Double::doubleValue)
 				.toArray();
+	}
+
+	public void setTargetSurfaceBTC() {
+		double ttmBTC = 0.10122575874485597;
+		LocalDate maturityBTC = valuationDate.plusDays((long) (365. * ttmBTC) + 1); // TODO: Change! Set manually
+		LocalDate[] dates = new LocalDate[]{
+				maturityBTC
+		};
+
+		// Initialize volatilityPoints
+		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();
+
+		// Create and adf volatility points
+		volatilityPoints.add(new VolatilityPoint(dates[0], 45000., 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 48000., 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 55000., 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 58000., 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 64000., 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 65000., 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 70000., 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 75000., 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 80000., 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 85000., 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 90000., 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 100000, 0.));
+		volatilityPoints.add(new VolatilityPoint(dates[0], 120000, 0.));
+
+		double ttm = dayCountConvention.getDaycountFraction(valuationDate, maturityBTC);
+		// Create volatility surface
+		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);
+
+		// Redefine the maturityGrid and the simulation grid
+		maturityGrid = Arrays.stream(dates).mapToDouble(date -> dayCountConvention.getDaycountFraction(valuationDate, date)).toArray();
 	}
 
 	private VolatilityPoint makeVolatilityPoint(String date, double percentage, double volatility, double spot) {

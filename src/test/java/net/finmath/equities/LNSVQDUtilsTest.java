@@ -8,6 +8,9 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
+
+import static org.junit.Assert.assertEquals;
 
 public class LNSVQDUtilsTest {
 
@@ -89,29 +92,14 @@ public class LNSVQDUtilsTest {
 	}
 
 	@Test
-	public void confidenceIntervals() {
-		StandardDeviation sd = new StandardDeviation(true);
-		double[] arrayOld = {
-				0.39216667, 0.39704215, 0.39423829, 0.40119638, 0.39436073,
-				0.39663248, 0.39676409, 0.39810285, 0.39891461, 0.40348198
-		};
+	public void testScrambling() {
+		for(int j = 0; j < 10000; j++) {
+			double number = Math.random();
+			double numberAfterTransition = LNSVQDUtils.getNumFromBin(LNSVQDUtils.getBinaryRepresentation(number));
+			System.out.println(number + "\t" + numberAfterTransition);
+			assertEquals(number, numberAfterTransition, 1E-10);
+		}
 
-		double[] array = {
-				0.40107024, 0.39812148, 0.39653207, 0.39616844, 0.39676177,
-				0.39665332, 0.39525346, 0.39836511, 0.39654689, 0.39959539
-		}; // 400000 paths
-		int numberOfPaths = 400000;
-		double price = Arrays.stream(array).average().getAsDouble();
-		double stdError = sd.evaluate(array);
-		double lowerPrice = Math.max(price - 1.96 * stdError / Math.sqrt(array.length), 1E-10);
-		double upperPrice = price + 1.96 * stdError / Math.sqrt(array.length);
-					/*confidenceIntervalMC[0] = lnsvqdCallPriceSimulator.getImpliedVolFromPrice(strike, maturity, priceStdErrorAndBounds[2]);
-					confidenceIntervalMC[1] = lnsvqdCallPriceSimulator.getImpliedVolFromPrice(strike, maturity, priceStdErrorAndBounds[3]);*/
-		double[] confidenceInterval = new double[2];
-		// confidenceInterval = LNSVQDUtils.getConfidenceInterval(array, 0.05);
-		confidenceInterval[0] = lowerPrice;
-		confidenceInterval[1] = upperPrice;
-		System.out.println(price + "\t" + confidenceInterval[0] + "\t" + confidenceInterval[1]);
 	}
 
 

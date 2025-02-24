@@ -316,11 +316,10 @@ public class LNSVQDUtils {
 
 	public static double[] getStdNormalsFromUnifVec(double[] vecOfUnifroms, double scambleNumber) {
 		String scambleNumberBinary = getBinaryRepresentation(scambleNumber);
-
 		double[] stdNormals = new double[vecOfUnifroms.length];
 		for(int j= 0; j < stdNormals.length; j++) {
 			String initialUniformBinary = getBinaryRepresentation(vecOfUnifroms[j]);
-			String xOr = xOr(scambleNumberBinary, initialUniformBinary);
+			String xOr = xOr(scambleNumberBinary, initialUniformBinary, true);
 			double result = getNumFromBin(xOr);
 			stdNormals[j] = NormalDistribution.inverseCumulativeDistribution(result);
 		}
@@ -328,7 +327,7 @@ public class LNSVQDUtils {
 	}
 
 	public static String getBinaryRepresentation(double x) {
-		int numberBits = 20;
+		int numberBits = 50;
 		double num = x;
 		StringBuilder sb = new StringBuilder();
 		for(int i = 1; i < numberBits + 1; i++) {
@@ -343,13 +342,23 @@ public class LNSVQDUtils {
 		return sb.toString();
 	}
 
-	public static String xOr(String a, String b) {
+	public static String xOr(String a, String b, Boolean scrambled) {
 		StringBuilder result = new StringBuilder();
-		for (int i = 0; i < a.length(); i++) {
-			char bitA = a.charAt(i);
-			char bitB = b.charAt(i);
-			result.append((bitA == bitB) ? '0' : '1');
+		if(scrambled) {
+			for (int i = 0; i < a.length(); i++) {
+				char bitA = a.charAt(i);
+				char bitB = b.charAt(i);
+				result.append((bitA == bitB) ? '0' : '1');
+			}
 		}
+		else {
+			for (int i = 0; i < a.length(); i++) {
+				char bitA = a.charAt(i);
+				char bitB = b.charAt(i);
+				result.append((bitA == bitB) ? '0' : '1');
+			}
+		}
+
 		return result.toString();
 	}
 

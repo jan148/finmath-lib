@@ -10,6 +10,7 @@ import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.univariate.BrentOptimizer;
 import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
+import org.apache.commons.math3.random.MersenneTwister;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -35,9 +36,13 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 
 		path[0][0] = spotPathAt0;
 		path[1][0] = volPathAt0;
+		double[] volNewTransformed = new double[numberOfPaths];
+		Arrays.fill(volNewTransformed, Math.log(lnsvqdModel.getSigma0()));
 
 		for(int i = 1; i < timeGrid.length; i++) {
 			double deltaT = timeGrid[i] - timeGrid[i - 1];
+			double sqrtDeltaT = Math.sqrt(deltaT);
+			assert(sqrtDeltaT > 0) : "sqrt(delta) = 0!";
 			double[][] brownianIncrements = new double[numberOfPaths][2];
 			// Fill Paths
 			for(int j = 0; j < numberOfPaths; j++) {
@@ -46,38 +51,37 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
 				brownianIncrements[j][0] = brownianBridge.getBrownianIncrementArr(i - 1, 0, seed)[j];
 				brownianIncrements[j][1] = brownianBridge.getBrownianIncrementArr(i - 1, 1, seed)[j];
 
-				// Vol path
-				double volPrev = path[1][i - 1][j];
-				double volPrevTransformed = Math.log(volPrev);
-				double volNewTransformed;
-
 				if(isBackwardEuler) {
 					UnivariateObjectiveFunction rootFunction = new UnivariateObjectiveFunction(
 							l -> Math.abs(-brownianIncrements[pathIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[pathIndex][1] * lnsvqdModel.getEpsilon())
-									- (zeta.value(l) * deltaT) - volPrevTransformed + l)
+									- (zeta.value(l) * deltaT) - volNewTransformed[pathIndex] + l)
 					);
 					UnivariatePointValuePair result = brentOptimizer.optimize(
 							rootFunction,
 							GoalType.MINIMIZE,
 							new MaxEval(100),
-							new org.apache.commons.math3.optim.univariate.SearchInterval(-1000, 1000)
+							new org.apache.commons.math3.optim.univariate.SearchInterval(-100, 100)
 					);
-					volNewTransformed = result.getPoint();
+					volNewTransformed[j] = result.getPoint();
 					if(Math.abs(result.getValue()) > 1e-4) {throw new ArithmeticException("The point doesn't result in a root.");}
 				} else {
-					volNewTransformed = volPrevTransformed + ((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / volPrev - lnsvqdModel.getKappa1())
-							+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - volPrev) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT +
-							lnsvqdModel.getBeta() * brownianIncrements[j][0] + lnsvqdModel.getEpsilon() * brownianIncrements[j][1];
+					// from Sepp's implementation: vol_var = vol_var + ((kappa1 * theta / sigma0 - kappa1) + kappa2*(theta-sigma0) + adj*sigma0 - 0.5*vartheta2) * dt + vartheta*w1_
+					//				sigma0 = np.exp(vol_var)
+					/*sigma0_2dt = vol_backbone_eta2 * sigma0 * sigma0 * dt
+					x0 = x0 + alpha * 0.5 * sigma0_2dt + vol_backbone_eta * sigma0 * w0
+					vol_var = vol_var + ((kappa1 * theta / sigma0 - kappa1) + kappa2*(theta-sigma0) + adj*sigma0 - 0.5*vartheta2) * dt + beta*w0+volvol*w1
+					sigma0 = np.exp(vol_var)*/
+					volNewTransformed[j] = volNewTransformed[j] + ((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / path[1][i - 1][j] - lnsvqdModel.getKappa1())
+							+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - path[1][i - 1][j]) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT
+							+ lnsvqdModel.getBeta() * brownianIncrements[j][0] + lnsvqdModel.getEpsilon() * brownianIncrements[j][1];
 				}
-				path[1][i][j] = Math.exp(volNewTransformed);
+				// vol_var = vol_var + ((kappa1 * theta / sigma0 - kappa1) + kappa2*(theta-sigma0) + adj*sigma0 - 0.5*vartheta2) * dt + vartheta*w1_
+				path[1][i][j] = Math.exp(volNewTransformed[j]);
 
-				// VAssetol path
-				double assetPrev = path[0][i - 1][j];
-				path[0][i][j] = assetPrev + Math.pow(volPrev, 2) * (-0.5) * deltaT + volPrev * brownianIncrements[j][0];
+				// Asset path
+				path[0][i][j] = path[0][i - 1][j] + path[1][i - 1][j] * path[1][i - 1][j] * (-0.5) * deltaT + path[1][i - 1][j] * brownianIncrements[j][0];
 			}
 		}
 	}
-
-
 
 }
