@@ -3,6 +3,7 @@ package net.finmath.equities.models.LNSVQD;
 import net.finmath.equities.marketdata.AffineDividendStream;
 import net.finmath.equities.marketdata.FlatYieldCurve;
 import net.finmath.equities.marketdata.YieldCurve;
+import net.finmath.equities.models.Black76Model;
 import net.finmath.equities.models.EquityForwardStructure;
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.RandomVariableFactory;
@@ -422,6 +423,19 @@ public class LNSVQDModel extends AbstractProcessModel {
 	@Override
 	public ProcessModel getCloneWithModifiedData(Map<String, Object> dataModified) throws CalculationException {
 		return null;
+	}
+
+	public double getImpliedVolFromPrice(double strike, double maturity, double price) throws Exception {
+		double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
+		double forward = equityForwardStructure.getForward(maturity);
+
+		double impliedVol;
+		if(strike > forward) {
+			impliedVol = Black76Model.optionImpliedVolatility(forward, strike, maturity, price / discountFactor, true);
+		} else {
+			impliedVol = Black76Model.optionImpliedVolatility(forward, strike, maturity, price / discountFactor, false);
+		}
+		return impliedVol;
 	}
 
 }

@@ -35,7 +35,6 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 
 	@Test
 	public void calibrateTestHeston() throws Exception {
-		init();
 		/**
 		 * 1. Calibrate and get cvalibrated paramerters
 		 */
@@ -71,9 +70,9 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 			double discFac = equityForwardStructure.getRepoCurve().getDiscountFactor(ttm);
 			double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
 					ttm, (int) Math.round(ttm * 365.));
-			LNSVQDCallPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDCallPriceSimulator(lnsvqdModelAnalyticalPricer, 100000, timeGrid, false);
+			LNSVQDEuropeanPriceSimulator lnsvqdCallPriceSimulator = new LNSVQDEuropeanPriceSimulator(lnsvqdModelAnalyticalPricer, 100000, timeGrid, false);
 			lnsvqdCallPriceSimulator.precalculatePaths(35425);
-			double price = lnsvqdCallPriceSimulator.getCallPrice(strike, ttm, 1); // TODO: Change!
+			double price = lnsvqdCallPriceSimulator.getEuropeanPrice(strike, ttm, 1); // TODO: Change!
 			double impliedVol = Black76Model.optionImpliedVolatility(forward, strike, ttm, price / discFac, true);
 			System.out.println("MC implied vols" );{
 				System.out.print(maturity + "\t" + strike + "\t" + impliedVol);

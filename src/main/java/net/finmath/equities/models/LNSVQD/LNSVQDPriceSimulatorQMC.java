@@ -1,8 +1,6 @@
 package net.finmath.equities.models.LNSVQD;
 
 import net.finmath.montecarlo.*;
-import net.finmath.randomnumbers.SobolSequence;
-import net.finmath.stochastic.RandomVariable;
 import net.finmath.time.TimeDiscretization;
 import net.finmath.time.TimeDiscretizationFromArray;
 import org.apache.commons.math3.optim.MaxEval;
@@ -10,12 +8,10 @@ import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.univariate.BrentOptimizer;
 import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
-import org.apache.commons.math3.random.MersenneTwister;
 
 import java.util.Arrays;
-import java.util.stream.IntStream;
 
-public class LNSVQDPriceSimulatorQMC extends LNSVQDCallPriceSimulator{
+public class LNSVQDPriceSimulatorQMC extends LNSVQDEuropeanPriceSimulator {
 	public LNSVQDPriceSimulatorQMC(LNSVQDModel lnsvqdModel, int numberOfPaths, double[] timeGrid, Boolean isBackwardEuler) {
 		super(lnsvqdModel, numberOfPaths, timeGrid, isBackwardEuler);
 	}
