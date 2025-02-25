@@ -29,7 +29,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	// 2. For unbounded integration
 	// Integration bounds params
 	public final double lowerBound = 0;
-	public final double upperBound = 100; // 100;
+	public double upperBound = 100; // 100;
 	List<Double> yGridForIntegration = new ArrayList<>();
 
 	// finmath integrator
@@ -92,6 +92,37 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		yGridForIntegration.add(lowerBound + singleInterval);
 		yGridForIntegration.add(lowerBound);
 		yGridForIntegration.add(upperBound);
+
+		yGridForIntegration = yGridForIntegration.stream().sorted().distinct().collect(Collectors.toList());
+	}
+
+	public void setUpperBoundForIntegration(double upperBoundForIntegration) {
+		numberOfEvaluationPoints = (int) upperBoundForIntegration * 10;
+		simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBoundForIntegration, numberOfEvaluationPoints, false);
+
+		/**
+		 * Get all the integration points from the integrator, in our case Simpson
+		 */
+		// Next lines adapted from finmath's Simpson implementation
+		final double range = upperBoundForIntegration - lowerBound;
+
+		final int numberOfDoubleSizeIntervals = (int) ((numberOfEvaluationPoints - 1) / 2.0);
+
+		final double doubleInterval = range / numberOfDoubleSizeIntervals;
+		final double singleInterval = 0.5 * doubleInterval;
+
+		IntStream intervals = IntStream.range(1, numberOfDoubleSizeIntervals);
+
+		intervals.forEach(
+				i -> {
+					yGridForIntegration.add(lowerBound + i * doubleInterval);
+					yGridForIntegration.add(lowerBound + i * doubleInterval + singleInterval);
+				}
+		);
+
+		yGridForIntegration.add(lowerBound + singleInterval);
+		yGridForIntegration.add(lowerBound);
+		yGridForIntegration.add(upperBoundForIntegration);
 
 		yGridForIntegration = yGridForIntegration.stream().sorted().distinct().collect(Collectors.toList());
 	}
@@ -452,7 +483,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		// Check if ...
 		double[] uS = getU(strikeMaturityPairs);
 
-		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<>();
 		for(int i = 0; i < uS.length; i++) {
 			double strike = strikeMaturityPairs.get(i).getValue();
 			double ttm = strikeMaturityPairs.get(i).getKey();
@@ -515,6 +545,35 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		}
 
 		return new VolatilityPointsSurface(volatilityPoints, today, dayCountConvention);
+	}
+
+	public void setYGridForIntegration(double lb, double ub, int numberOfEvaluationPoints) {
+		/**
+		 * Get all the integration points from the integrator, in our case Simpson
+		 */
+		// Next lines adapted from finmath's Simpson implementation
+		final double range = ub - lb;
+
+		final int numberOfDoubleSizeIntervals = (int) ((numberOfEvaluationPoints - 1) / 2.0);
+
+		final double doubleInterval = range / numberOfDoubleSizeIntervals;
+		final double singleInterval = 0.5 * doubleInterval;
+
+		IntStream intervals = IntStream.range(1, numberOfDoubleSizeIntervals);
+
+		intervals.forEach(
+				i -> {
+					yGridForIntegration.add(lb + i * doubleInterval);
+					yGridForIntegration.add(lb + i * doubleInterval + singleInterval);
+				}
+		);
+
+		yGridForIntegration.add(lb + singleInterval);
+		yGridForIntegration.add(lb);
+		yGridForIntegration.add(ub);
+
+		yGridForIntegration = yGridForIntegration.stream().sorted().distinct().collect(Collectors.toList());
+
 	}
 
 }

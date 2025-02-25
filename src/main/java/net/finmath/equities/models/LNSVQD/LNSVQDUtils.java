@@ -113,7 +113,6 @@ public class LNSVQDUtils {
 		for(double element : array) {
 			System.out.print(element + "\t");
 		}
-		System.out.print("\n");
 	}
 
 	public static void printArrayVertical(double[] array) {
