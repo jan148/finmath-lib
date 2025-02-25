@@ -24,7 +24,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * Numerical parameters
 	 */
 	// 1. For ODE-solution
-	public final int numStepsForODEIntegration = 300;
+	public int numStepsForODEIntegrationPerYear = 365;
 
 	// 2. For unbounded integration
 	// Integration bounds params
@@ -295,10 +295,11 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 
 	// Calculate the affine-exponential approximation to the characteristic function
 	public Complex calculateExponentialAffineApproximation(Double endTime, Complex[] charFuncArgs) {
+		int numStepsForODEIntegration = (int) (endTime * 365 * numStepsForODEIntegrationPerYear);
 		// double
-		double[] timeGridForMGFApproximationCalculation = LNSVQDUtils.createTimeGrid(0, endTime, this.numStepsForODEIntegration);
+		double[] timeGridForMGFApproximationCalculation = LNSVQDUtils.createTimeGrid(0, endTime, numStepsForODEIntegration);
 		// Choose the end point of the solution path
-		Complex result = calculateExponentialAffineApproximationFullPath(timeGridForMGFApproximationCalculation, charFuncArgs)[this.numStepsForODEIntegration];
+		Complex result = calculateExponentialAffineApproximationFullPath(timeGridForMGFApproximationCalculation, charFuncArgs)[numStepsForODEIntegration];
 		return result;
 	}
 
@@ -331,6 +332,8 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	}
 
 	public double[] getU(List<Pair<Double, Double>> strikeMaturityPairs) throws Exception {
+		int numStepsForODEIntegration = (int) (Math.max(strikeMaturityPairs.get(strikeMaturityPairs.size() - 1).getKey() * numStepsForODEIntegrationPerYear, 300));
+
 		// Initialize the array of option prices that will be returned
 		double[] optionPrices = new double[strikeMaturityPairs.size()];
 
@@ -370,7 +373,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			double y = gridForIntegrationWithMidPoints.get(l);
 			Complex[] charFuncArs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 			Complex[] expAffApproxPathPerCharFuncRealization = calculateExponentialAffineApproximationFullPath(timeGridForMGFApproximationCalculation, charFuncArs);
-			;
 
 			// Get only maturities
 			for(int i = 0; i < maturitiesWithZero.length; i++) {

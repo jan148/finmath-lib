@@ -1,12 +1,10 @@
 package net.finmath.equities;
 
-import net.finmath.equities.models.LNSVQD.ComplexRungeKutta4thOrderIntegrator;
 import net.finmath.equities.models.LNSVQD.LNSVQDModel;
 import net.finmath.equities.models.LNSVQD.LNSVQDModelAnalyticalPricer;
 import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import net.finmath.exception.CalculationException;
 import net.finmath.functions.AnalyticFormulas;
-import net.finmath.integration.SimpsonRealIntegrator;
 import net.finmath.montecarlo.BrownianMotionFromMersenneRandomNumbers;
 import net.finmath.montecarlo.RandomVariableFactory;
 import net.finmath.montecarlo.RandomVariableFromArrayFactory;
@@ -15,8 +13,6 @@ import net.finmath.montecarlo.assetderivativevaluation.products.EuropeanOption;
 import net.finmath.montecarlo.process.LNSVQDDiscretizationScheme;
 import net.finmath.time.TimeDiscretization;
 import net.finmath.time.TimeDiscretizationFromArray;
-import org.apache.commons.math3.analysis.UnivariateFunction;
-import org.apache.commons.math3.analysis.integration.IterativeLegendreGaussIntegrator;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
 import org.junit.Assert;
@@ -27,18 +23,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
-import java.util.function.BiFunction;
-import java.util.function.DoubleUnaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * This test
  * 1. compares the semi-analytical LNSVQD call option price to the BS call option price and
  * 2. compares the semi-analytical LNSVQD call option price to the simulated LNSVQD call option price
  */
-class LNSVQDModelAnalyticalPricerTest {
+class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 	/**
 	 * Time params
 	 */
@@ -120,7 +113,8 @@ class LNSVQDModelAnalyticalPricerTest {
 		int index = 3;
 		double ttm = 1;
 		double y = 2;
-		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
+		int numStepsForODEIntegration = (int) (ttm * 365 * lnsvqdModelAnalyticalPricer.numStepsForODEIntegrationPerYear);
+		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, numStepsForODEIntegration);
 		final Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 		Complex[][] solutionPath = lnsvqdModelAnalyticalPricer.getSolutionPathForODESystem(timeGrid, charFuncArgs);
 		System.out.println("T \t Real part \t Imaginary part");
@@ -137,7 +131,8 @@ class LNSVQDModelAnalyticalPricerTest {
 	public void printE2() {
 		double ttm = 1;
 		double y = 1;
-		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
+		int numStepsForODEIntegration = (int) (ttm * 365 * lnsvqdModelAnalyticalPricer.numStepsForODEIntegrationPerYear);
+		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, numStepsForODEIntegration);
 		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 
 		System.out.println("TTM \t Real part \t Imaginary part");
@@ -320,7 +315,8 @@ class LNSVQDModelAnalyticalPricerTest {
 	public void calculateExponentialAffineApproximationFullPathTest() {
 		double ttm = 1;
 		double y = 2.;
-		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, lnsvqdModelAnalyticalPricer.numStepsForODEIntegration);
+		int numStepsForODEIntegration = (int) (ttm * 365 * lnsvqdModelAnalyticalPricer.numStepsForODEIntegrationPerYear);
+		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, numStepsForODEIntegration);
 		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 
 		System.out.println("TTM \t Real part \t Imaginary part");
@@ -367,4 +363,18 @@ class LNSVQDModelAnalyticalPricerTest {
 		}
 	}
 
+	/**
+	 * ***************************************************+
+	 * SECTION 4: TEST CALL PRICE CALCULATION WITH PRECALCULATION OF E2
+	 * ***************************************************+
+	 */
+
+	@Test
+	public void printPricesWrtPricerParams() throws Exception {
+		double a;
+		ArrayList<Pair<Double, Double>> strikeMatPairs = setDAXHestonSetupSIM();
+
+		double[] volAna = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs, null);
+
+	}
 }

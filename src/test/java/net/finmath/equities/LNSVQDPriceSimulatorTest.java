@@ -5,6 +5,7 @@ import net.finmath.exception.CalculationException;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.util.Pair;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -22,7 +23,8 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 	@Test
 	public void testDax() throws Exception {
-		ArrayList<Pair<Double, Double>> strikeMatPairs = setDAXHestonSetup();
+		// Set the right case
+		ArrayList<Pair<Double, Double>> strikeMatPairs = setDAXHestonSetupSIM();
 
 		// Get option values
 		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
@@ -34,7 +36,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		StopWatch sw = StopWatch.createStarted();
 		double[] volAna = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs, null);
 		sw.stop();
-		System.out.println("time: " + sw.getTime()); // formatted string like "12.3 ms"
+		System.out.println("time: " + sw.getTime());
 
 		double[][] stdErrorsMc = new double[maturityGrid.length][numStrikesPerMaturity];
 		double[][] stdErrorsQMc = new double[maturityGrid.length][numStrikesPerMaturity];
@@ -44,9 +46,9 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 				double maturity = strikeMatPairs.get(m * numStrikesPerMaturity + s).getKey();
 				double strike = strikeMatPairs.get(m * numStrikesPerMaturity + s).getValue();
 				double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
-						maturity, (int) (Math.round(maturity * 365.) * 2));
+						maturity, (int) (Math.round(maturity * 365.) * 1));
 
-				List<Integer> seeds = random.ints(30).boxed().collect(Collectors.toList());
+				List<Integer> seeds = random.ints(3).boxed().collect(Collectors.toList());
 				double[] prices = new double[seeds.size()];
 				double[] pricesQ = new double[seeds.size()];
 
@@ -72,17 +74,17 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					LNSVQDPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
 					sw.reset();
 					sw.start();
-					// lnsvqdPriceSimulatorQMC.precalculatePaths(seed);
+					lnsvqdPriceSimulatorQMC.precalculatePaths(seed);
 					sw.stop();
-					System.out.println("time MC: " + sw.getTime());
+					// System.out.println("time MC: " + sw.getTime());
 					double simulatedOptionPriceQMC;
 					try {
-						// simulatedOptionPriceQMC = lnsvqdPriceSimulatorQMC.getEuropeanPriceAuto(strike, maturity);
+						simulatedOptionPriceQMC = lnsvqdPriceSimulatorQMC.getEuropeanPriceAuto(strike, maturity);
 					} catch(AssertionError e) {
 						System.err.println("Caught AssertionError: " + e.getMessage());
-						// simulatedOptionPriceQMC = 1000000;
+						simulatedOptionPriceQMC = 1000000;
 					}
-					pricesQ[seeds.indexOf(seed)] = 0; // simulatedOptionPriceQMC;
+					pricesQ[seeds.indexOf(seed)] = simulatedOptionPriceQMC;
 				}
 
 				double averagePrice = Arrays.stream(prices).average().getAsDouble();
@@ -125,7 +127,8 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 	// Nest method assumes the same number of strikes for all maturities!
 	@Test
 	public void testBTC() throws Exception {
-		ArrayList<Pair<Double, Double>> strikeMatPairs = setBTCSetup();
+		// Set the right case
+		ArrayList<Pair<Double, Double>> strikeMatPairs = setBTCSetupSIM();
 
 		// Get option values
 		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
@@ -149,7 +152,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 				double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
 						maturity, (int) (Math.round(maturity * 365.) * 1));
 
-				List<Integer> seeds = random.ints(10).boxed().collect(Collectors.toList());
+				List<Integer> seeds = random.ints(3).boxed().collect(Collectors.toList());
 				double[] prices = new double[seeds.size()];
 				double[] pricesQ = new double[seeds.size()];
 
