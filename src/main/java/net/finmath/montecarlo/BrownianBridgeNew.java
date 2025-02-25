@@ -10,12 +10,12 @@ import java.io.IOException;
 import java.util.*;
 
 public class BrownianBridgeNew {
-	private final TimeDiscretization timeDiscretization;
+	private final ArrayList<Double> timeDiscretization;
 	private transient double[][][] brownianIncrementsArray;
 	private int[][] schedulingArray;
 	private int numberOfPaths;
 
-	public BrownianBridgeNew(final TimeDiscretization timeDiscretization, int[][] schedulingArray, int numberOfPaths) {
+	public BrownianBridgeNew(final ArrayList<Double> timeDiscretization, int[][] schedulingArray, int numberOfPaths) {
 		this.timeDiscretization = timeDiscretization;
 		this.schedulingArray = schedulingArray;
 		this.numberOfPaths = numberOfPaths;
@@ -49,9 +49,9 @@ public class BrownianBridgeNew {
 		}
 
 		// Allocate memory
-		brownianIncrementsArray = new double[getTimeDiscretization().getNumberOfTimeSteps()][getNumberOfFactors()][getNumberOfPaths()];
+		brownianIncrementsArray = new double[timeDiscretization.size() - 1][getNumberOfFactors()][getNumberOfPaths()];
 
-		double[][][] brownianMotionArr = new double[getTimeDiscretization().getNumberOfTimes()][getNumberOfFactors()][getNumberOfPaths()];
+		double[][][] brownianMotionArr = new double[timeDiscretization.size()][getNumberOfFactors()][getNumberOfPaths()];
 		double[][] initArray = new double[getNumberOfFactors()][getNumberOfPaths()];
 		for(int i = 0; i < initArray.length; i++) {
 			Arrays.fill(initArray[i], 0);  // Fill each row with 0s
@@ -77,13 +77,13 @@ public class BrownianBridgeNew {
 
 			for(int j = 1; j < brownianMotionArr.length; j++) {
 				int timeIndex = schedulingArray[j][0];
-				double time = timeDiscretization.getTime(timeIndex);
+				double time = timeDiscretization.get(timeIndex);
 
 				int timeIndexEarlierTimeStep = schedulingArray[j][1];
-				double timeEarlier = timeDiscretization.getTime(timeIndexEarlierTimeStep);
+				double timeEarlier = timeDiscretization.get(timeIndexEarlierTimeStep);
 
 				int timeIndexLaterTimeStep = schedulingArray[j][2];
-				double timeLater = timeDiscretization.getTime(timeIndexLaterTimeStep);
+				double timeLater = timeDiscretization.get(timeIndexLaterTimeStep);
 
 				double fac = (time - timeEarlier) / (timeLater - timeEarlier);
 
@@ -110,7 +110,7 @@ public class BrownianBridgeNew {
 
 		double[] brownianMotionLastTime; //  = brownianMotion[j + 1][i].getRealizations();
 		double[] brownianMotionCurrentTime;
-		for(int j = 0; j < getTimeDiscretization().getNumberOfTimeSteps(); j++) {
+		for(int j = 0; j < timeDiscretization.size() - 1; j++) {
 			for(int i = 0; i < getNumberOfFactors(); i++) {
 				brownianMotionLastTime = brownianMotionArr[j][i];
 				brownianMotionCurrentTime = brownianMotionArr[j + 1][i];
@@ -119,10 +119,6 @@ public class BrownianBridgeNew {
 				}
 			}
 		}
-	}
-
-	public TimeDiscretization getTimeDiscretization() {
-		return timeDiscretization;
 	}
 
 	public int getNumberOfFactors() {

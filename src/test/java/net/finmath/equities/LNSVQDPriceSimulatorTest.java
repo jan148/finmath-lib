@@ -21,16 +21,16 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 	StandardDeviation standardDeviation = new StandardDeviation();
 	Random random = new Random();
 
+	/**
+	 * Test cases: DAX: setDAXHestonSetupSIM(); BTC: setBTCSetupSIM()
+	 */
 	@Test
-	public void testDax() throws Exception {
+	public void testCase() throws Exception {
 		// Set the right case
-		ArrayList<Pair<Double, Double>> strikeMatPairs = setDAXHestonSetupSIM();
+		ArrayList<Pair<Double, Double>> strikeMatPairs = setBTCSetupSIM(); // setDAXHestonSetupSIM();
 
 		// Get option values
 		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
-
-		double[][] pricesMC = new double[maturityGrid.length][numStrikesPerMaturity];
-		double[][] pricesQMC = new double[maturityGrid.length][numStrikesPerMaturity];
 
 		// Get analytical prices
 		StopWatch sw = StopWatch.createStarted();
@@ -38,28 +38,37 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		sw.stop();
 		System.out.println("time: " + sw.getTime());
 
-		double[][] stdErrorsMc = new double[maturityGrid.length][numStrikesPerMaturity];
-		double[][] stdErrorsQMc = new double[maturityGrid.length][numStrikesPerMaturity];
+		List<Integer> seeds = random.ints(2).boxed().collect(Collectors.toList());
 
-		for(int m = 0; m < maturityGrid.length; m++) {
-			for(int s = 0; s < numStrikesPerMaturity; s++) {
-				double maturity = strikeMatPairs.get(m * numStrikesPerMaturity + s).getKey();
-				double strike = strikeMatPairs.get(m * numStrikesPerMaturity + s).getValue();
-				double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
-						maturity, (int) (Math.round(maturity * 365.) * 1));
+		double[][][] pricesMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
+		double[][][] pricesQMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
 
-				List<Integer> seeds = random.ints(3).boxed().collect(Collectors.toList());
-				double[] prices = new double[seeds.size()];
-				double[] pricesQ = new double[seeds.size()];
+		for(int seed : seeds) {
+			double maxMaturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
+			/*double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
+					maxMaturity, (int) (Math.round(maxmaturity * 365.) * 1));*/
+			double[] timeGrid = LNSVQDUtils.addTimePointsToArray(maturityGrid,
+					(int) (Math.round(maxMaturity * 365.) * 1), 0, maxMaturity, true)
+					.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 
-				for(int seed : seeds) {
-					// Normal MC
-					// sw.reset();
-					// sw.start();
-					LNSVQDEuropeanPriceSimulator lnsvqdPriceSimulator = new LNSVQDEuropeanPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-					lnsvqdPriceSimulator.precalculatePaths(seed);
-					// sw.stop();
-					// System.out.println("time MC: " + sw.getTime());
+			LNSVQDEuropeanPriceSimulator lnsvqdPriceSimulator = new LNSVQDEuropeanPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
+			// sw.reset();
+			// sw.start();
+			lnsvqdPriceSimulator.precalculatePaths(seed);
+			// System.out.println("time MC: " + sw.getTime());
+
+			LNSVQDPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
+			// sw.reset();
+			// sw.start();
+			lnsvqdPriceSimulatorQMC.precalculatePaths(seed);
+			// sw.stop();
+			// System.out.println("time MC: " + sw.getTime());
+
+			for(int m = 0; m < maturityGrid.length; m++) {
+				for(int s = 0; s < numStrikesPerMaturity; s++) {
+					double maturity = strikeMatPairs.get(m * numStrikesPerMaturity + s).getKey();
+					double strike = strikeMatPairs.get(m * numStrikesPerMaturity + s).getValue();
+
 					double simulatedOptionPrice;
 					try {
 						simulatedOptionPrice = lnsvqdPriceSimulator.getEuropeanPriceAuto(strike, maturity);
@@ -67,16 +76,9 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 						System.err.println("Caught AssertionError: " + e.getMessage());
 						simulatedOptionPrice = 1000000;
 					}
-
-					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
+					pricesMC[seeds.indexOf(seed)][m][s] = simulatedOptionPrice;
 
 					// QMC
-					LNSVQDPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-					sw.reset();
-					sw.start();
-					lnsvqdPriceSimulatorQMC.precalculatePaths(seed);
-					sw.stop();
-					// System.out.println("time MC: " + sw.getTime());
 					double simulatedOptionPriceQMC;
 					try {
 						simulatedOptionPriceQMC = lnsvqdPriceSimulatorQMC.getEuropeanPriceAuto(strike, maturity);
@@ -84,149 +86,55 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 						System.err.println("Caught AssertionError: " + e.getMessage());
 						simulatedOptionPriceQMC = 1000000;
 					}
-					pricesQ[seeds.indexOf(seed)] = simulatedOptionPriceQMC;
+					pricesQMC[seeds.indexOf(seed)][m][s] = simulatedOptionPriceQMC;
 				}
-
-				double averagePrice = Arrays.stream(prices).average().getAsDouble();
-				double varMC = Arrays.stream(prices).map(x -> Math.pow(x - averagePrice, 2)).sum() / (seeds.size() - 1);
-				double stdErrMC = Math.sqrt(varMC) / Math.sqrt(seeds.size());
-				double under = averagePrice + stdErrMC * 1.96; //
-				System.out.println(lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, under)); //
-				double[] confidenceIntervalMC = LNSVQDUtils.getConfidenceInterval(prices, 0.05);
-
-				double impliedVolMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, averagePrice);
-				double impliedVolLowerMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, confidenceIntervalMC[0]);
-				double impliedVolUpperMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, confidenceIntervalMC[1]);
-
-				double averagePriceQMC = Arrays.stream(pricesQ).average().getAsDouble();
-				double varQMC = Arrays.stream(pricesQ).map(x -> Math.pow(x - averagePriceQMC, 2)).sum() / (seeds.size() - 1);
-				double stdErrQMC = Math.sqrt(varQMC) / Math.sqrt(seeds.size());
-				double[] confidenceIntervalQMC = LNSVQDUtils.getConfidenceInterval(pricesQ, 0.05);
-
-				double impliedVolQMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, averagePriceQMC);
-				double impliedVolLowerQMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, confidenceIntervalQMC[0]);
-				double impliedVolUpperQMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, confidenceIntervalQMC[1]);
-
-				pricesMC[m][s] = averagePrice;
-				pricesQMC[m][s] = averagePriceQMC;
-
-				stdErrorsMc[m][s] = stdErrMC;
-				stdErrorsQMc[m][s] = stdErrQMC;
-
-				System.out.println(volAna[m * numStrikesPerMaturity + s] + "\t"
-						+ impliedVolMC + "\t" + stdErrMC + "\t" + impliedVolLowerMC + "\t" + impliedVolUpperMC + "\t"
-						+ impliedVolQMC  + "\t" + stdErrQMC + "\t" + impliedVolLowerQMC + "\t" + impliedVolUpperQMC + "\t");
-
-				/*System.out.println(pricesAnalytical[m * numStrikesPerMaturity + s] + "\t"
-						+ pricesMC[m][s] + "\t" + stdErrMC + "\t" + confidenceIntervalMC[0] + "\t" + confidenceIntervalMC[1] + "\t"
-						+ pricesQMC[m][s] + "\t" + stdErrQMC + "\t" + confidenceIntervalQMC[0] + "\t" + confidenceIntervalQMC[1] + "\t");*/
 			}
+			System.out.println("Finished seed " + seed);
 		}
-	}
-
-	// Nest method assumes the same number of strikes for all maturities!
-	@Test
-	public void testBTC() throws Exception {
-		// Set the right case
-		ArrayList<Pair<Double, Double>> strikeMatPairs = setBTCSetupSIM();
-
-		// Get option values
-		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
-
-		double[][] pricesMC = new double[maturityGrid.length][numStrikesPerMaturity];
-		double[][] pricesQMC = new double[maturityGrid.length][numStrikesPerMaturity];
-
-		// Get analytical prices
-		// StopWatch sw = StopWatch.createStarted();
-		double[] volAna = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs, null);
-		// sw.stop();
-		// System.out.println("time: " + sw.getTime()); // formatted string like "12.3 ms"
-
-		double[][] stdErrorsMc = new double[maturityGrid.length][numStrikesPerMaturity];
-		double[][] stdErrorsQMc = new double[maturityGrid.length][numStrikesPerMaturity];
 
 		for(int m = 0; m < maturityGrid.length; m++) {
 			for(int s = 0; s < numStrikesPerMaturity; s++) {
 				double maturity = strikeMatPairs.get(m * numStrikesPerMaturity + s).getKey();
 				double strike = strikeMatPairs.get(m * numStrikesPerMaturity + s).getValue();
-				double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
-						maturity, (int) (Math.round(maturity * 365.) * 1));
 
-				List<Integer> seeds = random.ints(3).boxed().collect(Collectors.toList());
-				double[] prices = new double[seeds.size()];
-				double[] pricesQ = new double[seeds.size()];
-
-				for(int seed : seeds) {
-					// Normal MC
-					// sw.reset();
-					// sw.start();
-					LNSVQDEuropeanPriceSimulator lnsvqdPriceSimulator = new LNSVQDEuropeanPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-					lnsvqdPriceSimulator.precalculatePaths(seed);
-					// sw.stop();
-					// System.out.println("time MC: " + sw.getTime());
-					double simulatedOptionPrice;
-					try {
-						simulatedOptionPrice = lnsvqdPriceSimulator.getEuropeanPriceAuto(strike, maturity);
-					} catch(AssertionError e) {
-						System.err.println("Caught AssertionError: " + e.getMessage());
-						simulatedOptionPrice = 1000000;
-					}
-
-					prices[seeds.indexOf(seed)] = simulatedOptionPrice;
-
-					// QMC
-					LNSVQDPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-					// sw.reset();
-					// sw.start();
-					lnsvqdPriceSimulatorQMC.precalculatePaths(seed);
-					// sw.stop();
-					// System.out.println("time MC: " + sw.getTime());
-					double simulatedOptionPriceQMC;
-					try {
-						simulatedOptionPriceQMC = lnsvqdPriceSimulatorQMC.getEuropeanPriceAuto(strike, maturity);
-					} catch(AssertionError e) {
-						System.err.println("Caught AssertionError: " + e.getMessage());
-						simulatedOptionPriceQMC = 1000000;
-					}
-					pricesQ[seeds.indexOf(seed)] = simulatedOptionPriceQMC;
+				double[] pricesMCForPair = new double[seeds.size()];
+				double[] pricesQMCForPair = new double[seeds.size()];
+				for(int j = 0; j < seeds.size(); j++) {
+					pricesMCForPair[j] = pricesMC[j][m][s];
+					pricesQMCForPair[j] = pricesQMC[j][m][s];
 				}
 
-				double averagePrice = Arrays.stream(prices).average().getAsDouble();
-				double varMC = Arrays.stream(prices).map(x -> Math.pow(x - averagePrice, 2)).sum() / (seeds.size() - 1);
+				double averagePrice = Math.max(Arrays.stream(pricesMCForPair).average().getAsDouble(), 1E-10);
+				double varMC = Arrays.stream(pricesMCForPair).map(x -> Math.pow(x - averagePrice, 2)).sum() / (seeds.size() - 1);
 				double stdErrMC = Math.sqrt(varMC) / Math.sqrt(seeds.size());
-				double[] confidenceIntervalMC = LNSVQDUtils.getConfidenceInterval(prices, 0.05);
+				double[] confidenceIntervalMC = LNSVQDUtils.getConfidenceInterval(pricesMCForPair, 0.05);
+				double lbMc = Math.max(confidenceIntervalMC[0], 1E-10);
+				double ubMc = Math.max(confidenceIntervalMC[0], 1E-10);
 
 				double impliedVolMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, averagePrice);
-				double impliedVolLowerMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, confidenceIntervalMC[0]);
-				double impliedVolUpperMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, confidenceIntervalMC[1]);
+				double impliedVolLowerMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, lbMc);
+				double impliedVolUpperMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, ubMc);
 
-				double averagePriceQMC = Arrays.stream(pricesQ).average().getAsDouble();
-				double varQMC = Arrays.stream(pricesQ).map(x -> Math.pow(x - averagePriceQMC, 2)).sum() / (seeds.size() - 1);
+				double averagePriceQMC = Math.max(Arrays.stream(pricesQMCForPair).average().getAsDouble(), 1E-10);
+				double varQMC = Arrays.stream(pricesQMCForPair).map(x -> Math.pow(x - averagePriceQMC, 2)).sum() / (seeds.size() - 1);
 				double stdErrQMC = Math.sqrt(varQMC) / Math.sqrt(seeds.size());
-				double[] confidenceIntervalQMC = LNSVQDUtils.getConfidenceInterval(pricesQ, 0.05);
+				double[] confidenceIntervalQMC = LNSVQDUtils.getConfidenceInterval(pricesQMCForPair, 0.05);
+				double lbQmc = Math.max(confidenceIntervalQMC[0], 1E-10);
+				double ubQmc = Math.max(confidenceIntervalQMC[0], 1E-10);
 
 				double impliedVolQMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, averagePriceQMC);
-				double impliedVolLowerQMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, confidenceIntervalQMC[0]);
-				double impliedVolUpperQMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, confidenceIntervalQMC[1]);
-
-				pricesMC[m][s] = averagePrice;
-				pricesQMC[m][s] = averagePriceQMC;
-
-				stdErrorsMc[m][s] = stdErrMC;
-				stdErrorsQMc[m][s] = stdErrQMC;
+				double impliedVolLowerQMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, lbQmc);
+				double impliedVolUpperQMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, ubQmc);
 
 				System.out.println(volAna[m * numStrikesPerMaturity + s] + "\t"
 						+ impliedVolMC + "\t" + stdErrMC + "\t" + impliedVolLowerMC + "\t" + impliedVolUpperMC + "\t"
-						+ impliedVolQMC  + "\t" + stdErrQMC + "\t" + impliedVolLowerQMC + "\t" + impliedVolUpperQMC + "\t");
+						+ impliedVolQMC + "\t" + stdErrQMC + "\t" + impliedVolLowerQMC + "\t" + impliedVolUpperQMC + "\t");
 
-				/*System.out.println(pricesAnalytical[m * numStrikesPerMaturity + s] + "\t"
-						+ pricesMC[m][s] + "\t" + stdErrMC + "\t" + confidenceIntervalMC[0] + "\t" + confidenceIntervalMC[1] + "\t"
-						+ pricesQMC[m][s] + "\t" + stdErrQMC + "\t" + confidenceIntervalQMC[0] + "\t" + confidenceIntervalQMC[1] + "\t");*/
 			}
 		}
 	}
 
-	@Test
+	/*@Test
 	public void printTransformedVolPathMoments() throws CalculationException {
 		int numberOfPaths = 100000;
 		// Get option values
@@ -255,5 +163,5 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					"\t" + moment5 +
 					"\t" + moment6);
 		}
-	}
+	}*/
 }

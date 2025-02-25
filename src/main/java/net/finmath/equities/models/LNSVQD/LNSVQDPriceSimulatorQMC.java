@@ -9,7 +9,10 @@ import org.apache.commons.math3.optim.univariate.BrentOptimizer;
 import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 public class LNSVQDPriceSimulatorQMC extends LNSVQDEuropeanPriceSimulator {
 	public LNSVQDPriceSimulatorQMC(LNSVQDModel lnsvqdModel, int numberOfPaths, double[] timeGrid, Boolean isBackwardEuler) {
@@ -19,9 +22,14 @@ public class LNSVQDPriceSimulatorQMC extends LNSVQDEuropeanPriceSimulator {
 	public void precalculatePaths(int seed) {
 		final int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(timeGrid.length);
 
-		TimeDiscretization timeDiscretization = new TimeDiscretizationFromArray(timeGrid);
+		ArrayList<Double> timeGridList = Arrays.stream(timeGrid)
+				.boxed()
+				.collect(Collectors.toCollection(ArrayList::new));
 
-		BrownianBridgeNew brownianBridge = new BrownianBridgeNew(timeDiscretization, schedulingArray, numberOfPaths);
+		/*LNSVQDUtils.printArray(timeDiscretization.getAsDoubleArray());
+		System.out.println("----");
+		LNSVQDUtils.printArray(timeGrid);*/
+		BrownianBridgeNew brownianBridge = new BrownianBridgeNew(timeGridList, schedulingArray, numberOfPaths);
 
 		BrentOptimizer brentOptimizer = new BrentOptimizer(1e-8, 1e-8);
 
