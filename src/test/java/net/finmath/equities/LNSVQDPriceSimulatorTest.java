@@ -1,11 +1,9 @@
 package net.finmath.equities;
 
 import net.finmath.equities.models.LNSVQD.*;
-import net.finmath.exception.CalculationException;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.apache.commons.math3.util.Pair;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -44,21 +42,18 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		double[][][] pricesMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
 		double[][][] pricesQMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
 
+		double maxMaturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
+		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(maturityGrid,
+						(int) (Math.round(maxMaturity * 365.) * 1), 0, maxMaturity, true)
+				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 		for(int seed : seeds) {
-			double maxMaturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
-			/*double[] timeGrid = LNSVQDUtils.createTimeGrid(0.,
-					maxMaturity, (int) (Math.round(maxmaturity * 365.) * 1));*/
-			double[] timeGrid = LNSVQDUtils.addTimePointsToArray(maturityGrid,
-					(int) (Math.round(maxMaturity * 365.) * 1), 0, maxMaturity, true)
-					.stream().distinct().mapToDouble(Double::doubleValue).toArray();
-
-			LNSVQDEuropeanPriceSimulator lnsvqdPriceSimulator = new LNSVQDEuropeanPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
+			LNSVQDEuropeanPriceSimulator lnsvqdPriceSimulator = new LNSVQDEuropeanPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, maturityGrid, false);
 			// sw.reset();
 			// sw.start();
-			lnsvqdPriceSimulator.precalculatePaths(seed);
+			lnsvqdPriceSimulator.precalculatePaths(seed, true);
 			// System.out.println("time MC: " + sw.getTime());
 
-			LNSVQDPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
+			LNSVQDEuropeanPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDEuropeanPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, maturityGrid, false);
 			// sw.reset();
 			// sw.start();
 			lnsvqdPriceSimulatorQMC.precalculatePaths(seed);
@@ -135,7 +130,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		}
 	}
 
-	/*@Test
+	@Test
 	public void testDependencyOnDiscretization() throws Exception {
 		// Set the right case
 		ArrayList<Pair<Double, Double>> strikeMatPairs = setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
@@ -143,7 +138,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		// Get option values
 		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
 
-		List<Integer> seeds = IntStream.range(1, 11).boxed().collect(Collectors.toList());
+		List<Integer> seeds = IntStream.range(1, 6).boxed().collect(Collectors.toList());
 
 		double[][][] pricesMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
 		double[][][] pricesQMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
@@ -154,11 +149,11 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 							(int) (Math.round(maxMaturity * 365.) * seed), 0, maxMaturity, true)
 					.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 
-			LNSVQDEuropeanPriceSimulator lnsvqdPriceSimulator = new LNSVQDEuropeanPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-			lnsvqdPriceSimulator.precalculatePaths(seed);
+			LNSVQDEuropeanPriceSimulator lnsvqdPriceSimulator = new LNSVQDEuropeanPriceSimulator(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, maturityGrid, false);
+			lnsvqdPriceSimulator.precalculatePaths(5603, true);
 
-			LNSVQDPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, false);
-			// lnsvqdPriceSimulatorQMC.precalculatePaths(seed);
+			LNSVQDEuropeanPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDEuropeanPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, maturityGrid, false);
+			// lnsvqdPriceSimulatorQMC.precalculatePaths(5603);
 
 			for(int m = 0; m < maturityGrid.length; m++) {
 				for(int s = 0; s < numStrikesPerMaturity; s++) {
@@ -190,17 +185,20 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 		for(int m = 0; m < maturityGrid.length; m++) {
 			for(int s = 0; s < numStrikesPerMaturity; s++) {
+				double maturity = strikeMatPairs.get(m * numStrikesPerMaturity + s).getKey();
+				double strike = strikeMatPairs.get(m * numStrikesPerMaturity + s).getValue();
+
 				double[] pricesMCForPair = new double[seeds.size()];
 				double[] pricesQMCForPair = new double[seeds.size()];
 				for(int j = 0; j < seeds.size(); j++) {
-					pricesMCForPair[j] = pricesMC[j][m][s];
-					pricesQMCForPair[j] = pricesQMC[j][m][s];
+					pricesMCForPair[j] = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, pricesMC[j][m][s]);
+					pricesQMCForPair[j] = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, pricesQMC[j][m][s]);
 				}
 				LNSVQDUtils.printArray(pricesMCForPair);
 				LNSVQDUtils.printArray(pricesQMCForPair);
 			}
 		}
-	}*/
+	}
 
 	/*@Test
 	public void printTransformedVolPathMoments() throws CalculationException {

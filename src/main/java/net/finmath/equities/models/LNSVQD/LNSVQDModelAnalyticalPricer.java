@@ -143,52 +143,49 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		final Complex mixedDeg4 = new Complex(Math.pow(this.theta, 2) * this.totalInstVar, 0);
 
 		// 1. Matrices
-		Complex[][] M0 = {
-				{complex0, complex0, complex0, complex0, complex0},
-				{complex0, mixedDeg4.multiply(0.5), complex0, complex0, complex0},
-				{complex0, complex0, complex0, complex0, complex0},
-				{complex0, complex0, complex0, complex0, complex0},
-				{complex0, complex0, complex0, complex0, complex0}};
+		Complex[][] M0 = { { complex0, complex0, complex0, complex0, complex0 },
+				{ complex0, mixedDeg4.multiply(0.5), complex0, complex0, complex0 },
+				{ complex0, complex0, complex0, complex0, complex0 },
+				{ complex0, complex0, complex0, complex0, complex0 },
+				{ complex0, complex0, complex0, complex0, complex0 } };
 
-		Complex[][] M1 = {
-				{complex0, complex0, complex0, complex0, complex0},
-				{complex0, mixedDeg3, mixedDeg4, complex0, complex0},
-				{complex0, mixedDeg4, complex0, complex0, complex0},
-				{complex0, complex0, complex0, complex0, complex0},
-				{complex0, complex0, complex0, complex0, complex0}};
+		Complex[][] M1 = { { complex0, complex0, complex0, complex0, complex0 },
+				{ complex0, mixedDeg3, mixedDeg4, complex0, complex0 },
+				{ complex0, mixedDeg4, complex0, complex0, complex0 },
+				{ complex0, complex0, complex0, complex0, complex0 },
+				{ complex0, complex0, complex0, complex0, complex0 } };
 
-		Complex[][] M2 = {
-				{complex0, complex0, complex0, complex0, complex0},
-				{complex0, totalInstVar.multiply(1. / 2), mixedDeg3.multiply(2), mixedDeg4.multiply(3. / 2), complex0},
-				{complex0, mixedDeg3.multiply(2), mixedDeg4.multiply(2), complex0, complex0},
-				{complex0, mixedDeg4.multiply(3. / 2), complex0, complex0, complex0},
-				{complex0, complex0, complex0, complex0, complex0}};
+		Complex[][] M2 = { { complex0, complex0, complex0, complex0, complex0 },
+				{ complex0, totalInstVar.multiply(1. / 2), mixedDeg3.multiply(2), mixedDeg4.multiply(3. / 2),
+						complex0 },
+				{ complex0, mixedDeg3.multiply(2), mixedDeg4.multiply(2), complex0, complex0 },
+				{ complex0, mixedDeg4.multiply(3. / 2), complex0, complex0, complex0 },
+				{ complex0, complex0, complex0, complex0, complex0 } };
 
-		Complex[][] M3 = {
-				{complex0, complex0, complex0, complex0, complex0},
-				{complex0, complex0, totalInstVar, mixedDeg3.multiply(3), mixedDeg4.multiply(2)},
-				{complex0, totalInstVar, mixedDeg3.multiply(4), mixedDeg4.multiply(3), complex0},
-				{complex0, mixedDeg3.multiply(3), mixedDeg4.multiply(3), complex0, complex0},
-				{complex0, mixedDeg4.multiply(2), complex0, complex0, complex0}};
+		Complex[][] M3 = { { complex0, complex0, complex0, complex0, complex0 },
+				{ complex0, complex0, totalInstVar, mixedDeg3.multiply(3), mixedDeg4.multiply(2) },
+				{ complex0, totalInstVar, mixedDeg3.multiply(4), mixedDeg4.multiply(3), complex0 },
+				{ complex0, mixedDeg3.multiply(3), mixedDeg4.multiply(3), complex0, complex0 },
+				{ complex0, mixedDeg4.multiply(2), complex0, complex0, complex0 } };
 
-		Complex[][] M4 = {
-				{complex0, complex0, complex0, complex0, complex0},
-				{complex0, complex0, complex0, totalInstVar.multiply(3. / 2), mixedDeg3.multiply(4)},
-				{complex0, complex0, totalInstVar.multiply(2), mixedDeg3.multiply(6), mixedDeg4.multiply(4)},
-				{complex0, totalInstVar.multiply(3. / 2), mixedDeg3.multiply(6), mixedDeg4.multiply(9. / 2), complex0},
-				{complex0, mixedDeg3.multiply(4), mixedDeg4.multiply(4), complex0, complex0}};
+		Complex[][] M4 = { { complex0, complex0, complex0, complex0, complex0 },
+				{ complex0, complex0, complex0, totalInstVar.multiply(3. / 2), mixedDeg3.multiply(4) },
+				{ complex0, complex0, totalInstVar.multiply(2), mixedDeg3.multiply(6), mixedDeg4.multiply(4) },
+				{ complex0, totalInstVar.multiply(3. / 2), mixedDeg3.multiply(6), mixedDeg4.multiply(9. / 2),
+						complex0 },
+				{ complex0, mixedDeg3.multiply(4), mixedDeg4.multiply(4), complex0, complex0 } };
 
-		/*# fills Ls
-		L = np.zeros((n, n), dtype=np.complex128)
-		L[0, 1], L[0, 2] = lamda - theta2 * beta * vol_backbone_eta * phi, qv2
-		L[1, 1], L[1, 2] = -kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi, 2.0 * (lamda + qv - theta2 * beta * vol_backbone_eta * phi)
-		L[2, 1], L[2, 2] = -kappa2_p - beta * vol_backbone_eta * phi, vartheta2 - 2.0 * kappa_p - 4.0 * theta * beta * vol_backbone_eta * phi
+        /*# fills Ls
+        L = np.zeros((n, n), dtype=np.complex128)
+        L[0, 1], L[0, 2] = lamda - theta2 * beta * vol_backbone_eta * phi, qv2
+        L[1, 1], L[1, 2] = -kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi, 2.0 * (lamda + qv - theta2 * beta * vol_backbone_eta * phi)
+        L[2, 1], L[2, 2] = -kappa2_p - beta * vol_backbone_eta * phi, vartheta2 - 2.0 * kappa_p - 4.0 * theta * beta * vol_backbone_eta * phi
 
-		if expansion_order == ExpansionOrder.SECOND:
-		L[1, 3] = 3.0*qv2
-		L[2, 3], L[2, 4] = 3.0 * (2.0 * qv - theta2 * beta * vol_backbone_eta * phi), 6.0 * qv2
-		L[3, 2], L[3, 3], L[3, 4] = -2.0 * (kappa2_p + beta * vol_backbone_eta * phi), 3.0 * (vartheta2 - kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi), 4.0 * (3.0 * qv - theta2 * beta * vol_backbone_eta * phi)
-		L[4, 3], L[4, 4] = -3.0 * (kappa2_p + beta * vol_backbone_eta * phi), 2.0 * (vartheta2 - 2.0 * kappa_p - 4.0 * theta * beta * vol_backbone_eta * phi)*/
+        if expansion_order == ExpansionOrder.SECOND:
+        L[1, 3] = 3.0*qv2
+        L[2, 3], L[2, 4] = 3.0 * (2.0 * qv - theta2 * beta * vol_backbone_eta * phi), 6.0 * qv2
+        L[3, 2], L[3, 3], L[3, 4] = -2.0 * (kappa2_p + beta * vol_backbone_eta * phi), 3.0 * (vartheta2 - kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi), 4.0 * (3.0 * qv - theta2 * beta * vol_backbone_eta * phi)
+        L[4, 3], L[4, 4] = -3.0 * (kappa2_p + beta * vol_backbone_eta * phi), 2.0 * (vartheta2 - 2.0 * kappa_p - 4.0 * theta * beta * vol_backbone_eta * phi)*/
 
 		// 2. Vectors
 		Complex L01 = complex0;
@@ -196,28 +193,30 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		Complex L03 = mixedDeg4;
 		Complex L04 = complex0;
 		Complex L05 = complex0;
-		Complex[] L0 = {L01, L02, L03, L04, L05};
+		Complex[] L0 = { L01, L02, L03, L04, L05 };
 
 		Complex L11 = complex0;
 		Complex L12 = charFuncArgs[0].multiply(-theta * beta * 2).subtract(kappa1 + kappa2 * theta);
 		Complex L13 = mixedDeg3.subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(2);
 		Complex L14 = mixedDeg4.multiply(3);
 		Complex L15 = complex0;
-		Complex[] L1 = {L11, L12, L13, L14, L15};
+		Complex[] L1 = { L11, L12, L13, L14, L15 };
 		// L[2, 3], L[2, 4] = 3.0 * (2.0 * qv - theta2 * beta * vol_backbone_eta * phi), 6.0 * qv2
 		Complex L21 = complex0;
 		Complex L22 = charFuncArgs[0].multiply(-beta).subtract(kappa2);
-		Complex L23 = totalInstVar.subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(4 * theta * beta));
+		Complex L23 = totalInstVar.subtract(2 * (kappa1 + kappa2 * theta))
+				.subtract(charFuncArgs[0].multiply(4 * theta * beta));
 		Complex L24 = mixedDeg3.multiply(2).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(3); // !
 		Complex L25 = mixedDeg4.multiply(6);
-		Complex[] L2 = {L21, L22, L23, L24, L25};
+		Complex[] L2 = { L21, L22, L23, L24, L25 };
 		// L[3, 2], L[3, 3], L[3, 4] = -2.0 * (kappa2_p + beta * vol_backbone_eta * phi), 3.0 * (vartheta2 - kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi), 4.0 * (3.0 * qv - theta2 * beta * vol_backbone_eta * phi)
 		Complex L31 = complex0;
 		Complex L32 = complex0;
 		Complex L33 = charFuncArgs[0].multiply(beta).add(kappa2).multiply(-2);
-		Complex L34 = totalInstVar.subtract(kappa1 + kappa2 * theta).subtract(charFuncArgs[0].multiply(2 * theta * beta)).multiply(3);
+		Complex L34 = totalInstVar.subtract(kappa1 + kappa2 * theta)
+				.subtract(charFuncArgs[0].multiply(2 * theta * beta)).multiply(3);
 		Complex L35 = mixedDeg3.multiply(3).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(4);
-		Complex[] L3 = {L31, L32, L33, L34, L35};
+		Complex[] L3 = { L31, L32, L33, L34, L35 };
 		// L[4, 3], L[4, 4] = -3.0 * (kappa2_p + beta * vol_backbone_eta * phi),
 		// 2.0 * (vartheta2 - 2.0 * kappa_p - 4.0 * theta * beta * vol_backbone_eta * phi)*/
 		Complex L41 = complex0;
@@ -225,53 +224,93 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		Complex L43 = complex0;
 		Complex L44 = charFuncArgs[0].multiply(beta).add(kappa2).multiply(-3);
 		// TODO: In next line: Should be mulitplied with 3 instead of one
-		Complex L45 = totalInstVar.multiply(1).subtract(2 * (kappa1 + kappa2 * theta)).subtract(charFuncArgs[0].multiply(4 * theta * beta)).multiply(2);
-		Complex[] L4 = {L41, L42, L43, L44, L45};
+		Complex L45 = totalInstVar.multiply(1).subtract(2 * (kappa1 + kappa2 * theta))
+				.subtract(charFuncArgs[0].multiply(4 * theta * beta)).multiply(2);
+		Complex[] L4 = { L41, L42, L43, L44, L45 };
 
 		// 3. Scalars
-		Complex H0 = charFuncArgs[0].multiply(charFuncArgs[0]).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(0.5 * Math.pow(theta, 2));
-		Complex H1 = charFuncArgs[0].multiply(charFuncArgs[0]).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(theta);
-		Complex H2 = charFuncArgs[0].multiply(charFuncArgs[0]).add(charFuncArgs[0]).subtract(charFuncArgs[1].multiply(2)).multiply(0.5);
+		Complex H0 = charFuncArgs[0].multiply(charFuncArgs[0]).add(charFuncArgs[0])
+				.subtract(charFuncArgs[1].multiply(2)).multiply(0.5 * Math.pow(theta, 2));
+		Complex H1 = charFuncArgs[0].multiply(charFuncArgs[0]).add(charFuncArgs[0])
+				.subtract(charFuncArgs[1].multiply(2)).multiply(theta);
+		Complex H2 = charFuncArgs[0].multiply(charFuncArgs[0]).add(charFuncArgs[0])
+				.subtract(charFuncArgs[1].multiply(2)).multiply(0.5);
 		Complex H3 = complex0;
 		Complex H4 = complex0;
 
 		// 2. Functions
 		BiFunction<Double, Complex[], Complex> A0 = new BiFunction<Double, Complex[], Complex>() {
+
 			@Override
 			public Complex apply(Double aDouble, Complex[] complexes) {
-				Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M0, complexes)).add(LNSVQDUtils.scalarProduct(L0, complexes)).add(H0);
+                /*Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M0, complexes))
+                        .add(LNSVQDUtils.scalarProduct(L0, complexes)).add(H0);*/
+				Complex result = M0[1][1].multiply(complexes[1]).multiply(complexes[1])
+						.add(L0[1].multiply(complexes[1])).add(L0[2].multiply(complexes[2])).add(H0);
 				return result;
 			}
 		};
 
 		BiFunction<Double, Complex[], Complex> A1 = new BiFunction<Double, Complex[], Complex>() {
+
 			@Override
 			public Complex apply(Double aDouble, Complex[] complexes) {
-				Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M1, complexes)).add(LNSVQDUtils.scalarProduct(L1, complexes)).add(H1);
+                /*Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M1, complexes))
+                        .add(LNSVQDUtils.scalarProduct(L1, complexes)).add(H1);*/
+				Complex result = M1[1][1].multiply(complexes[1]).multiply(complexes[1])
+						.add(M1[1][2].multiply(complexes[1]).multiply(complexes[2]).multiply(2))
+						.add(L1[1].multiply(complexes[1])).add(L1[2].multiply(complexes[2]))
+						.add(L1[3].multiply(complexes[3])).add(H1);
 				return result;
 			}
 		};
 
 		BiFunction<Double, Complex[], Complex> A2 = new BiFunction<Double, Complex[], Complex>() {
+
 			@Override
 			public Complex apply(Double aDouble, Complex[] complexes) {
-				Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M2, complexes)).add(LNSVQDUtils.scalarProduct(L2, complexes)).add(H2);
+                /*Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M2, complexes))
+                        .add(LNSVQDUtils.scalarProduct(L2, complexes)).add(H2);*/
+				Complex result = M2[1][1].multiply(complexes[1]).multiply(complexes[1])
+						.add(M2[2][2].multiply(complexes[2]).multiply(complexes[2]))
+						.add(M2[1][2].multiply(complexes[1]).multiply(complexes[2]).multiply(2))
+						.add(M2[1][3].multiply(complexes[1]).multiply(complexes[3]).multiply(2))
+						.add(L2[1].multiply(complexes[1])).add(L2[2].multiply(complexes[2]))
+						.add(L2[3].multiply(complexes[3])).add(L2[4].multiply(complexes[4])).add(H2);
 				return result;
 			}
 		};
 
 		BiFunction<Double, Complex[], Complex> A3 = new BiFunction<Double, Complex[], Complex>() {
+
 			@Override
 			public Complex apply(Double aDouble, Complex[] complexes) {
-				Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M3, complexes)).add(LNSVQDUtils.scalarProduct(L3, complexes)).add(H3);
+                /*Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M3, complexes))
+                        .add(LNSVQDUtils.scalarProduct(L3, complexes)).add(H3);*/
+				Complex result = M3[2][2].multiply(complexes[2]).multiply(complexes[2])
+						.add(M3[1][2].multiply(complexes[1]).multiply(complexes[2]).multiply(2))
+						.add(M3[1][3].multiply(complexes[1]).multiply(complexes[3]).multiply(2))
+						.add(M3[1][4].multiply(complexes[1]).multiply(complexes[4]).multiply(2))
+						.add(M3[2][3].multiply(complexes[2]).multiply(complexes[3]).multiply(2))
+						.add(L3[2].multiply(complexes[2])).add(L3[3].multiply(complexes[3]))
+						.add(L3[4].multiply(complexes[4])).add(H3);
 				return result;
 			}
 		};
 
 		BiFunction<Double, Complex[], Complex> A4 = new BiFunction<Double, Complex[], Complex>() {
+
 			@Override
 			public Complex apply(Double aDouble, Complex[] complexes) {
-				Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M4, complexes)).add(LNSVQDUtils.scalarProduct(L4, complexes)).add(H4);
+                /*Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M4, complexes))
+                        .add(LNSVQDUtils.scalarProduct(L4, complexes)).add(H4);*/
+				Complex result = M4[2][2].multiply(complexes[2]).multiply(complexes[2])
+						.add(M4[3][3].multiply(complexes[3]).multiply(complexes[3]))
+						.add(M4[1][3].multiply(complexes[1]).multiply(complexes[3]).multiply(2))
+						.add(M4[1][4].multiply(complexes[1]).multiply(complexes[4]).multiply(2))
+						.add(M4[2][3].multiply(complexes[2]).multiply(complexes[3]).multiply(2))
+						.add(M4[2][4].multiply(complexes[2]).multiply(complexes[4]).multiply(2))
+						.add(L4[3].multiply(complexes[3])).add(L4[4].multiply(complexes[4])).add(H4);
 				return result;
 			}
 		};
