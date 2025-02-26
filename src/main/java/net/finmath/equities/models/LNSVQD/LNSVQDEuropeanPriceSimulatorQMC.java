@@ -1,14 +1,17 @@
 package net.finmath.equities.models.LNSVQD;
 
 import net.finmath.montecarlo.*;
+import net.finmath.randomnumbers.MersenneTwister;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.univariate.BrentOptimizer;
 import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
+import org.apache.commons.math3.random.SobolSequenceGenerator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 public class LNSVQDEuropeanPriceSimulatorQMC extends LNSVQDEuropeanPriceSimulator {
@@ -16,53 +19,58 @@ public class LNSVQDEuropeanPriceSimulatorQMC extends LNSVQDEuropeanPriceSimulato
 		super(lnsvqdModel, numberOfPaths, timeGrid, maturities, isBackwardEuler);
 	}
 
-	public void precalculatePaths(int seed) {
-		path = new double[2][timeGrid.length][numberOfPaths];
+	public void precalculatePaths(int seed, Boolean saveMemory) {
 		final int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(timeGrid.length);
 
 		ArrayList<Double> timeGridList = Arrays.stream(timeGrid)
 				.boxed()
 				.collect(Collectors.toCollection(ArrayList::new));
 
-		/*LNSVQDUtils.printArray(timeDiscretization.getAsDoubleArray());
-		System.out.println("----");
-		LNSVQDUtils.printArray(timeGrid);*/
 		BrownianBridgeNew brownianBridge = new BrownianBridgeNew(timeGridList, schedulingArray, numberOfPaths);
 
+		/**
+		 * Init Sobol and Mersenne
+		 */
+		int rngDim = 2 * (schedulingArray.length - 1);
+		SobolSequenceGenerator sobolSequenceGenerator = new SobolSequenceGenerator(Math.min(rngDim, 1000));
+		sobolSequenceGenerator.nextVector(); // Skip 0
+
+		Random random = new Random(seed);
+		double scrambleNumber = random.nextDouble();
+		assert (0. < scrambleNumber && scrambleNumber < 1.) : "ScrambleNumber is out of bounds!";
+
+		MersenneTwister mersenneTwister = new MersenneTwister(seed);
+		/**
+		 * Optimizer
+		 */
 		BrentOptimizer brentOptimizer = new BrentOptimizer(1e-8, 1e-8);
 
-		int currentMaturityIndex = 0;
-
 		assetPathAtMaturities = new double[maturities.length][numberOfPaths];
-		path = new double[2][timeGrid.length][numberOfPaths];
 
-		double assetPath[] = new double[numberOfPaths];
-		double volPath[] = new double[numberOfPaths];
-		Arrays.fill(assetPath, Math.log(lnsvqdModel.getSpot0()));
-		Arrays.fill(volPath, lnsvqdModel.getSigma0());
+		if(!saveMemory) {
+			path = new double[2][timeGrid.length][numberOfPaths];
+			Arrays.fill(path[0][0], Math.log(lnsvqdModel.getSpot0()));
+			Arrays.fill(path[1][0], lnsvqdModel.getSigma0());
+		}
 
-		path[0][0] = assetPath;
-		path[1][0] = volPath;
-
-		double[] volNewTransformed = new double[numberOfPaths];
-		Arrays.fill(volNewTransformed, Math.log(lnsvqdModel.getSigma0()));
-
-		for(int i = 1; i < timeGrid.length; i++) {
-			double deltaT = timeGrid[i] - timeGrid[i - 1];
-			double sqrtDeltaT = Math.sqrt(deltaT);
-			assert (sqrtDeltaT > 0) : "sqrt(delta) = 0!";
-			double[][] brownianIncrements = new double[numberOfPaths][2];
+		for(int j = 0; j < numberOfPaths; j++) {
+			double[] vec = sobolSequenceGenerator.nextVector();
+			double[] standardNormals = LNSVQDUtils.getStdNormalsFromUnifVec(vec, scrambleNumber);
+			double[][] brownianIncrements = brownianBridge.generateBrownianIncrementsOnePath(standardNormals, mersenneTwister); // new double[numberOfPaths][2];
 			// Fill Paths
-			for(int j = 0; j < numberOfPaths; j++) {
-				int pathIndex = j;
+			double asset = Math.log(lnsvqdModel.getSpot0());
+			double vol = lnsvqdModel.getSigma0();
+			double volTransformed = Math.log(lnsvqdModel.getSigma0());
+			int currentMaturityIndex = 0;
+			for(int i = 1; i < timeGrid.length; i++) {
+				int currentIncrementIndex = i - 1;
 
-				brownianIncrements[j][0] = brownianBridge.getBrownianIncrementArr(i - 1, 0, seed)[j];
-				brownianIncrements[j][1] = brownianBridge.getBrownianIncrementArr(i - 1, 1, seed)[j];
-
+				double deltaT = timeGrid[i] - timeGrid[i - 1];
 				if(isBackwardEuler) {
+					double copyVolTransformed = volTransformed; // Need to copy bc. of static context
 					UnivariateObjectiveFunction rootFunction = new UnivariateObjectiveFunction(
-							l -> Math.abs(-brownianIncrements[pathIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[pathIndex][1] * lnsvqdModel.getEpsilon())
-									- (zeta.value(l) * deltaT) - volNewTransformed[pathIndex] + l)
+							l -> Math.abs(-brownianIncrements[currentIncrementIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[currentIncrementIndex][1] * lnsvqdModel.getEpsilon())
+									- (zeta.value(l) * deltaT) - copyVolTransformed + l)
 					);
 					UnivariatePointValuePair result = brentOptimizer.optimize(
 							rootFunction,
@@ -70,33 +78,30 @@ public class LNSVQDEuropeanPriceSimulatorQMC extends LNSVQDEuropeanPriceSimulato
 							new MaxEval(100),
 							new org.apache.commons.math3.optim.univariate.SearchInterval(-100, 100)
 					);
-					volNewTransformed[j] = result.getPoint();
+					volTransformed = result.getPoint();
 					if(Math.abs(result.getValue()) > 1e-4) {
 						throw new ArithmeticException("The point doesn't result in a root.");
 					}
 				} else {
-					// from Sepp's implementation: vol_var = vol_var + ((kappa1 * theta / sigma0 - kappa1) + kappa2*(theta-sigma0) + adj*sigma0 - 0.5*vartheta2) * dt + vartheta*w1_
-					//				sigma0 = np.exp(vol_var)
-					/*sigma0_2dt = vol_backbone_eta2 * sigma0 * sigma0 * dt
-					x0 = x0 + alpha * 0.5 * sigma0_2dt + vol_backbone_eta * sigma0 * w0
-					vol_var = vol_var + ((kappa1 * theta / sigma0 - kappa1) + kappa2*(theta-sigma0) + adj*sigma0 - 0.5*vartheta2) * dt + beta*w0+volvol*w1
-					sigma0 = np.exp(vol_var)*/
-					volNewTransformed[j] = volNewTransformed[j] + ((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / volPath[j] - lnsvqdModel.getKappa1())
-							+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - volPath[j]) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT
-							+ lnsvqdModel.getBeta() * brownianIncrements[j][0] + lnsvqdModel.getEpsilon() * brownianIncrements[j][1];
+					volTransformed = volTransformed + ((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / vol - lnsvqdModel.getKappa1())
+							+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - vol) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT
+							+ lnsvqdModel.getBeta() * brownianIncrements[currentIncrementIndex][0] + lnsvqdModel.getEpsilon() * brownianIncrements[currentIncrementIndex][1];
 				}
-				assetPath[j] = assetPath[j] + volPath[j] * volPath[j] * (-0.5) * deltaT + volPath[j] * brownianIncrements[j][0];
-				volPath[j] = Math.exp(volNewTransformed[j]);
+				asset = asset + vol * vol * (-0.5) * deltaT + vol * brownianIncrements[currentIncrementIndex][0];
+				vol = Math.exp(volTransformed);
 
+				// System.out.println(maturities[currentMaturityIndex] + "\t" + timeGrid[i]);
 				if(maturities[currentMaturityIndex] == timeGrid[i]) {
-					assetPathAtMaturities[currentMaturityIndex][j] = assetPath[j];
+					assetPathAtMaturities[currentMaturityIndex][j] = asset;
+					currentMaturityIndex = currentMaturityIndex + 1;
 				}
-				// Vol path
-				path[1][i][j] = volPath[j];
-				// Asset path
-				path[0][i][j] = assetPath[j];
+				if(!saveMemory) {
+					// Vol path
+					path[1][i][j] = vol;
+					// Asset path
+					path[0][i][j] = asset;
+				}
 			}
-			if(maturities[currentMaturityIndex] == timeGrid[i]) {currentMaturityIndex++;}
 		}
 	}
 }

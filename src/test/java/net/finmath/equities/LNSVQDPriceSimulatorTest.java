@@ -26,7 +26,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 	@Test
 	public void testCase() throws Exception {
 		// Set the right case
-		ArrayList<Pair<Double, Double>> strikeMatPairs = setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
+		ArrayList<Pair<Double, Double>> strikeMatPairs = setBTCSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
 
 		// Get option values
 		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
@@ -56,7 +56,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 			LNSVQDEuropeanPriceSimulatorQMC lnsvqdPriceSimulatorQMC = new LNSVQDEuropeanPriceSimulatorQMC(lnsvqdModelAnalyticalPricer, numberOfPaths, timeGrid, maturityGrid, false);
 			// sw.reset();
 			// sw.start();
-			lnsvqdPriceSimulatorQMC.precalculatePaths(seed);
+			lnsvqdPriceSimulatorQMC.precalculatePaths(seed, true);
 			// sw.stop();
 			// System.out.println("time MC: " + sw.getTime());
 
@@ -125,7 +125,6 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 				System.out.println(volAna[m * numStrikesPerMaturity + s] + "\t"
 						+ impliedVolMC + "\t" + stdErrMC + "\t" + impliedVolLowerMC + "\t" + impliedVolUpperMC + "\t"
 						+ impliedVolQMC + "\t" + stdErrQMC + "\t" + impliedVolLowerQMC + "\t" + impliedVolUpperQMC + "\t");
-
 			}
 		}
 	}
