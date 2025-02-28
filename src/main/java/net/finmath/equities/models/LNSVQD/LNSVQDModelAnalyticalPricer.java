@@ -1,6 +1,7 @@
 package net.finmath.equities.models.LNSVQD;
 
 import net.finmath.equities.marketdata.VolatilityPoint;
+import net.finmath.equities.marketdata.YieldCurve;
 import net.finmath.equities.models.Black76Model;
 import net.finmath.equities.models.EquityForwardStructure;
 import net.finmath.equities.models.VolatilityPointsSurface;
@@ -36,8 +37,8 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	int numberOfEvaluationPoints = (int) upperBound * 10;
 	SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, numberOfEvaluationPoints, false);
 
-	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate valuationDate, EquityForwardStructure equityForwardStructure) {
-		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate, equityForwardStructure);
+	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate valuationDate, YieldCurve discountCurve, EquityForwardStructure equityForwardStructure) {
+		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate, discountCurve, equityForwardStructure);
 
 		/**
 		 * Get all the integration points from the integrator, in our case Simpson
@@ -387,13 +388,20 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		double[] optionPrices;
 
 		if(isCall) {
-			optionPrices = Arrays.stream(uS).map(u -> spot0 - u).toArray();
+			optionPrices = IntStream.range(0, strikeMaturityPairs.size())
+					.mapToDouble(i -> {
+						double maturity = strikeMaturityPairs.get(i).getKey();
+						double discountFactor = discountCurve.getDiscountFactor(maturity);
+						double forward = equityForwardStructure.getForward(maturity);
+						return discountFactor * forward - uS[i];
+					})
+					.toArray();
 		} else {
 			optionPrices = IntStream.range(0, strikeMaturityPairs.size())
 					.mapToDouble(i -> {
 						double maturity = strikeMaturityPairs.get(i).getKey();
 						double strike = strikeMaturityPairs.get(i).getValue();
-						double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
+						double discountFactor = discountCurve.getDiscountFactor(maturity);
 						return discountFactor * strike - uS[i];
 					})
 					.toArray();
@@ -460,7 +468,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			double strike = strikeMaturityPairs.get(i).getValue();
 
 			double forward = equityForwardStructure.getForward(maturity);
-			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity); //Math.exp(-getRiskFreeRate(maturity) * maturity);
+			double discountFactor = discountCurve.getDiscountFactor(maturity); //Math.exp(-getRiskFreeRate(maturity) * maturity);
 			double convenienceFactor = 0;
 
 			// Get the time index of the maturity
@@ -525,14 +533,14 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		for(int i = 0; i < uS.length; i++) {
 			double strike = strikeMaturityPairs.get(i).getValue();
 			double ttm = strikeMaturityPairs.get(i).getKey();
-			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(ttm);
+			double discountFactor = discountCurve.getDiscountFactor(ttm);
 			double forward = equityForwardStructure.getForward(ttm);
 
 			double impliedVol;
 			double u = uS[i];
 			// Use put-prices for itm-call region
 			if(strike > forward) {
-				double price = spot0 - u;
+				double price = discountFactor * forward - u;
 				impliedVol = Black76Model.optionImpliedVolatility(forward, strike, ttm, price / discountFactor, true);
 			} else {
 				double price = discountFactor * strike - u;
@@ -567,14 +575,14 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 			LocalDate maturity = volatilityPointsSurface.getVolatilityPoints().get(i).getDate();
 			double strike = volatilityPointsSurface.getVolatilityPoints().get(i).getStrike();
 			double ttm = dayCountConvention.getDaycountFraction(today, maturity);
-			double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
+			double discountFactor = discountCurve.getDiscountFactor(maturity);
 			double forward = equityForwardStructure.getForward(ttm);
 
 			double impliedVol;
 			double u = uS[i];
 			// Use put-prices for itm-call region
 			if(strike > forward) {
-				double price = spot0 - u;
+				double price = discountFactor * forward - u;
 				impliedVol = Black76Model.optionImpliedVolatility(forward, strike, ttm, price / discountFactor, true);
 			} else {
 				double price = discountFactor * strike - u;

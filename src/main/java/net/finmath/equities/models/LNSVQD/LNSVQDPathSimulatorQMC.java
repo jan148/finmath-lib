@@ -14,11 +14,12 @@ import java.util.Arrays;
 import java.util.Random;
 import java.util.stream.Collectors;
 
-public class LNSVQDEuropeanPriceSimulatorQMC extends LNSVQDEuropeanPriceSimulator {
-	public LNSVQDEuropeanPriceSimulatorQMC(LNSVQDModel lnsvqdModel, int numberOfPaths, double[] timeGrid, double[] maturities, Boolean isBackwardEuler) {
+public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
+	public LNSVQDPathSimulatorQMC(LNSVQDModel lnsvqdModel, int numberOfPaths, double[] timeGrid, double[] maturities, Boolean isBackwardEuler) {
 		super(lnsvqdModel, numberOfPaths, timeGrid, maturities, isBackwardEuler);
 	}
 
+	@Override
 	public void precalculatePaths(int seed, Boolean saveMemory) {
 		final int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(timeGrid.length);
 
@@ -69,8 +70,8 @@ public class LNSVQDEuropeanPriceSimulatorQMC extends LNSVQDEuropeanPriceSimulato
 				if(isBackwardEuler) {
 					double copyVolTransformed = volTransformed; // Need to copy bc. of static context
 					UnivariateObjectiveFunction rootFunction = new UnivariateObjectiveFunction(
-							l -> Math.abs(-brownianIncrements[currentIncrementIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[currentIncrementIndex][1] * lnsvqdModel.getEpsilon())
-									- (zeta.value(l) * deltaT) - copyVolTransformed + l)
+							l -> -brownianIncrements[currentIncrementIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[currentIncrementIndex][1] * lnsvqdModel.getEpsilon())
+									- (zeta.value(l) * deltaT) - copyVolTransformed + l
 					);
 					UnivariatePointValuePair result = brentOptimizer.optimize(
 							rootFunction,

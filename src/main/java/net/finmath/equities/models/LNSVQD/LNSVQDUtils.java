@@ -247,12 +247,12 @@ public class LNSVQDUtils {
 	public static double[] getConfidenceInterval(double[] vals, double error) {
 		double[] bounds = new double[2];
 		double mean = StatUtils.mean(vals);
-		double populationVariance = StatUtils.populationVariance(vals, mean);
+		double sampleVariance = StatUtils.variance(vals, mean);
 		int n = vals.length;
 		TDistribution tDist = new TDistribution(n-1);
 		double c = tDist.inverseCumulativeProbability(1.0 - error / 2);
-		bounds[0] = mean - c * Math.sqrt(populationVariance) / Math.sqrt(n);
-		bounds[1] = mean + c * Math.sqrt(populationVariance) / Math.sqrt(n);
+		bounds[0] = mean - c * Math.sqrt(sampleVariance) / Math.sqrt(n);
+		bounds[1] = mean + c * Math.sqrt(sampleVariance) / Math.sqrt(n);
 		return bounds;
 	}
 

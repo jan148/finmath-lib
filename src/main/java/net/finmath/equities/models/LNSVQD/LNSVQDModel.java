@@ -42,6 +42,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	 * Market observables
 	 */
 	LocalDate spotDate;
+	YieldCurve discountCurve;
 	EquityForwardStructure equityForwardStructure;
 
 	/**
@@ -75,7 +76,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 		}
 	};
 
-	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate spotDate, EquityForwardStructure equityForwardStructure) {
+	public LNSVQDModel(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate spotDate, YieldCurve discountCurve, EquityForwardStructure equityForwardStructure) {
 		super();
 
 		// Perform necessary checks
@@ -96,6 +97,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 
 		// EFS
 		this.spotDate = spotDate;
+		this.discountCurve = discountCurve;
 		this.equityForwardStructure = equityForwardStructure;
 	}
 
@@ -120,6 +122,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 
 		// EFS; create a EFS with a flat yield curve and 365 dayCountConvention
 		this.spotDate = spotDate;
+		this.discountCurve = new FlatYieldCurve(spotDate, 0, new DayCountConvention_ACT_365());
 		this.equityForwardStructure = new EquityForwardStructure() {
 			@Override
 			public DividendModelType getDividendModel() {
@@ -133,7 +136,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 
 			@Override
 			public double getSpot() {
-				return 0;
+				return spot0;
 			}
 
 			@Override
@@ -362,7 +365,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 
 	@Override
 	public RandomVariable getNumeraire(MonteCarloProcess process, double time) {
-		return getRandomVariableForConstant(1. / equityForwardStructure.getRepoCurve().getDiscountFactor(time));
+		return getRandomVariableForConstant(1. / discountCurve.getDiscountFactor(time));
 	}
 
 	/**
@@ -426,7 +429,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	}
 
 	public double getImpliedVolFromPrice(double strike, double maturity, double price) throws Exception {
-		double discountFactor = equityForwardStructure.getRepoCurve().getDiscountFactor(maturity);
+		double discountFactor = discountCurve.getDiscountFactor(maturity);
 		double forward = equityForwardStructure.getForward(maturity);
 
 		double impliedVol;

@@ -32,6 +32,7 @@ public abstract class TestsSetupForLNSVQD {
 			0.1514,
 			1.8458
 	};
+
 	static double[] paramBlackScholes = new double[]{
 			0.2,
 			0,
@@ -91,7 +92,12 @@ public abstract class TestsSetupForLNSVQD {
 
 	static double[] discountFactors;
 
-	static YieldCurve yieldCurve;
+	static YieldCurve disountCurve;
+	static LocalDate[] forwardDates;
+
+	static double[] forwardDiscountFactors;
+
+	static YieldCurve forwardCurve;
 
 	static AffineDividend[] affineDividends;
 	static AffineDividendStream affineDividendStream;
@@ -126,6 +132,54 @@ public abstract class TestsSetupForLNSVQD {
 		}).toArray(LocalDate[]::new);
 
 		discountDates = LNSVQDUtils.createLocalDateList(new String[]{
+				"2024-10-07",
+				"2024-10-14",
+				"2024-10-30",
+				"2024-11-29",
+				"2024-12-30",
+				"2025-01-30",
+				"2025-02-28",
+				"2025-03-31",
+				"2025-04-30",
+				"2025-05-30",
+				"2025-06-30",
+				"2025-07-30",
+				"2025-08-29",
+				"2025-09-30",
+				"2026-03-30",
+				"2026-09-30",
+				"2027-09-30",
+				"2028-09-29"
+		});
+
+		discountFactors = new double[]{
+				0.99933661
+				, 0.9986739
+				, 0.99722853
+				, 0.99457625
+				, 0.99197353
+				, 0.98951738
+				, 0.98740534
+				, 0.98533962
+				, 0.9834937
+				, 0.98180536
+				, 0.98010916
+				, 0.97865945
+				, 0.97716886
+				, 0.97558229
+				, 0.96739905
+				, 0.95894793
+				, 0.94120254
+				, 0.92255552
+		};
+
+		disountCurve = new YieldCurve("Discount curve"
+				, valuationDate
+				, dayCountConvention
+				, discountDates
+				, discountFactors);
+
+		forwardDates = LNSVQDUtils.createLocalDateList(new String[]{
 				"2024-10-18",
 				"2024-11-15",
 				"2024-12-20",
@@ -139,7 +193,7 @@ public abstract class TestsSetupForLNSVQD {
 				"2027-12-17"
 		});
 
-		discountFactors = new double[]{
+		forwardDiscountFactors = new double[]{
 				0.997589468
 				, 0.994816096
 				, 0.991454403
@@ -153,15 +207,15 @@ public abstract class TestsSetupForLNSVQD {
 				, 0.91252815
 		};
 
-		yieldCurve = new YieldCurve("Discount curve"
+		forwardCurve = new YieldCurve("Discount curve"
 				, valuationDate
 				, dayCountConvention
-				, discountDates
-				, discountFactors);
+				, forwardDates
+				, forwardDiscountFactors);
 
 		affineDividends = new AffineDividend[]{new AffineDividend(valuationDate, 0., 0.)};
 		affineDividendStream = new AffineDividendStream(affineDividends);
-		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, yieldCurve, affineDividendStream, dayCountConvention);
+		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, forwardCurve, affineDividendStream, dayCountConvention);
 
 		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
 				spot0
@@ -171,7 +225,10 @@ public abstract class TestsSetupForLNSVQD {
 				, selectedParams[3]
 				, selectedParams[4]
 				, selectedParams[5]
-				, 0, valuationDate, equityForwardStructure);
+				, 0
+				, valuationDate
+				, disountCurve
+				, equityForwardStructure);
 
 		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<VolatilityPoint>();
 
@@ -215,9 +272,64 @@ public abstract class TestsSetupForLNSVQD {
 
 	public ArrayList<Pair<Double, Double>> setDAXHestonSetupSIM() {
 		spot0 = 1;
-		selectedParams = paramVectorCalibrated;
+		selectedParams = paramVectorInitial;
+
+		double[] ttms = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
+		LocalDate[] dates = Arrays.stream(ttms).mapToObj(ttm -> {
+			long days = Math.round(ttm * 365);
+			return valuationDate.plusDays(days);
+		}).toArray(LocalDate[]::new);
 
 		discountDates = LNSVQDUtils.createLocalDateList(new String[]{
+				"2024-10-07",
+				"2024-10-14",
+				"2024-10-30",
+				"2024-11-29",
+				"2024-12-30",
+				"2025-01-30",
+				"2025-02-28",
+				"2025-03-31",
+				"2025-04-30",
+				"2025-05-30",
+				"2025-06-30",
+				"2025-07-30",
+				"2025-08-29",
+				"2025-09-30",
+				"2026-03-30",
+				"2026-09-30",
+				"2027-09-30",
+				"2028-09-29"
+		});
+
+		discountFactors = new double[]{
+				0.99933661
+				, 0.9986739
+				, 0.99722853
+				, 0.99457625
+				, 0.99197353
+				, 0.98951738
+				, 0.98740534
+				, 0.98533962
+				, 0.9834937
+				, 0.98180536
+				, 0.98010916
+				, 0.97865945
+				, 0.97716886
+				, 0.97558229
+				, 0.96739905
+				, 0.95894793
+				, 0.94120254
+				, 0.92255552
+		};
+
+		disountCurve = new YieldCurve("Discount curve"
+				, valuationDate
+				, dayCountConvention
+				, discountDates
+				, discountFactors);
+
+
+		forwardDates = LNSVQDUtils.createLocalDateList(new String[]{
 				"2024-10-18",
 				"2024-11-15",
 				"2024-12-20",
@@ -231,7 +343,7 @@ public abstract class TestsSetupForLNSVQD {
 				"2027-12-17"
 		});
 
-		discountFactors = new double[]{
+		forwardDiscountFactors = new double[]{
 				0.997589468
 				, 0.994816096
 				, 0.991454403
@@ -245,27 +357,31 @@ public abstract class TestsSetupForLNSVQD {
 				, 0.91252815
 		};
 
-		yieldCurve = new YieldCurve("Discount curve"
+		forwardCurve = new YieldCurve("Discount curve"
 				, valuationDate
 				, dayCountConvention
-				, discountDates
-				, discountFactors);
+				, forwardDates
+				, forwardDiscountFactors);
 
 		affineDividends = new AffineDividend[]{new AffineDividend(valuationDate, 0., 0.)};
 		affineDividendStream = new AffineDividendStream(affineDividends);
-		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, yieldCurve, affineDividendStream, dayCountConvention);
+		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, forwardCurve, affineDividendStream, dayCountConvention);
 
-		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
-		double[] forwards = Arrays.stream(maturityGrid).map(x -> equityForwardStructure.getForward(x)).toArray();
-
-		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(spot0
+		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
+				spot0
 				, selectedParams[0]
 				, selectedParams[1]
 				, selectedParams[2]
 				, selectedParams[3]
 				, selectedParams[4]
 				, selectedParams[5]
-				, 0, valuationDate, equityForwardStructure);
+				, 0
+				, valuationDate
+				, disountCurve
+				, equityForwardStructure);
+
+		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
+		double[] forwards = Arrays.stream(maturityGrid).map(x -> equityForwardStructure.getForward(x)).toArray();
 
 		// Initialize volatilityPoints
 		ArrayList<Pair<Double, Double>> strikeMatPairs = new ArrayList<>();
@@ -309,21 +425,25 @@ public abstract class TestsSetupForLNSVQD {
 		spot0 = 67843.219;
 		selectedParams = paramVectorBitcoin;
 
-		yieldCurve = new FlatYieldCurve(valuationDate, 0., dayCountConvention);
+		disountCurve = new FlatYieldCurve(valuationDate, 0., dayCountConvention);
+		forwardCurve = new FlatYieldCurve(valuationDate, 0., dayCountConvention);
 
 		affineDividends = new AffineDividend[]{new AffineDividend(valuationDate, 0., 0.)};
 		affineDividendStream = new AffineDividendStream(affineDividends);
-		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, yieldCurve, affineDividendStream, dayCountConvention);
+		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, forwardCurve, affineDividendStream, dayCountConvention);
 
 		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
-						spot0
-						, selectedParams[0]
-						, selectedParams[1]
-						, selectedParams[2]
-						, selectedParams[3]
-						, selectedParams[4]
-						, selectedParams[5]
-						, 0, valuationDate, equityForwardStructure);
+				spot0
+				, selectedParams[0]
+				, selectedParams[1]
+				, selectedParams[2]
+				, selectedParams[3]
+				, selectedParams[4]
+				, selectedParams[5]
+				, 0
+				, valuationDate
+				, disountCurve
+				, equityForwardStructure);
 
 		double ttm = 0.10122575874485597;
 		maturityGrid = new double[]{0.10122575874485597};
