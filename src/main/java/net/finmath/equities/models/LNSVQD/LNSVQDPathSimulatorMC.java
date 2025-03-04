@@ -1,5 +1,7 @@
 package net.finmath.equities.models.LNSVQD;
 
+import net.finmath.equities.marketdata.YieldCurve;
+import net.finmath.equities.models.EquityForwardStructure;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
@@ -8,14 +10,15 @@ import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import org.apache.commons.math3.random.MersenneTwister;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class LNSVQDPathSimulatorMC extends LNSVQDPathSimulator{
 
-	public LNSVQDPathSimulatorMC(LNSVQDModel lnsvqdModel, int numberOfPaths, double[] timeGrid, double[] maturities, Boolean isBackwardEuler) {
-		super(lnsvqdModel, numberOfPaths, timeGrid, maturities, isBackwardEuler);
+	public LNSVQDPathSimulatorMC(LocalDate spotDate, YieldCurve discountCurve, EquityForwardStructure equityForwardStructure, int numberOfPaths, double[] timeGrid, double[] maturities, LNSVQDModel lnsvqdModel, Boolean isBackwardEuler) {
+		super(spotDate, discountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturities, lnsvqdModel, isBackwardEuler);
 	}
 
 	@Override
@@ -87,7 +90,16 @@ public class LNSVQDPathSimulatorMC extends LNSVQDPathSimulator{
 					path[0][i][j] = assetPath[j];
 				}
 			}
-			if(maturities[currentMaturityIndex] == timeGrid[i]) {currentMaturityIndex++;}
+			// Apply martingale correction and increment maturity index
+			if(maturities[currentMaturityIndex] == timeGrid[i]) {
+				double avg = Arrays.stream(assetPathAtMaturities[currentMaturityIndex]).map(x -> Math.exp(x)).average().getAsDouble();
+				for(int p = 0; p < numberOfPaths; p++) {
+					double assetRealizationExp = Math.exp(assetPathAtMaturities[currentMaturityIndex][p]);
+					assetRealizationExp *= (lnsvqdModel.spot0 / avg);
+					assetPathAtMaturities[currentMaturityIndex][p] = Math.log(assetRealizationExp);
+				}
+				currentMaturityIndex++;
+			}
 		}
 	}
 

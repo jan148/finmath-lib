@@ -469,13 +469,12 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 
 			double forward = equityForwardStructure.getForward(maturity);
 			double discountFactor = discountCurve.getDiscountFactor(maturity); //Math.exp(-getRiskFreeRate(maturity) * maturity);
-			double convenienceFactor = 0;
 
 			// Get the time index of the maturity
 			int maturityIndex = maturitiesWithZeroList.indexOf(maturity);
 			int optionIndex = i;
 
-			double logMoneyness = Math.log(spot0 / strike) + (-Math.log(discountFactor) - convenienceFactor);
+			double logMoneyness = Math.log(forward / strike);
 
 			/**
 			 * TODO: Change factor

@@ -1,13 +1,9 @@
 package net.finmath.equities;
 
-import net.finmath.equities.marketdata.VolatilityPoint;
-import net.finmath.equities.models.Black76Model;
 import net.finmath.equities.models.LNSVQD.*;
 import net.finmath.equities.models.VolatilityPointsSurface;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import java.time.LocalDate;
 
 public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 	@BeforeClass
@@ -29,7 +25,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 				, 4
 				, 5
 		};
-		calibratedParameters = LNSVQDModelCalibrator.calibrate(selectedParams, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
+		calibratedParameters = LNSVQDModelCalibrator.calibrate(selectedParamsLNSVQD, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
 
 		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
 		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilityPointsSurface, null);

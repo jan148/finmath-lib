@@ -103,7 +103,7 @@ class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 	@Test
 	void calculateExponentialAffineApproximation() {
 		double maturity = 1;
-		if(selectedParams[1] != 0 || selectedParams[2] != 0 || selectedParams[3] != 0 || selectedParams[4] != 0 || selectedParams[5] != 0) {
+		if(selectedParamsLNSVQD[1] != 0 || selectedParamsLNSVQD[2] != 0 || selectedParamsLNSVQD[3] != 0 || selectedParamsLNSVQD[4] != 0 || selectedParamsLNSVQD[5] != 0) {
 			return;
 		}
 		double y = 1.;

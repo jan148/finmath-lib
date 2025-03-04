@@ -1,5 +1,7 @@
 package net.finmath.equities.models.LNSVQD;
 
+import net.finmath.equities.marketdata.YieldCurve;
+import net.finmath.equities.models.EquityForwardStructure;
 import net.finmath.montecarlo.*;
 import net.finmath.randomnumbers.MersenneTwister;
 import org.apache.commons.math3.optim.MaxEval;
@@ -9,14 +11,16 @@ import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
 import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import org.apache.commons.math3.random.SobolSequenceGenerator;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
 import java.util.stream.Collectors;
 
 public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
-	public LNSVQDPathSimulatorQMC(LNSVQDModel lnsvqdModel, int numberOfPaths, double[] timeGrid, double[] maturities, Boolean isBackwardEuler) {
-		super(lnsvqdModel, numberOfPaths, timeGrid, maturities, isBackwardEuler);
+
+	public LNSVQDPathSimulatorQMC(LocalDate spotDate, YieldCurve discountCurve, EquityForwardStructure equityForwardStructure, int numberOfPaths, double[] timeGrid, double[] maturities, LNSVQDModel lnsvqdModel, Boolean isBackwardEuler) {
+		super(spotDate, discountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturities, lnsvqdModel, isBackwardEuler);
 	}
 
 	@Override
@@ -102,6 +106,15 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 					// Asset path
 					path[0][i][j] = asset;
 				}
+			}
+		}
+		// Apply martingale correction
+		for(int m = 0; m < maturities.length; m++) {
+			double avg = Arrays.stream(assetPathAtMaturities[m]).map(x -> Math.exp(x)).average().getAsDouble();
+			for(int p = 0; p < numberOfPaths; p++) {
+				double assetRealizationExp = Math.exp(assetPathAtMaturities[m][p]);
+				assetRealizationExp *= (lnsvqdModel.spot0 / avg);
+				assetPathAtMaturities[m][p] = Math.log(assetRealizationExp);
 			}
 		}
 	}

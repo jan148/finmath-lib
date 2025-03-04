@@ -1,14 +1,12 @@
 package net.finmath.equities.models.LNSVQD;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class LNSVQDCliquetPricer<T extends LNSVQDPathSimulator>{
+public class CliquetSimulationPricer<T extends PathSimulator>{
 	T pathSimulator;
 
-	public LNSVQDCliquetPricer(T pathSimulator) {
+	public CliquetSimulationPricer(T pathSimulator) {
 		this.pathSimulator = pathSimulator;
 	}
 
@@ -20,9 +18,7 @@ public class LNSVQDCliquetPricer<T extends LNSVQDPathSimulator>{
 			double[] pathAtPayPoints = IntStream.range(0, pathSimulator.maturities.length)
 					.mapToDouble(i ->
 					{
-						// TODO: Check next two lines
-						double forwardFactor = pathSimulator.lnsvqdModel.equityForwardStructure.getForward(maturity) / pathSimulator.lnsvqdModel.spot0;
-						return Math.exp(pathSimulator.assetPathAtMaturities[i][pathIndex]) * forwardFactor;
+						return Math.exp(pathSimulator.assetPathAtMaturities[i][pathIndex]);
 					})
 					.toArray();
 			double payoff = 0;
@@ -36,7 +32,7 @@ public class LNSVQDCliquetPricer<T extends LNSVQDPathSimulator>{
 	}
 
 	public double getCliquetPrice(double maturity, double floorL, double capL, double floorG, double capG) throws Exception {
-		double discountFactor = pathSimulator.lnsvqdModel.discountCurve.getDiscountFactor(maturity);
+		double discountFactor = pathSimulator.discountCurve.getDiscountFactor(maturity);
 		double[] payoffsAtMaturity = getPayoffsAtMaturity(maturity, floorL, capL, floorG, capG);
 		// for(double payoff : payoffsAtMaturity) {assert(!Double.isNaN(payoff)) : "Nan encountered";}
 		double expectationAtMaturity = Arrays.stream(payoffsAtMaturity).average().getAsDouble();

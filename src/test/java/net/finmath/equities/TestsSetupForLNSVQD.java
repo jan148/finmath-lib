@@ -78,7 +78,16 @@ public abstract class TestsSetupForLNSVQD {
 			1.53513925
 	};
 
-	static double[] selectedParams;
+	static double[] paramVectorHeston = new double[]{
+			0.024536987
+			, 4
+			, 0.036676304
+			, 1.211288333
+			, -0.672024524
+	};
+
+	static double[] selectedParamsLNSVQD;
+	static double[] selectedParamsHeston;
 
 	/**
 	 * Other
@@ -123,7 +132,8 @@ public abstract class TestsSetupForLNSVQD {
 	 */
 	public static void setDAXHestonSetupCALIB() {
 		spot0 = 1;
-		selectedParams = paramVectorInitial;
+		selectedParamsLNSVQD = paramVectorInitial;
+		selectedParamsHeston = paramVectorHeston;
 
 		double[] ttms = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(ttms).mapToObj(ttm -> {
@@ -219,12 +229,12 @@ public abstract class TestsSetupForLNSVQD {
 
 		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
 				spot0
-				, selectedParams[0]
-				, selectedParams[1]
-				, selectedParams[2]
-				, selectedParams[3]
-				, selectedParams[4]
-				, selectedParams[5]
+				, selectedParamsLNSVQD[0]
+				, selectedParamsLNSVQD[1]
+				, selectedParamsLNSVQD[2]
+				, selectedParamsLNSVQD[3]
+				, selectedParamsLNSVQD[4]
+				, selectedParamsLNSVQD[5]
 				, 0
 				, valuationDate
 				, disountCurve
@@ -269,12 +279,12 @@ public abstract class TestsSetupForLNSVQD {
 	}
 
 
-
 	public ArrayList<Pair<Double, Double>> setDAXHestonSetupSIM() {
 		spot0 = 1;
-		selectedParams = paramVectorInitial;
+		selectedParamsLNSVQD = paramVectorInitial;
+		selectedParamsHeston = paramVectorHeston;
 
-		double[] ttms = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
+		double[] ttms = new double[]{0.25/*, 0.5, 0.75, 1, 1.25, 1.5*/};
 		LocalDate[] dates = Arrays.stream(ttms).mapToObj(ttm -> {
 			long days = Math.round(ttm * 365);
 			return valuationDate.plusDays(days);
@@ -369,12 +379,12 @@ public abstract class TestsSetupForLNSVQD {
 
 		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
 				spot0
-				, selectedParams[0]
-				, selectedParams[1]
-				, selectedParams[2]
-				, selectedParams[3]
-				, selectedParams[4]
-				, selectedParams[5]
+				, selectedParamsLNSVQD[0]
+				, selectedParamsLNSVQD[1]
+				, selectedParamsLNSVQD[2]
+				, selectedParamsLNSVQD[3]
+				, selectedParamsLNSVQD[4]
+				, selectedParamsLNSVQD[5]
 				, 0
 				, valuationDate
 				, disountCurve
@@ -423,7 +433,8 @@ public abstract class TestsSetupForLNSVQD {
 
 	public ArrayList<Pair<Double, Double>> setBTCSetupSIM() {
 		spot0 = 67843.219;
-		selectedParams = paramVectorBitcoin;
+		selectedParamsLNSVQD = paramVectorBitcoin;
+		selectedParamsHeston = paramVectorHeston;
 
 		disountCurve = new FlatYieldCurve(valuationDate, 0., dayCountConvention);
 		forwardCurve = new FlatYieldCurve(valuationDate, 0., dayCountConvention);
@@ -434,12 +445,12 @@ public abstract class TestsSetupForLNSVQD {
 
 		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
 				spot0
-				, selectedParams[0]
-				, selectedParams[1]
-				, selectedParams[2]
-				, selectedParams[3]
-				, selectedParams[4]
-				, selectedParams[5]
+				, selectedParamsLNSVQD[0]
+				, selectedParamsLNSVQD[1]
+				, selectedParamsLNSVQD[2]
+				, selectedParamsLNSVQD[3]
+				, selectedParamsLNSVQD[4]
+				, selectedParamsLNSVQD[5]
 				, 0
 				, valuationDate
 				, disountCurve
