@@ -75,7 +75,7 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 					double copyVolTransformed = volTransformed; // Need to copy bc. of static context
 					UnivariateObjectiveFunction rootFunction = new UnivariateObjectiveFunction(
 							l -> -brownianIncrements[currentIncrementIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[currentIncrementIndex][1] * lnsvqdModel.getEpsilon())
-									- (zeta.value(l) * deltaT) - copyVolTransformed + l
+									- (zeta.value(Math.exp(l)) * deltaT) - copyVolTransformed + l
 					);
 					UnivariatePointValuePair result = brentOptimizer.optimize(
 							rootFunction,
@@ -88,6 +88,7 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 						throw new ArithmeticException("The point doesn't result in a root.");
 					}
 				} else {
+					// TODO: Check replacement by zeta
 					volTransformed = volTransformed + ((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / vol - lnsvqdModel.getKappa1())
 							+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - vol) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT
 							+ lnsvqdModel.getBeta() * brownianIncrements[currentIncrementIndex][0] + lnsvqdModel.getEpsilon() * brownianIncrements[currentIncrementIndex][1];

@@ -9,7 +9,8 @@ import java.time.LocalDate;
 public abstract class LNSVQDPathSimulator extends PathSimulator{
 	LNSVQDModel lnsvqdModel;
 	boolean isBackwardEuler = false;
-	UnivariateFunction zeta = x -> Math.exp(-x) * lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() - Math.exp(x) * lnsvqdModel.getKappa2()
+	// y = e^x
+	UnivariateFunction zeta = y -> 1 / y * lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() - y * lnsvqdModel.getKappa2()
 			- lnsvqdModel.getKappa1() + lnsvqdModel.getKappa2() * lnsvqdModel.getTheta() - 0.5 * lnsvqdModel.getTotalInstVar();
 
 	public LNSVQDPathSimulator(LocalDate spotDate, YieldCurve discountCurve, EquityForwardStructure equityForwardStructure, int numberOfPaths, double[] timeGrid, double[] maturities, LNSVQDModel lnsvqdModel, Boolean isBackwardEuler) {

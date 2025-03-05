@@ -60,7 +60,7 @@ public class LNSVQDPathSimulatorMC extends LNSVQDPathSimulator{
 				if(isBackwardEuler) {
 					UnivariateObjectiveFunction rootFunction = new UnivariateObjectiveFunction(
 							l -> -brownianIncrements[pathIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[pathIndex][1] * lnsvqdModel.getEpsilon())
-									- (zeta.value(l) * deltaT) - volNewTransformed[pathIndex] + l
+									- (zeta.value(Math.exp(l)) * deltaT) - volNewTransformed[pathIndex] + l
 					);
 					UnivariatePointValuePair result = brentOptimizer.optimize(
 							rootFunction,
@@ -73,6 +73,7 @@ public class LNSVQDPathSimulatorMC extends LNSVQDPathSimulator{
 						throw new ArithmeticException("The point doesn't result in a root.");
 					}
 				} else {
+					// TODO: Check replacement by zeta
 					volNewTransformed[j] = volNewTransformed[j] + ((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / volPath[j] - lnsvqdModel.getKappa1())
 							+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - volPath[j]) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT
 							+ lnsvqdModel.getBeta() * brownianIncrements[j][0] + lnsvqdModel.getEpsilon() * brownianIncrements[j][1];
