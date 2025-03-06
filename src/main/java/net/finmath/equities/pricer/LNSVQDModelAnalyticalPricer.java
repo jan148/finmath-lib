@@ -1,9 +1,12 @@
-package net.finmath.equities.models.LNSVQD;
+package net.finmath.equities.pricer;
 
 import net.finmath.equities.marketdata.VolatilityPoint;
 import net.finmath.equities.marketdata.YieldCurve;
 import net.finmath.equities.models.Black76Model;
 import net.finmath.equities.models.EquityForwardStructure;
+import net.finmath.equities.models.ComplexRungeKutta4thOrderIntegrator;
+import net.finmath.equities.models.LNSVQDModel;
+import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.equities.models.VolatilityPointsSurface;
 import net.finmath.integration.SimpsonRealIntegrator;
 import net.finmath.time.daycount.DayCountConvention;
@@ -374,15 +377,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		return result;
 	}
 
-	/**
-	 * We use our Runge-Kutta implementation to calculate the integral
-	 */
-	public double getCallPrice(double strike, double ttm) throws Exception {
-		List<Pair<Double, Double>> strikeMaturityPairs = new ArrayList<>();
-		strikeMaturityPairs.add(new Pair<>(ttm, strike));
-		return getEuropeanOptionPrices(strikeMaturityPairs, true)[0];
-	}
-
 	public double[] getEuropeanOptionPrices(List<Pair<Double, Double>> strikeMaturityPairs, Boolean isCall) throws Exception {
 		double[] uS = getU(strikeMaturityPairs);
 		double[] optionPrices;
@@ -593,10 +587,10 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		return new VolatilityPointsSurface(volatilityPoints, today, dayCountConvention);
 	}
 
-	public void setYGridForIntegration(double lb, double ub, int numberOfEvaluationPoints) {
-		/**
+/*	public void setYGridForIntegration(double lb, double ub, int numberOfEvaluationPoints) {
+		*//**
 		 * Get all the integration points from the integrator, in our case Simpson
-		 */
+		 *//*
 		// Next lines adapted from finmath's Simpson implementation
 		final double range = ub - lb;
 
@@ -619,7 +613,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		yGridForIntegration.add(ub);
 
 		yGridForIntegration = yGridForIntegration.stream().sorted().distinct().collect(Collectors.toList());
-
-	}
+	}*/
 
 }

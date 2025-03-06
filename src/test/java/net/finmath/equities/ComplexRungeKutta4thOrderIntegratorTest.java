@@ -1,15 +1,12 @@
 package net.finmath.equities;
 
-import net.finmath.equities.models.LNSVQD.ComplexRungeKutta4thOrderIntegrator;
-import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
+import net.finmath.equities.models.ComplexRungeKutta4thOrderIntegrator;
+import net.finmath.equities.models.LNSVQDUtils;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.exception.DimensionMismatchException;
 import org.apache.commons.math3.exception.MaxCountExceededException;
-import org.apache.commons.math3.ode.ExpandableStatefulODE;
 import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
 import org.apache.commons.math3.ode.nonstiff.ClassicalRungeKuttaIntegrator;
-import org.apache.commons.math3.ode.nonstiff.RungeKuttaIntegrator;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

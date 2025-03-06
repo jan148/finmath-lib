@@ -1,4 +1,4 @@
-package net.finmath.equities.models.LNSVQD;
+package net.finmath.equities.models;
 
 import net.finmath.functions.NormalDistribution;
 import org.apache.commons.math3.complex.Complex;
@@ -10,11 +10,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class LNSVQDUtils {
 	/**

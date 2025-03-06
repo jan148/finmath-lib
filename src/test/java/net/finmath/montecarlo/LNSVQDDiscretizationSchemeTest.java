@@ -1,7 +1,7 @@
 package net.finmath.montecarlo;
 
-import net.finmath.equities.models.LNSVQD.LNSVQDModel;
-import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
+import net.finmath.equities.models.LNSVQDModel;
+import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.process.LNSVQDDiscretizationScheme;
 import net.finmath.rootfinder.NewtonsMethod;

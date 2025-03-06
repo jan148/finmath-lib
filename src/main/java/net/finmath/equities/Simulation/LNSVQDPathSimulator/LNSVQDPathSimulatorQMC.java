@@ -1,8 +1,10 @@
-package net.finmath.equities.models.LNSVQD;
+package net.finmath.equities.Simulation.LNSVQDPathSimulator;
 
+import net.finmath.equities.Simulation.BrownianBridgeNew;
 import net.finmath.equities.marketdata.YieldCurve;
 import net.finmath.equities.models.EquityForwardStructure;
-import net.finmath.montecarlo.*;
+import net.finmath.equities.models.LNSVQDUtils;
+import net.finmath.equities.models.LNSVQDModel;
 import net.finmath.randomnumbers.MersenneTwister;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
@@ -109,13 +111,12 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 				}
 			}
 		}
-		// Apply martingale correction
+		// TODO: Check
+		// Apply martingale correction; Can only apply it after complete rollout, might be problematic
 		for(int m = 0; m < maturities.length; m++) {
 			double avg = Arrays.stream(assetPathAtMaturities[m]).map(x -> Math.exp(x)).average().getAsDouble();
 			for(int p = 0; p < numberOfPaths; p++) {
-				double assetRealizationExp = Math.exp(assetPathAtMaturities[m][p]);
-				assetRealizationExp *= (lnsvqdModel.spot0 / avg);
-				assetPathAtMaturities[m][p] = Math.log(assetRealizationExp);
+				assetPathAtMaturities[m][p] += Math.log(equityForwardStructure.getSpot() / avg);
 			}
 		}
 	}

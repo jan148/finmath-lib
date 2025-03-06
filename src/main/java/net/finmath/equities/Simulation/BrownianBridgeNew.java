@@ -1,12 +1,8 @@
-package net.finmath.montecarlo;
+package net.finmath.equities.Simulation;
 
-import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import net.finmath.functions.NormalDistribution;
 import net.finmath.randomnumbers.MersenneTwister;
-import net.finmath.time.TimeDiscretization;
-import org.apache.commons.math3.random.SobolSequenceGenerator;
 
-import java.io.IOException;
 import java.util.*;
 
 public class BrownianBridgeNew {

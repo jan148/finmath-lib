@@ -1,4 +1,6 @@
-package net.finmath.equities.models.LNSVQD;
+package net.finmath.equities.Simulation.Options;
+
+import net.finmath.equities.Simulation.PathSimulator;
 
 import java.util.Arrays;
 import java.util.stream.IntStream;
@@ -10,7 +12,7 @@ public class CliquetSimulationPricer<T extends PathSimulator>{
 		this.pathSimulator = pathSimulator;
 	}
 
-	public double[] getPayoffsAtMaturity(double maturity, double floorL, double capL, double floorG, double capG) throws Exception {
+	public double[] getPayoffsAtMaturity(double maturity, double floorL, double capL, double floorG, double capG) {
 		double[] payoffsAtMaturity = new double[pathSimulator.numberOfPaths];
 
 		for(int j = 0; j < pathSimulator.numberOfPaths; j++) {
@@ -18,7 +20,8 @@ public class CliquetSimulationPricer<T extends PathSimulator>{
 			double[] pathAtPayPoints = IntStream.range(0, pathSimulator.maturities.length)
 					.mapToDouble(i ->
 					{
-						return Math.exp(pathSimulator.assetPathAtMaturities[i][pathIndex]);
+						double forwardFactor = pathSimulator.equityForwardStructure.getForward(maturity) / pathSimulator.equityForwardStructure.getSpot(); // Division by spot because EFS-spot != 1 i.g.
+						return Math.exp(pathSimulator.assetPathAtMaturities[i][pathIndex]) * forwardFactor;
 					})
 					.toArray();
 			double payoff = 0;

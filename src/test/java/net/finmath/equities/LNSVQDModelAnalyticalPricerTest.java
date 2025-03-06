@@ -1,6 +1,6 @@
 package net.finmath.equities;
 
-import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
+import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.montecarlo.RandomVariableFactory;
 import net.finmath.montecarlo.RandomVariableFromArrayFactory;
 import org.apache.commons.math3.complex.Complex;

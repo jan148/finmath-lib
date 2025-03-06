@@ -1,14 +1,11 @@
 package net.finmath.equities;
 
-import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
+import net.finmath.equities.models.LNSVQDUtils;
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 

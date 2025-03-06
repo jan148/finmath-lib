@@ -1,6 +1,6 @@
 package net.finmath.integration;
 
-import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
+import net.finmath.equities.models.LNSVQDUtils;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.integration.IterativeLegendreGaussIntegrator;
 import org.apache.commons.math3.analysis.integration.gauss.GaussIntegrator;

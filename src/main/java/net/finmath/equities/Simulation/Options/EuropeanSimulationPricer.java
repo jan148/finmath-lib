@@ -1,4 +1,6 @@
-package net.finmath.equities.models.LNSVQD;
+package net.finmath.equities.Simulation.Options;
+
+import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDPathSimulator;
 
 import java.util.Arrays;
 import java.util.List;
@@ -17,8 +19,7 @@ public class EuropeanSimulationPricer<T extends LNSVQDPathSimulator>{
 		if(matIndex == -1) {
 			throw new Exception("Maturity not found!");
 		}
-		// TODO: Check next two lines
-		double forwardFactor = 1 / pathSimulator.discountCurve.getDiscountFactor(maturity); // pathSimulator.equityForwardStructure.getForward(maturity) / pathSimulator.equityForwardStructure.getSpot();
+		double forwardFactor = pathSimulator.equityForwardStructure.getForward(maturity) / pathSimulator.equityForwardStructure.getSpot(); // Division by spot because EFS-spot != 1 i.g.
 		double[] actualAssets = Arrays.stream(pathSimulator.assetPathAtMaturities[matIndex]).map(x -> Math.exp(x) * forwardFactor).toArray();
 		double[] payoffsAtMaturity = Arrays.stream(actualAssets)
 				.map(x -> Math.max(callPutSign * (x - strike), 0)).toArray();

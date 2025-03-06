@@ -1,4 +1,4 @@
-package net.finmath.equities.models.LNSVQD;
+package net.finmath.equities.models;
 
 import net.finmath.equities.marketdata.AffineDividendStream;
 import net.finmath.equities.marketdata.FlatYieldCurve;
@@ -29,32 +29,32 @@ public class LNSVQDModel extends AbstractProcessModel {
 	/**
 	 * Model parameters under the EMM
 	 */
-	protected final double spot0;
-	double sigma0;
-	double kappa1;
-	double kappa2;
-	double theta;
-	double beta;
-	double epsilon;
-	double totalInstVar;
+	public final double spot0;
+	public double sigma0;
+	public double kappa1;
+	public double kappa2;
+	public double theta;
+	public double beta;
+	public double epsilon;
+	public double totalInstVar;
 
 	/**
 	 * Market observables
 	 */
-	LocalDate spotDate;
-	YieldCurve discountCurve;
-	EquityForwardStructure equityForwardStructure;
+	public LocalDate spotDate;
+	public YieldCurve discountCurve;
+	public EquityForwardStructure equityForwardStructure;
 
 	/**
 	 * Transformed inital values
 	 */
-	protected double X0, Y0, I0;
+	public double X0, Y0, I0;
 
 	/**
 	 * Random variable factory
 	 */
-	protected final RandomVariableFactory randomVariableFactory = new RandomVariableFromArrayFactory();
-	protected static final RandomVariable ZERO = new Scalar(0.0);
+	public final RandomVariableFactory randomVariableFactory = new RandomVariableFromArrayFactory();
+	public static final RandomVariable ZERO = new Scalar(0.0);
 
 	/**
 	 * Functions used for the discretization scheme of the LNSVQD model

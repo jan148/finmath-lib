@@ -15,10 +15,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import net.finmath.equities.models.LNSVQD.LNSVQDUtils;
 import net.finmath.functions.LinearAlgebra;
 
 /**

@@ -1,6 +1,6 @@
 package net.finmath.equities;
 
-import net.finmath.equities.models.LNSVQD.*;
+import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDModelCalibrator;
 import net.finmath.equities.models.VolatilityPointsSurface;
 import org.junit.BeforeClass;
 import org.junit.Test;

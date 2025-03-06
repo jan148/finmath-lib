@@ -1,17 +1,15 @@
 package net.finmath.montecarlo.process;
 
-import net.finmath.equities.models.LNSVQD.LNSVQDModel;
+import net.finmath.equities.models.LNSVQDModel;
 import net.finmath.exception.CalculationException;
 import net.finmath.montecarlo.IndependentIncrements;
 import net.finmath.montecarlo.model.ProcessModel;
-import net.finmath.rootfinder.NewtonsMethod;
 import net.finmath.stochastic.RandomVariable;
 import net.finmath.stochastic.Scalar;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
-import java.util.concurrent.*;
 import java.util.function.Function;
 
 public class LNSVQDDiscretizationScheme extends MonteCarloProcessFromProcessModel {
