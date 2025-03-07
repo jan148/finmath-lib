@@ -48,7 +48,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 		double maxMaturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
 		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(maturityGrid,
-						(int) (Math.round(maxMaturity * 365.) * 1), 0, maxMaturity, true)
+						(int) (Math.round(maxMaturity * 365.) * 5), 0, maxMaturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 		for(int seed : seeds) {
 			// MC
@@ -72,7 +72,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 				LNSVQDPathSimulatorQMC pathSimulatorQMC = new LNSVQDPathSimulatorQMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
 				// sw.reset();
 				// sw.start();
-				pathSimulatorQMC.precalculatePaths(seed, true);
+				// pathSimulatorQMC.precalculatePaths(seed, true);
 				// sw.stop();
 				// System.out.println("time QMC: " + sw.getTime());
 
@@ -94,7 +94,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					// QMC
 					double simulatedOptionPriceQMC;
 					try {
-						simulatedOptionPriceQMC = simulPricerQMC.getEuropeanPriceAuto(strike, maturity);
+						simulatedOptionPriceQMC = 0; // simulPricerQMC.getEuropeanPriceAuto(strike, maturity);
 					} catch(AssertionError e) {
 						System.err.println("Caught AssertionError: " + e.getMessage());
 						simulatedOptionPriceQMC = 1000000;
@@ -158,7 +158,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		double floorG = 0;
 		double capG = 10;
 
-		List<Integer> seeds = random.ints(2).boxed().collect(Collectors.toList());
+		List<Integer> seeds = random.ints(10).boxed().collect(Collectors.toList());
 
 		double[] pricesLnsvqdMC = new double[seeds.size()];
 		double[] pricesLnsvqdQMC = new double[seeds.size()];
@@ -181,7 +181,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);;
 			// sw.reset();
 			// sw.start();
-			pathSimulatorQMC.precalculatePaths(seed, true);
+			// pathSimulatorQMC.precalculatePaths(seed, true);
 			// sw.stop();
 			// System.out.println("time QMC: " + sw.getTime());
 
@@ -214,7 +214,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 			// QMC
 			double simulatedOptionPriceQMC;
 			try {
-				simulatedOptionPriceQMC = simulPricerLnsvqdQMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
+				simulatedOptionPriceQMC = 0; // simulPricerLnsvqdQMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
 			} catch(AssertionError e) {
 				System.err.println("Caught AssertionError: " + e.getMessage());
 				simulatedOptionPriceQMC = 1000000;

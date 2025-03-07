@@ -35,4 +35,13 @@ public class GeneralTests {
 		Assert.assertEquals(vol1 , impliedVol1, E-3);
 		// Assert.assertEquals(vol2 , impliedVol2, E-3);
 	}
+
+	@Test
+	public void test() {
+		double[] arr = new double[]{1, 2, 3};
+		double p = arr[1];
+		System.out.println(p);
+		arr[1] = 0;
+		System.out.println(p);
+	}
 }

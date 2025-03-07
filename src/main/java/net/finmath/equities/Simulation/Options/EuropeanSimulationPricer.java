@@ -19,7 +19,7 @@ public class EuropeanSimulationPricer<T extends LNSVQDPathSimulator>{
 		if(matIndex == -1) {
 			throw new Exception("Maturity not found!");
 		}
-		double forwardFactor = pathSimulator.equityForwardStructure.getForward(maturity) / pathSimulator.equityForwardStructure.getSpot(); // Division by spot because EFS-spot != 1 i.g.
+		double forwardFactor = pathSimulator.equityForwardStructure.getForward(maturity);
 		double[] actualAssets = Arrays.stream(pathSimulator.assetPathAtMaturities[matIndex]).map(x -> Math.exp(x) * forwardFactor).toArray();
 		double[] payoffsAtMaturity = Arrays.stream(actualAssets)
 				.map(x -> Math.max(callPutSign * (x - strike), 0)).toArray();

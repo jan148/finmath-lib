@@ -20,7 +20,7 @@ public class CliquetSimulationPricer<T extends PathSimulator>{
 			double[] pathAtPayPoints = IntStream.range(0, pathSimulator.maturities.length)
 					.mapToDouble(i ->
 					{
-						double forwardFactor = pathSimulator.equityForwardStructure.getForward(maturity) / pathSimulator.equityForwardStructure.getSpot(); // Division by spot because EFS-spot != 1 i.g.
+						double forwardFactor = pathSimulator.equityForwardStructure.getForward(maturity);
 						return Math.exp(pathSimulator.assetPathAtMaturities[i][pathIndex]) * forwardFactor;
 					})
 					.toArray();

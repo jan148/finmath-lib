@@ -6,13 +6,11 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
-	@BeforeClass
-	public static void setVolaSurface() {
-		setDAXHestonSetupCALIB();
-	}
 
 	@Test
 	public void calibrateTest() throws Exception {
+		setDAXHestonSetupCALIB();
+
 		/**
 		 * 1. Calibrate and get cvalibrated paramerters
 		 */
@@ -26,9 +24,9 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 				, 5
 		};
 		calibratedParameters = LNSVQDModelCalibrator.calibrate(selectedParamsLNSVQD, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
-
 		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
 		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilityPointsSurface, null);
 		impliedVolSurface.printVolSurfaceForOutput();
 	}
+
 }

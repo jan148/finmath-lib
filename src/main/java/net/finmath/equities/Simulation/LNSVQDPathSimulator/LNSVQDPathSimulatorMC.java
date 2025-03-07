@@ -92,9 +92,9 @@ public class LNSVQDPathSimulatorMC extends LNSVQDPathSimulator{
 			// TODO: Check
 			// Apply martingale correction and increment maturity index
 			if(maturities[currentMaturityIndex] == timeGrid[i]) {
-				double avg = Arrays.stream(assetPathAtMaturities[currentMaturityIndex]).map(x -> Math.exp(x)).average().getAsDouble();
+				double avg = Math.log(Arrays.stream(assetPathAtMaturities[currentMaturityIndex]).map(x -> Math.exp(x)).average().getAsDouble());
 				for(int p = 0; p < numberOfPaths; p++) {
-					assetPath[p] += Math.log(equityForwardStructure.getSpot() / avg);
+					assetPath[p] -= avg; //+= Math.log(equityForwardStructure.getSpot() / avg);
 					assetPathAtMaturities[currentMaturityIndex][p] = assetPath[p];
 				}
 				currentMaturityIndex++;

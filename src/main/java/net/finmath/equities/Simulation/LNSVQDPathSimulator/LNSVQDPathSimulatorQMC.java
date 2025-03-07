@@ -114,9 +114,9 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 		// TODO: Check
 		// Apply martingale correction; Can only apply it after complete rollout, might be problematic
 		for(int m = 0; m < maturities.length; m++) {
-			double avg = Arrays.stream(assetPathAtMaturities[m]).map(x -> Math.exp(x)).average().getAsDouble();
+			double avg = Math.log(Arrays.stream(assetPathAtMaturities[m]).map(x -> Math.exp(x)).average().getAsDouble());
 			for(int p = 0; p < numberOfPaths; p++) {
-				assetPathAtMaturities[m][p] += Math.log(equityForwardStructure.getSpot() / avg);
+				assetPathAtMaturities[m][p] -= avg;
 			}
 		}
 	}

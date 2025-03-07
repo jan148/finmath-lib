@@ -61,12 +61,12 @@ public abstract class TestsSetupForLNSVQD {
 	};
 
 	static double[] paramVectorCalibrated = new double[]{
-			0.13731067,
+			0.13731016014532768,
 			4,
 			0,
-			0.14664391,
-			-1.4890642,
-			1.53513925
+			0.14664386051912978,
+			-1.4890940544243099,
+			1.5351312426087254
 	};
 
 	static double[] paramVectorCalibratedWPositiveKappa2 = new double[]{
