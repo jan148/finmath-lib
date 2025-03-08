@@ -80,7 +80,7 @@ public abstract class TestsSetupForLNSVQD {
 
 	static double[] paramVectorHeston = new double[]{
 			0.024536987
-			, 4
+			, 4.
 			, 0.036676304
 			, 1.211288333
 			, -0.672024524
@@ -281,7 +281,7 @@ public abstract class TestsSetupForLNSVQD {
 
 	public ArrayList<Pair<Double, Double>> setDAXHestonSetupSIM() {
 		spot0 = 1;
-		selectedParamsLNSVQD = paramVectorInitial;
+		selectedParamsLNSVQD = paramVectorCalibrated;
 		selectedParamsHeston = paramVectorHeston;
 
 		double[] ttms = new double[]{0.25/*, 0.5, 0.75, 1, 1.25, 1.5*/};

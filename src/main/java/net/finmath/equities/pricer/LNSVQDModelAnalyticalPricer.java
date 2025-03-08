@@ -403,6 +403,31 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		return optionPrices;
 	}
 
+	public double[] getEuropeanOptionPricesAuto(List<Pair<Double, Double>> strikeMaturityPairs) throws Exception {
+		double[] optionPrices = new double[strikeMaturityPairs.size()];
+
+		// Check if ...
+		double[] uS = getU(strikeMaturityPairs);
+
+		for(int i = 0; i < uS.length; i++) {
+			double strike = strikeMaturityPairs.get(i).getValue();
+			double ttm = strikeMaturityPairs.get(i).getKey();
+			double discountFactor = discountCurve.getDiscountFactor(ttm);
+			double forward = equityForwardStructure.getForward(ttm);
+
+			double price;
+			double u = uS[i];
+			// Use put-prices for itm-call region
+			if(strike > forward) {
+				price = discountFactor * forward - u;
+			} else {
+				price = discountFactor * strike - u;
+			}
+			optionPrices[i] = price;
+		}
+		return optionPrices;
+	}
+
 	public double[] getU(List<Pair<Double, Double>> strikeMaturityPairs) throws Exception {
 		int numStepsForODEIntegration = (int) (Math.max(strikeMaturityPairs.get(strikeMaturityPairs.size() - 1).getKey() * numStepsForODEIntegrationPerYear, 300));
 

@@ -1,12 +1,13 @@
 package net.finmath.equities.Simulation.Options;
 
 import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDPathSimulator;
+import net.finmath.equities.Simulation.PathSimulator;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class EuropeanSimulationPricer<T extends LNSVQDPathSimulator>{
+public class EuropeanSimulationPricer<T extends PathSimulator>{
 	T pathSimulator;
 
 	public EuropeanSimulationPricer(T pathSimulator) {
