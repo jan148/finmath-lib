@@ -4,6 +4,7 @@ import net.finmath.equities.Simulation.BrownianBridgeNew;
 import net.finmath.equities.marketdata.YieldCurve;
 import net.finmath.equities.models.EquityForwardStructure;
 import net.finmath.equities.models.LNSVQDUtils;
+import net.finmath.functions.NormalDistribution;
 import org.apache.commons.math3.optim.MaxEval;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.univariate.BrentOptimizer;
@@ -77,7 +78,6 @@ public class HestonPathSimulatorQMC extends HestonPathSimulator {
 				double deltaT = timeGrid[i] - timeGrid[i - 1];
 				double sqrtDeltaT = Math.sqrt(deltaT);
 				assert (sqrtDeltaT > 0) : "sqrt(delta) = 0!";
-				double[][] increments = new double[numberOfPaths][2];
 
 				// Pre-chaching
 				// Asset
@@ -89,33 +89,32 @@ public class HestonPathSimulatorQMC extends HestonPathSimulator {
 				// double A = k2 + 0.5 * k4;
 
 				// Fill Paths
-				increments[j][0] = 1 / sqrtDeltaT * brownianIncrements[currentIncrementIndex][0];
+				double incAsset = 1 / sqrtDeltaT * brownianIncrements[currentIncrementIndex][0];
 
 				// Vol
+				double incVol;
 				double volPrev = vol; // Needed for asset
 				double m = theta + (volPrev - theta) * Math.exp(-kappa * deltaT);
 				double s2 = volPrev * epsilon * epsilon * Math.exp(-kappa * deltaT) / kappa * (1 - Math.exp(-kappa * deltaT))
 						+ theta * epsilon * epsilon / (2 * kappa) * (1 - Math.exp(-kappa * deltaT)) * (1 - Math.exp(-kappa * deltaT));
 				double psi = s2 / (m * m);
 				if(psi <= psiCritical) {
-					increments[j][1] = 1 / sqrtDeltaT * brownianIncrements[currentIncrementIndex][1];
+					incVol = 1 / sqrtDeltaT * brownianIncrements[currentIncrementIndex][1];
 					double b = Math.sqrt(2 / psi - 1 + Math.sqrt(2 / psi) * Math.sqrt(2 / psi - 1));
 					double a = m / (1 + b * b);
-					vol = a * (b + increments[j][1]) * (b + increments[j][1]);
+					vol = a * (b + incVol) * (b + incVol);
 				} else {
-					increments[currentIncrementIndex][1] = vec[2 * currentIncrementIndex + 1];
+					incVol = NormalDistribution.cumulativeDistribution(1 / sqrtDeltaT * brownianIncrements[currentIncrementIndex][1]) ;
 					double p = (psi - 1) / (psi + 1);
 					double beta = (1 - p) / m;
 					// System.out.println((1 - p) / beta + "\t" + m);
 					// System.out.println((1 - p * p) / (beta * beta) + "\t" + s2);
-					double bigPsiInverse = 0 <= increments[j][1] && increments[j][1] <= p ? 0 : 1 / beta * Math.log((1 - p) / (1 - increments[j][1]));
+					double bigPsiInverse = 0 <= incVol && incVol <= p ? 0 : 1 / beta * Math.log((1 - p) / (1 - incVol));
 					vol = bigPsiInverse;
 				}
 
-				assert (asset >= 0) : "Vol path < 0";
-
 				// Asset
-				asset = asset + k0 + k1 * volPrev + k2 * asset + Math.sqrt(k3 * volPrev + k4 * vol) * increments[j][0];
+				asset = asset + k0 + k1 * volPrev + k2 * vol + Math.sqrt(k3 * volPrev + k4 * vol) * incAsset;
 
 				// System.out.println(maturities[currentMaturityIndex] + "\t" + timeGrid[i]);
 				if(maturities[currentMaturityIndex] == timeGrid[i]) {

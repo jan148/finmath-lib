@@ -2,6 +2,7 @@ package net.finmath.equities;
 
 import net.finmath.equities.Simulation.HestonPathSimulator.HestonPathSimulator;
 import net.finmath.equities.Simulation.HestonPathSimulator.HestonPathSimulatorMC;
+import net.finmath.equities.Simulation.HestonPathSimulator.HestonPathSimulatorQMC;
 import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDPathSimulatorMC;
 import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDPathSimulatorQMC;
 import net.finmath.equities.Simulation.Options.CliquetSimulationPricer;
@@ -199,7 +200,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 			// System.out.println("time QMC: " + sw.getTime());
 
 			// Heston QMC
-			HestonPathSimulatorMC pathSimulatorHestonQMC = new HestonPathSimulatorMC(valuationDate, disountCurve
+			HestonPathSimulatorQMC pathSimulatorHestonQMC = new HestonPathSimulatorQMC(valuationDate, disountCurve
 					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3], selectedParamsHeston[4], gamma1, gamma2);
 
 			// sw.reset();
