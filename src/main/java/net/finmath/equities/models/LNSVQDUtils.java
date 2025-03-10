@@ -322,7 +322,7 @@ public class LNSVQDUtils {
 	}
 
 	public static String getBinaryRepresentation(double x) {
-		int numberBits = 50;
+		int numberBits = 20;
 		double num = x;
 		StringBuilder sb = new StringBuilder();
 		for(int i = 1; i < numberBits + 1; i++) {

@@ -50,7 +50,6 @@ public class HestonPathSimulatorMC extends HestonPathSimulator {
 			// Pre-chaching
 			// Asset
 			double k0 = - rho * kappa * theta / epsilon * deltaT;
-			double k0Star;
 			double k1 = gamma1 * deltaT * (kappa * rho / epsilon - 0.5) - rho / epsilon;
 			double k2 = gamma2 * deltaT * (kappa * rho / epsilon - 0.5) + rho / epsilon;
 			double k3 = gamma1 * deltaT * (1 - rho * rho);
@@ -72,7 +71,6 @@ public class HestonPathSimulatorMC extends HestonPathSimulator {
 					double b = Math.sqrt(2 / psi - 1 + Math.sqrt(2 / psi) * Math.sqrt(2 / psi - 1));
 					double a = m / (1 + b * b);
 					volPath[j] = a * (b + increments[j][1]) * (b + increments[j][1]);
-					k0Star = A < 1 / (2 * a) ? -A * b * b * a / (1 - 2 * A * a) + 0.5 * Math.log(1 - 2 * A * a) - (k1 + 0.5 * deltaT * gamma1) : k0;
 				} else {
 					increments[j][1] = mersenneTwister.nextDouble();
 					double p = (psi - 1) / (psi + 1);
@@ -81,7 +79,6 @@ public class HestonPathSimulatorMC extends HestonPathSimulator {
 					// System.out.println((1 - p * p) / (beta * beta) + "\t" + s2);
 					double bigPsiInverse = 0 <= increments[j][1] && increments[j][1] <= p ? 0 : 1 / beta * Math.log((1 - p) / (1 - increments[j][1]));
 					volPath[j] = bigPsiInverse;
-					k0Star = A < beta ? -Math.log(p + beta * (1 - p) / (beta - A)) - (k1 + 0.5 * k3) * volPrev : k0;
 				}
 
 				assert(volPath[j] >= 0) : "Vol path < 0";
