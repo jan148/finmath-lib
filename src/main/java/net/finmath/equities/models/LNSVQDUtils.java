@@ -254,7 +254,7 @@ public class LNSVQDUtils {
 	 * QMC-specific utils
 	 */
 	// Assumption: Reorder 0, ..., n with van-der-Corput
-	public static int[] sortTimeIndices(int numberOfPoints) {
+	public static int[] sortTimeIndices(int numberOfPoints, int[] prioritizedIndices) {
 		double highestIndex = numberOfPoints - 1;
 
 		List<Integer> sortedIndices = new ArrayList<>();
@@ -268,10 +268,14 @@ public class LNSVQDUtils {
 		indicedAlreadyAssigned.add(numberOfPoints - 1);
 
 		for(int k = 2; k < numberOfPoints; k++) {
-			double vdcNumber = LNSVQDUtils.modifiedVanDerCorput(k - 1, 2);
-			int idealIndexMin = (int) Math.floor(vdcNumber * highestIndex);
-			// int idealIndexMax = (int) Math.ceil(vdcNumber * highestNumber);
-			int selectedIndex = idealIndexMin;
+			int lengthOfPrioritizedIndicices = prioritizedIndices != null ? prioritizedIndices.length : 0;
+			int selectedIndex;
+			if(k - 2 < lengthOfPrioritizedIndicices) {selectedIndex = prioritizedIndices[k - 2];}
+			else {
+				double vdcNumber = LNSVQDUtils.modifiedVanDerCorput(k - (1 + lengthOfPrioritizedIndicices), 2);
+				int idealIndexMin = (int) Math.floor(vdcNumber * highestIndex);
+				selectedIndex = idealIndexMin;
+			}
 			while(indicedAlreadyAssigned.indexOf(selectedIndex) != -1) {
 				int altIndexMin = selectedIndex - 1;
 				int altIndexMax = selectedIndex + 1;
@@ -298,9 +302,9 @@ public class LNSVQDUtils {
 	}
 
 	// [][]
-	public static int[][] createSchedulingArray(int numberOfPoints) {
+	public static int[][] createSchedulingArray(int numberOfPoints, int[] prioritizedIndices) {
 		int[][] schedulingArray = new int[numberOfPoints][3];
-		int[] sortedArray = LNSVQDUtils.sortTimeIndices(numberOfPoints);
+		int[] sortedArray = LNSVQDUtils.sortTimeIndices(numberOfPoints, prioritizedIndices);
 
 		schedulingArray[0] = new int[]{0, 0, 0};
 		schedulingArray[1] = new int[]{numberOfPoints - 1, 0, 0};

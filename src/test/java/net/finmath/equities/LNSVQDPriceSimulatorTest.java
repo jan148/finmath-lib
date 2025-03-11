@@ -74,7 +74,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 				LNSVQDPathSimulatorQMC pathSimulatorQMC = new LNSVQDPathSimulatorQMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
 				// sw.reset();
 				// sw.start();
-				// pathSimulatorQMC.precalculatePaths(seed, true);
+				pathSimulatorQMC.precalculatePaths(seed, true);
 				// sw.stop();
 				// System.out.println("time QMC: " + sw.getTime());
 
@@ -96,7 +96,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					// QMC
 					double simulatedOptionPriceQMC;
 					try {
-						simulatedOptionPriceQMC = 0; // simulPricerQMC.getEuropeanPriceAuto(strike, maturity);
+						simulatedOptionPriceQMC = simulPricerQMC.getEuropeanPriceAuto(strike, maturity);
 					} catch(AssertionError e) {
 						System.err.println("Caught AssertionError: " + e.getMessage());
 						simulatedOptionPriceQMC = 1000000;
@@ -155,12 +155,12 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 		// Set Cliquet params
 		double maturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
-		double floorL = 0;
-		double capL = 10;
+		double floorL = Double.NEGATIVE_INFINITY;
+		double capL = 1.1;
 		double floorG = 0;
-		double capG = 10;
+		double capG = Double.POSITIVE_INFINITY;
 
-		List<Integer> seeds = random.ints(5).boxed().collect(Collectors.toList());
+		List<Integer> seeds = random.ints(10).boxed().collect(Collectors.toList());
 
 		double[] pricesLnsvqdMC = new double[seeds.size()];
 		double[] pricesLnsvqdQMC = new double[seeds.size()];
@@ -176,7 +176,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);;
 			// sw.reset();
 			// sw.start();
-			// pathSimulatorMC.precalculatePaths(seed, true);
+			pathSimulatorMC.precalculatePaths(seed, true);
 			// System.out.println("time MC: " + sw.getTime());
 
 			// QMC
@@ -184,7 +184,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
 			// sw.reset();
 			// sw.start();
-			// pathSimulatorQMC.precalculatePaths(seed, true);
+			pathSimulatorQMC.precalculatePaths(seed, true);
 			// sw.stop();
 			// System.out.println("time QMC: " + sw.getTime());
 
@@ -195,7 +195,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3], selectedParamsHeston[4], gamma1, gamma2);
 			// sw.reset();
 			// sw.start();
-			// pathSimulatorHestonMC.precalculatePaths(seed, true);
+			pathSimulatorHestonMC.precalculatePaths(seed, true);
 			// sw.stop();
 			// System.out.println("time QMC: " + sw.getTime());
 
@@ -218,7 +218,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 			// MC
 			double simulatedOptionPrice;
 			try {
-				simulatedOptionPrice = 0; // simulPricerLnsvqdMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
+				simulatedOptionPrice = simulPricerLnsvqdMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
 			} catch(AssertionError e) {
 				System.err.println("Caught AssertionError: " + e.getMessage());
 				simulatedOptionPrice = 1000000;
@@ -228,7 +228,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 			// QMC
 			double simulatedOptionPriceQMC;
 			try {
-				simulatedOptionPriceQMC = 0; // simulPricerLnsvqdQMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
+				simulatedOptionPriceQMC = simulPricerLnsvqdQMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
 			} catch(AssertionError e) {
 				System.err.println("Caught AssertionError: " + e.getMessage());
 				simulatedOptionPriceQMC = 1000000;
@@ -238,7 +238,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 			// MC Heston
 			double simulatedOptionPriceHestonMC;
 			try {
-				simulatedOptionPriceHestonMC = 0; // simulPricerHestonMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
+				simulatedOptionPriceHestonMC = simulPricerHestonMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
 			} catch(AssertionError e) {
 				System.err.println("Caught AssertionError: " + e.getMessage());
 				simulatedOptionPriceHestonMC = 1000000;

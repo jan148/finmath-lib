@@ -27,11 +27,16 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 
 	@Override
 	public void precalculatePaths(int seed, Boolean saveMemory) {
-		final int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(timeGrid.length);
-
 		ArrayList<Double> timeGridList = Arrays.stream(timeGrid)
 				.boxed()
 				.collect(Collectors.toCollection(ArrayList::new));
+		int[] prioritizedIndices = new int[maturities.length - 1];
+		for(int j = 0; j < prioritizedIndices.length; j++) {
+			double maturity = maturities[j];
+			prioritizedIndices[j] = timeGridList.indexOf(maturity);
+		}
+		prioritizedIndices = prioritizedIndices.length > 0 ? prioritizedIndices : null;
+		final int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(timeGrid.length, prioritizedIndices);
 
 		BrownianBridgeNew brownianBridge = new BrownianBridgeNew(timeGridList, schedulingArray, numberOfPaths);
 

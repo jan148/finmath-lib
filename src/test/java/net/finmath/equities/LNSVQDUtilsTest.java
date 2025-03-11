@@ -66,7 +66,7 @@ public class LNSVQDUtilsTest {
 	@Test
 	public void sortListTest() throws Exception {
 		int numberOfPoints = 22;
-		int[] sortedInts = LNSVQDUtils.sortTimeIndices(numberOfPoints);
+		int[] sortedInts = LNSVQDUtils.sortTimeIndices(numberOfPoints, null);
 		for(int k = 0; k < numberOfPoints; k++) {
 			System.out.println(k + " /  " + sortedInts[k]);
 		}
@@ -76,7 +76,7 @@ public class LNSVQDUtilsTest {
 	@Test
 	public void createSchedulingArrayTest() throws Exception {
 		int numberOfPoints = 19;
-		int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(numberOfPoints);
+		int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(numberOfPoints, null);
 		for(int k = 0; k < numberOfPoints; k++) {
 			System.out.println(k + " \t  " + schedulingArray[k][0] + " \t  " + schedulingArray[k][1] + " \t  " + schedulingArray[k][2]);
 		}
