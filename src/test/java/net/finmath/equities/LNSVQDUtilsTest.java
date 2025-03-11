@@ -99,6 +99,18 @@ public class LNSVQDUtilsTest {
 
 	}
 
+	@Test
+	public void sth() {
+		double[] values = {
+				0.133045447, 0.132996909, 0.133052429, 0.133012922, 0.133032868,
+				0.133012363, 0.13301381, 0.133016248, 0.132991382, 0.133045026
+		};
 
+
+		double[] bds = LNSVQDUtils.getConfidenceInterval(values, 0.05);
+		System.out.println(bds[0]);
+		System.out.println(bds[1]);
+
+	}
 
 }

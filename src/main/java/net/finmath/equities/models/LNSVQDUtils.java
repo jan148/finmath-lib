@@ -14,25 +14,23 @@ import java.util.stream.Collectors;
 
 public class LNSVQDUtils {
 	/**
-	 *
 	 * Matrix operations
-	 *
 	 */
-	public static Complex[][] matrixMult(Complex[][] A, Complex[][]  B) {
+	public static Complex[][] matrixMult(Complex[][] A, Complex[][] B) {
 		int rowsA = A.length;
 		int colsA = A[0].length;
 		int rowsB = B.length;
 		int colsB = B[0].length;
 
-		if (colsA != rowsB) {
+		if(colsA != rowsB) {
 			throw new IllegalArgumentException("Matrix A's columns must equal Matrix B's rows");
 		}
 
 		Complex[][] result = new Complex[rowsA][colsB];
-		for (int i = 0; i < rowsA; i++) {
-			for (int j = 0; j < colsB; j++) {
+		for(int i = 0; i < rowsA; i++) {
+			for(int j = 0; j < colsB; j++) {
 				result[i][j] = new Complex(0, 0); // Initialize with 0 + 0i
-				for (int k = 0; k < colsA; k++) {
+				for(int k = 0; k < colsA; k++) {
 					result[i][j] = result[i][j].add(A[i][k].multiply(B[k][j]));
 				}
 			}
@@ -40,30 +38,30 @@ public class LNSVQDUtils {
 		return result;
 	}
 
-	public static Complex[] matrixVectorMult(Complex[][] A, Complex[]  v) {
+	public static Complex[] matrixVectorMult(Complex[][] A, Complex[] v) {
 		int rows = A.length;
 		int cols = A[0].length;
 
-		if (v.length != cols) {
+		if(v.length != cols) {
 			throw new IllegalArgumentException("Matrix column count must match vector size");
 		}
 
 		Complex[] result = new Complex[rows];
-		for (int i = 0; i < rows; i++) {
+		for(int i = 0; i < rows; i++) {
 			result[i] = new Complex(0, 0);
-			for (int j = 0; j < cols; j++) {
+			for(int j = 0; j < cols; j++) {
 				result[i] = result[i].add(A[i][j].multiply(v[j]));
 			}
 		}
 		return result;
 	}
 
-	public static Complex scalarProduct(Complex[] v, Complex[]  w) {
-		if (v.length != w.length) {
+	public static Complex scalarProduct(Complex[] v, Complex[] w) {
+		if(v.length != w.length) {
 			throw new IllegalArgumentException("Vectors must be of the same length");
 		}
 		Complex result = new Complex(0, 0);
-		for (int i = 0; i < v.length; i++) {
+		for(int i = 0; i < v.length; i++) {
 			result = result.add(v[i].multiply(w[i]));
 			/*if(Double.isNaN(result.getReal()) || Double.isNaN(result.getImaginary())){
 				System.out.println(v[i].getReal() + "\t" + v[i].getImaginary());
@@ -79,8 +77,8 @@ public class LNSVQDUtils {
 		int cols = A[0].length;
 
 		Complex[][] transposed = new Complex[cols][rows];
-		for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
+		for(int i = 0; i < rows; i++) {
+			for(int j = 0; j < cols; j++) {
 				transposed[j][i] = A[i][j];
 			}
 		}
@@ -88,9 +86,7 @@ public class LNSVQDUtils {
 	}
 
 	/**
-	 *
 	 * Other
-	 *
 	 */
 	public static double[] createTimeGrid(double t0, double tEnd, int steps) {
 		double stepSize = (tEnd - t0) / steps;
@@ -176,7 +172,7 @@ public class LNSVQDUtils {
 		List<Double> listWithMidpoints = new ArrayList<>();
 		// Init
 		listWithMidpoints.add(numbers.get(0));
-		for (int i = 1; i < numbers.size(); i++) {
+		for(int i = 1; i < numbers.size(); i++) {
 			double newNumber = numbers.get(i);
 			double midPoint = numbers.get(i - 1) + ((newNumber - numbers.get(i - 1)) / 2.);
 			listWithMidpoints.add(midPoint);
@@ -187,7 +183,7 @@ public class LNSVQDUtils {
 
 	public static Complex[] convertDoubleArrayToComplexArray(double[] array) {
 		Complex[] complexes = new Complex[array.length];
-		for (int j = 0; j < array.length; j++) {
+		for(int j = 0; j < array.length; j++) {
 			complexes[j] = new Complex(array[j], 0.);
 		}
 		return complexes;
@@ -195,16 +191,16 @@ public class LNSVQDUtils {
 
 	public static double[] convertComplexArrayToDoubleWithReal(Complex[] array) {
 		double[] reals = new double[array.length];
-		for (int j = 0; j < array.length; j++) {
+		for(int j = 0; j < array.length; j++) {
 			reals[j] = array[j].getReal();
 		}
 		return reals;
 	}
 
 	public static List<Pair<Double, Double>> create2dMesh(double[] arr1, double[] arr2) {
-		List<Pair<Double, Double>> mesh= new ArrayList<>();
-		for (int i = 0; i < arr1.length; i++) {
-			for (int j = 0; j < arr2.length; j++) {
+		List<Pair<Double, Double>> mesh = new ArrayList<>();
+		for(int i = 0; i < arr1.length; i++) {
+			for(int j = 0; j < arr2.length; j++) {
 				mesh.add(new Pair<Double, Double>(arr1[i], arr2[j]));
 			}
 		}
@@ -213,7 +209,7 @@ public class LNSVQDUtils {
 
 	public static LocalDate[] createLocalDateList(String[] dates) {
 		LocalDate[] datesArray = new LocalDate[dates.length];
-		for (int i = 0; i < dates.length; i++) {
+		for(int i = 0; i < dates.length; i++) {
 			datesArray[i] = LocalDate.parse(dates[i]);
 		}
 		return datesArray;
@@ -225,14 +221,16 @@ public class LNSVQDUtils {
 		double result = 0.0;
 		double f = 1.0 / base;
 
-		while (n > 0) {
+		while(n > 0) {
 			result += f * (n % base);
 			n /= base;
 			f /= base;
 		}
 
 		// That's the modification
-		if(index == 0) {result = 1;}
+		if(index == 0) {
+			result = 1;
+		}
 
 		return result;
 	}
@@ -245,7 +243,7 @@ public class LNSVQDUtils {
 		double mean = StatUtils.mean(vals);
 		double sampleVariance = StatUtils.variance(vals, mean);
 		int n = vals.length;
-		TDistribution tDist = new TDistribution(n-1);
+		TDistribution tDist = new TDistribution(n - 1);
 		double c = tDist.inverseCumulativeProbability(1.0 - error / 2);
 		bounds[0] = mean - c * Math.sqrt(sampleVariance) / Math.sqrt(n);
 		bounds[1] = mean + c * Math.sqrt(sampleVariance) / Math.sqrt(n);
@@ -253,9 +251,7 @@ public class LNSVQDUtils {
 	}
 
 	/**
-	 *
 	 * QMC-specific utils
-	 *
 	 */
 	// Assumption: Reorder 0, ..., n with van-der-Corput
 	public static int[] sortTimeIndices(int numberOfPoints) {
@@ -279,10 +275,20 @@ public class LNSVQDUtils {
 			while(indicedAlreadyAssigned.indexOf(selectedIndex) != -1) {
 				int altIndexMin = selectedIndex - 1;
 				int altIndexMax = selectedIndex + 1;
-				if(indicedAlreadyAssigned.indexOf(altIndexMin) == -1 && altIndexMin >= 0) {selectedIndex = altIndexMin; break;}
-				if(indicedAlreadyAssigned.indexOf(altIndexMax) == -1 && altIndexMax <= highestIndex) {selectedIndex = altIndexMax; break;}
-				if(altIndexMin > 0) {selectedIndex = altIndexMin;}
-				if(altIndexMax < highestIndex) {selectedIndex = altIndexMax;}
+				if(indicedAlreadyAssigned.indexOf(altIndexMin) == -1 && altIndexMin >= 0) {
+					selectedIndex = altIndexMin;
+					break;
+				}
+				if(indicedAlreadyAssigned.indexOf(altIndexMax) == -1 && altIndexMax <= highestIndex) {
+					selectedIndex = altIndexMax;
+					break;
+				}
+				if(altIndexMin > 0) {
+					selectedIndex = altIndexMin;
+				}
+				if(altIndexMax < highestIndex) {
+					selectedIndex = altIndexMax;
+				}
 			}
 			sortedIndices.add(selectedIndex);
 			indicedAlreadyAssigned.add(selectedIndex);
@@ -312,9 +318,9 @@ public class LNSVQDUtils {
 	public static double[] getStdNormalsFromUnifVec(double[] vecOfUnifroms, double scambleNumber) {
 		String scambleNumberBinary = getBinaryRepresentation(scambleNumber);
 		double[] stdNormals = new double[vecOfUnifroms.length];
-		for(int j= 0; j < stdNormals.length; j++) {
+		for(int j = 0; j < stdNormals.length; j++) {
 			String initialUniformBinary = getBinaryRepresentation(vecOfUnifroms[j]);
-			String xOr = xOr(scambleNumberBinary, initialUniformBinary, true);
+			String xOr = xOr(scambleNumberBinary, initialUniformBinary);
 			double result = getNumFromBin(xOr);
 			stdNormals[j] = NormalDistribution.inverseCumulativeDistribution(result);
 		}
@@ -325,36 +331,31 @@ public class LNSVQDUtils {
 		int numberBits = 20;
 		double num = x;
 		StringBuilder sb = new StringBuilder();
+		char[] bits = new char[numberBits];
 		for(int i = 1; i < numberBits + 1; i++) {
 			double comp = Math.pow(2, -i);
 			if(num >= comp) {
-				sb.append("1");
+				// sb.append("1");
+				bits[i - 1] = '1';
 				num -= comp;
 			} else {
-				sb.append("0");
+				bits[i - 1] = '0';
+				// sb.append("0");
 			}
 		}
-		return sb.toString();
+		return new String(bits);
 	}
 
-	public static String xOr(String a, String b, Boolean scrambled) {
-		StringBuilder result = new StringBuilder();
-		if(scrambled) {
-			for (int i = 0; i < a.length(); i++) {
-				char bitA = a.charAt(i);
-				char bitB = b.charAt(i);
-				result.append((bitA == bitB) ? '0' : '1');
-			}
+	public static String xOr(String a, String b) {
+		// StringBuilder result = new StringBuilder();
+		char[] bits = new char[a.length()];
+		for(int i = 0; i < a.length(); i++) {
+			char bitA = a.charAt(i);
+			char bitB = b.charAt(i);
+			bits[i] = bitA == bitB ? '0' : '1';
+			// result.append((bitA == bitB) ? '0' : '1');
 		}
-		else {
-			for (int i = 0; i < a.length(); i++) {
-				char bitA = a.charAt(i);
-				char bitB = b.charAt(i);
-				result.append((bitA == bitB) ? '0' : '1');
-			}
-		}
-
-		return result.toString();
+		return new String(bits);
 	}
 
 	public static double getNumFromBin(String binaryString) {

@@ -117,7 +117,7 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create simulation model (not finmath)
 	 */
-	static int numberOfPaths = 100000;
+	static int numberOfPaths = 1000000;
 
 	/**
 	 * Declare volatility surface; will be insatntiated later
