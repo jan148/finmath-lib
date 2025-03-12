@@ -28,6 +28,7 @@ public class LNSVQDModelCalibrator {
 	                                 LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer,
 	                                 VolatilityPointsSurface volatilitySurface) throws Exception {
 		System.out.println("-------------------------------------");
+		lnsvqdModelAnalyticalPricer.setVolatilityParameters(initialVolatilityParameters);
 		final double[] initX = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
 				.stream()
 				.mapToDouble(VolatilityPoint::getVolatility)
@@ -41,7 +42,7 @@ public class LNSVQDModelCalibrator {
 		System.out.println("Calibration started. Initial cost: " + initialCost);
 		System.out.print("Initial params: ");
 		LNSVQDUtils.printArray(initialVolatilityParameters);
-		System.out.println("-------------------------------------");
+		System.out.println("\n-------------------------------------");
 
 		// Create list of parameters that should be calibrated
 		double[] initialVolatilityParametersToCalibrate = new double[parameterIndices.length];

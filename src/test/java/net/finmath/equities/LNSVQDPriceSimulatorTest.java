@@ -1,6 +1,5 @@
 package net.finmath.equities;
 
-import net.finmath.equities.Simulation.HestonPathSimulator.HestonPathSimulator;
 import net.finmath.equities.Simulation.HestonPathSimulator.HestonPathSimulatorMC;
 import net.finmath.equities.Simulation.HestonPathSimulator.HestonPathSimulatorQMC;
 import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDPathSimulatorMC;
@@ -32,14 +31,14 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 	@Test
 	public void testEuropeanOption() throws Exception {
 		// Set the right case
-		ArrayList<Pair<Double, Double>> strikeMatPairs = setBTCSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
+		setDAXHestonMarchSetupSIM(); //setBTCSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
 
 		// Get option values
 		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
 
 		// Get analytical prices
 		StopWatch sw = StopWatch.createStarted();
-		double[] volAna = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs, null);
+		double[] volAna = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs);
 		sw.stop();
 		System.out.println("time: " + sw.getTime());
 
@@ -50,7 +49,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 		double maxMaturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
 		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(maturityGrid,
-						(int) (Math.round(maxMaturity * 365.) * 5), 0, maxMaturity, true)
+						(int) (Math.round(maxMaturity * 365.) * 1), 0, maxMaturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 		for(int seed : seeds) {
 			// MC
@@ -151,7 +150,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 	@Test
 	public void testCliquetOption() throws Exception {
 		// Set the right case
-		ArrayList<Pair<Double, Double>> strikeMatPairs = setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
+		setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
 
 		// Set Cliquet params
 		double maturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
@@ -297,14 +296,14 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 	@Test
 	public void testHestonEuropean() throws Exception {
 		// Set the right case
-		ArrayList<Pair<Double, Double>> strikeMatPairs = setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
+		setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
 
 		// Get option values
 		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
 
 		// Get analytical prices
 		StopWatch sw = StopWatch.createStarted();
-		double[] volAna = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs, null);
+		double[] volAna = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs);
 		double[] pricesAna = lnsvqdModelAnalyticalPricer.getEuropeanOptionPricesAuto(strikeMatPairs);
 		sw.stop();
 		System.out.println("time: " + sw.getTime());

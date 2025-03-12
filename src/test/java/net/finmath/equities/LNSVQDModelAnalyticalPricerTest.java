@@ -150,12 +150,12 @@ class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 	 */
 	@Test
 	public void printPricesWrtPricerParams() throws Exception {
-		ArrayList<Pair<Double, Double>> strikeMatPairs = setDAXHestonSetupSIM();
+		setDAXHestonSetupSIM();
 		int[] vals = new int[]{100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600};
 		double[][] impliedVolsPerStepCounter = new double[vals.length][strikeMatPairs.size()];
 		for(int j = 0; j < vals.length; j++) {
 			lnsvqdModelAnalyticalPricer.setUpperBoundForIntegration(vals[j]); // lnsvqdModelAnalyticalPricer.numStepsForODEIntegrationPerYear = vals[j];
-			impliedVolsPerStepCounter[j] = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs, null);
+			impliedVolsPerStepCounter[j] = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs);
 			LNSVQDUtils.printArray(impliedVolsPerStepCounter[j]);
 		}
 		for(int i = 0; i < strikeMatPairs.size(); i++) {

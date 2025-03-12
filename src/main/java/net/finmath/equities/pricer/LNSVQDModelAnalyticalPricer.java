@@ -542,7 +542,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * SECTION 2: Get implied vol surface
 	 * ***************************************************+
 	 */
-	public double[] getImpliedVolsStrikeMatList(ArrayList<Pair<Double, Double>> strikeMaturityPairs, double[] maturities) throws Exception {
+	public double[] getImpliedVolsStrikeMatList(ArrayList<Pair<Double, Double>> strikeMaturityPairs) throws Exception {
 		double[] impliedVols = new double[strikeMaturityPairs.size()];
 
 		// Check if ...
