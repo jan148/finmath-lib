@@ -13,6 +13,7 @@ import org.apache.commons.math3.util.Pair;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public abstract class TestsSetupForLNSVQD {
 	/**
@@ -49,6 +50,15 @@ public abstract class TestsSetupForLNSVQD {
 			0.191510584,
 			-0.81402,
 			1.211288
+	};
+
+	static double[] paramVectorInitialWithPreCalibratedKappas = new double[]{
+			0.156642865,
+			4.012705001125997,
+			4,
+			0.19481803777387482,
+			0,
+			0.8975621744372831
 	};
 
 	static double[] paramVectorCalibrated = new double[]{
@@ -137,6 +147,7 @@ public abstract class TestsSetupForLNSVQD {
 	 * Other
 	 */
 	static DayCountConvention dayCountConvention = new DayCountConvention_ACT_365();
+	static List<Pair<Double, Double>> acfAtLags;
 
 	/**
 	 * Create forward stucture
@@ -161,7 +172,7 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create simulation model (not finmath)
 	 */
-	static int numberOfPaths = 1000;
+	static int numberOfPaths = 100;
 
 	/**
 	 * Declare volatility surface; will be insatntiated later
@@ -180,7 +191,7 @@ public abstract class TestsSetupForLNSVQD {
 		spot0 = 1;
 		selectedParamsLNSVQD = paramVectorCalibrated;
 		selectedParamsHeston = paramVectorHeston;
-		selectedParamsToCalibrate = paramVectorInitial;
+		selectedParamsToCalibrate = paramVectorInitialWithPreCalibratedKappas; // paramVectorInitial;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
@@ -361,14 +372,26 @@ public abstract class TestsSetupForLNSVQD {
 
 		// Create volatility surface
 		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);
+
+		// ACF
+		acfAtLags = new ArrayList<>();
+		acfAtLags.add(new Pair<>(0., 1.));
+		acfAtLags.add(new Pair<>(10.,0.782428986));
+		acfAtLags.add(new Pair<>(20.,0.626013798));
+		acfAtLags.add(new Pair<>(30.,0.52663777));
+		acfAtLags.add(new Pair<>(40.,0.474562316));
+		acfAtLags.add(new Pair<>(50.,0.438915541));
+		acfAtLags.add(new Pair<>(60.,0.415146521));
+		acfAtLags.add(new Pair<>(70.,0.383064415));
+		acfAtLags.add(new Pair<>(80.,0.33402509));
 	}
 
 	public void setDAXHestonMarchSetupSIM() {
 		valuationDate = LocalDate.parse("2020-03-12");
 		spot0 = 1;
-		selectedParamsLNSVQD = paramVectorInitialMarchCalibratedImproved;
-		selectedParamsHeston = paramVectorHeston;
-		selectedParamsToCalibrate = paramVectorInitialMarch;
+		selectedParamsLNSVQD = paramVectorInitialMarchCalibrated;
+		selectedParamsHeston = paramVectorHestonMarch;
+		selectedParamsToCalibrate = paramVectorInitialWithPreCalibratedKappas; // paramVectorInitial;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
@@ -549,14 +572,26 @@ public abstract class TestsSetupForLNSVQD {
 
 		// Create volatility surface
 		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);
+
+		// ACF
+		acfAtLags = new ArrayList<>();
+		acfAtLags.add(new Pair<>(0., 1.));
+		acfAtLags.add(new Pair<>(10.,0.782428986));
+		acfAtLags.add(new Pair<>(20.,0.626013798));
+		acfAtLags.add(new Pair<>(30.,0.52663777));
+		acfAtLags.add(new Pair<>(40.,0.474562316));
+		acfAtLags.add(new Pair<>(50.,0.438915541));
+		acfAtLags.add(new Pair<>(60.,0.415146521));
+		acfAtLags.add(new Pair<>(70.,0.383064415));
+		acfAtLags.add(new Pair<>(80.,0.33402509));
 	}
 
 	public void setDAXHestonFebruarySetupSIM() {
 		valuationDate = LocalDate.parse("2025-02-28");
 		spot0 = 1;
-		selectedParamsLNSVQD = paramVectorInitialFebruary;
-		selectedParamsHeston = paramVectorHeston;
-		selectedParamsToCalibrate = paramVectorInitialFebruary;
+		selectedParamsLNSVQD = paramVectorInitialFebruaryCalibrated;
+		selectedParamsHeston = paramVectorHestonFebruary;
+		selectedParamsToCalibrate = paramVectorInitialWithPreCalibratedKappas; // paramVectorInitial;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
@@ -736,6 +771,18 @@ public abstract class TestsSetupForLNSVQD {
 
 		// Create volatility surface
 		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);
+
+		// ACF
+		acfAtLags = new ArrayList<>();
+		acfAtLags.add(new Pair<>(0., 1.));
+		acfAtLags.add(new Pair<>(10.,0.782428986));
+		acfAtLags.add(new Pair<>(20.,0.626013798));
+		acfAtLags.add(new Pair<>(30.,0.52663777));
+		acfAtLags.add(new Pair<>(40.,0.474562316));
+		acfAtLags.add(new Pair<>(50.,0.438915541));
+		acfAtLags.add(new Pair<>(60.,0.415146521));
+		acfAtLags.add(new Pair<>(70.,0.383064415));
+		acfAtLags.add(new Pair<>(80.,0.33402509));
 	}
 
 	public void setBTCSetupSIM() {

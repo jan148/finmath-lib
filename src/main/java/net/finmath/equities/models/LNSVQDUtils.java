@@ -256,34 +256,23 @@ public class LNSVQDUtils {
 	// Assumption: Reorder 0, ..., n with van-der-Corput
 	public static int[] sortTimeIndices(int numberOfPoints, int[] prioritizedIndices) {
 		double highestIndex = numberOfPoints - 1;
-
 		List<Integer> sortedIndices = new ArrayList<>();
-
-		List<Integer> indicedAlreadyAssigned = new ArrayList<Integer>();
-
+		List<Integer> priotitizedIndicesAsList = Arrays.stream(prioritizedIndices).boxed().collect(Collectors.toList());
 		sortedIndices.add(0);
-		indicedAlreadyAssigned.add(0);
-
 		sortedIndices.add(numberOfPoints - 1);
-		indicedAlreadyAssigned.add(numberOfPoints - 1);
 
-		for(int k = 2; k < numberOfPoints; k++) {
-			int lengthOfPrioritizedIndicices = prioritizedIndices != null ? prioritizedIndices.length : 0;
+		for(int k = 0; k < prioritizedIndices.length; k++) {
 			int selectedIndex;
-			if(k - 2 < lengthOfPrioritizedIndicices) {selectedIndex = prioritizedIndices[k - 2];}
-			else {
-				double vdcNumber = LNSVQDUtils.modifiedVanDerCorput(k - (1 + lengthOfPrioritizedIndicices), 2);
-				int idealIndexMin = (int) Math.floor(vdcNumber * highestIndex);
-				selectedIndex = idealIndexMin;
-			}
-			while(indicedAlreadyAssigned.indexOf(selectedIndex) != -1) {
+			double vdcNumber = LNSVQDUtils.modifiedVanDerCorput(k + 1, 2);
+			selectedIndex = (int) Math.floor(vdcNumber * prioritizedIndices[prioritizedIndices.length - 1]);
+			while(sortedIndices.contains(selectedIndex) || !priotitizedIndicesAsList.contains(selectedIndex)) {
 				int altIndexMin = selectedIndex - 1;
 				int altIndexMax = selectedIndex + 1;
-				if(indicedAlreadyAssigned.indexOf(altIndexMin) == -1 && altIndexMin >= 0) {
+				if(!sortedIndices.contains(altIndexMin) && altIndexMin >= 0 && priotitizedIndicesAsList.contains(altIndexMin)) {
 					selectedIndex = altIndexMin;
 					break;
 				}
-				if(indicedAlreadyAssigned.indexOf(altIndexMax) == -1 && altIndexMax <= highestIndex) {
+				if(!sortedIndices.contains(altIndexMax) && altIndexMax <= highestIndex && priotitizedIndicesAsList.contains(altIndexMax)) {
 					selectedIndex = altIndexMax;
 					break;
 				}
@@ -295,9 +284,34 @@ public class LNSVQDUtils {
 				}
 			}
 			sortedIndices.add(selectedIndex);
-			indicedAlreadyAssigned.add(selectedIndex);
+		}
+
+		for(int k = 0; k < numberOfPoints - prioritizedIndices.length - 2; k++) {
+			int selectedIndex;
+			double vdcNumber = LNSVQDUtils.modifiedVanDerCorput(k + 1, 2);
+			selectedIndex = (int) Math.floor(vdcNumber * highestIndex);
+			while(sortedIndices.contains(selectedIndex)) {
+				int altIndexMin = selectedIndex - 1;
+				int altIndexMax = selectedIndex + 1;
+				if(!sortedIndices.contains(altIndexMin) && altIndexMin >= 0) {
+					selectedIndex = altIndexMin;
+					break;
+				}
+				if(!sortedIndices.contains(altIndexMax) && altIndexMax <= highestIndex) {
+					selectedIndex = altIndexMax;
+					break;
+				}
+				if(altIndexMin > 0) {
+					selectedIndex = altIndexMin;
+				}
+				if(altIndexMax < highestIndex) {
+					selectedIndex = altIndexMax;
+				}
+			}
+			sortedIndices.add(selectedIndex);
 		}
 		int[] sortedArray = sortedIndices.stream().mapToInt(Integer::intValue).toArray();
+		assert(sortedArray.length == numberOfPoints) : "Scheduling array generation failed at sorting of indices";
 		return sortedArray;
 	}
 

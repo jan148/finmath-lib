@@ -25,4 +25,9 @@ public abstract class LNSVQDPathSimulator extends PathSimulator {
 		this.lnsvqdModel = lnsvqdModel;
 		this.isBackwardEuler = isBackwardEuler;
 	}
+
+	public void setVolatilityParameters(double[] volatilityParameters) {
+		lnsvqdModel.setVolatilityParameters(volatilityParameters);
+	}
+
 }
