@@ -1,6 +1,7 @@
 package net.finmath.equities.models;
 
 import net.finmath.functions.NormalDistribution;
+import net.finmath.integration.SimpsonRealIntegrator;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.distribution.TDistribution;
 import org.apache.commons.math3.util.Pair;
@@ -10,6 +11,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.DoubleUnaryOperator;
 import java.util.stream.Collectors;
 
 public class LNSVQDUtils {
@@ -382,6 +384,17 @@ public class LNSVQDUtils {
 			x += Math.pow(2, -(i + 1)) * (binaryString.charAt(i) - '0');
 		}
 		return x;
+	}
+
+	public static double modifiedBesselSecondKind(double arg, double param) {
+		SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(0, 100, 100);
+		DoubleUnaryOperator integrand = new DoubleUnaryOperator() {
+			@Override
+			public double applyAsDouble(double operand) {
+				return Math.exp(-arg * Math.cosh(operand)) * Math.cosh(param * operand);
+			}
+		};
+		return simpsonRealIntegrator.integrate(integrand);
 	}
 
 }

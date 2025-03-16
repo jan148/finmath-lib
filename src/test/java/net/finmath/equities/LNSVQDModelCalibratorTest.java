@@ -10,12 +10,27 @@ import org.junit.Test;
 public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 
 	@Test
-	public void precalibrateMeanReversion() throws Exception {
+	public void printModelACF() throws Exception {
 		setDAXHestonSetupSIM();
 
-		/**
-		 * 1. Calibrate and get cvalibrated paramerters
-		 */
+		double maturity = 10; //maturityGrid[maturityGrid.length - 1];
+		int numberOfPaths = 1000;
+		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(new double[]{},
+						(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
+				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
+		lnsvqdModelAnalyticalPricer.setVolatilityParameters(selectedParamsLNSVQD);
+		LNSVQDPathSimulator lnsvqdPathSimulator = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure,
+				numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
+		lnsvqdPathSimulator.precalculatePaths(3105, false);
+		double[][] volaPaths = lnsvqdPathSimulator.path[1];
+		double[] acs = LNSVQDModelCalibrator.getAcfsFromVolPaths(volaPaths, acfAtLags.size(), 10);
+		LNSVQDUtils.printArray(acs);
+	}
+
+	@Test
+	public void precalibrateMeanReversion() throws Exception {
+		setDAXHestonMarchSetupSIM();
+
 		double[] calibratedParameters;
 		double maturity = 3; //maturityGrid[maturityGrid.length - 1];
 		int numberOfPaths = 1000;
@@ -29,6 +44,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilityPointsSurface, null);
 		impliedVolSurface.printVolSurfaceForOutput();
 	}
+
 	@Test
 	public void calibrateTest() throws Exception {
 		setDAXHestonSetupSIM();

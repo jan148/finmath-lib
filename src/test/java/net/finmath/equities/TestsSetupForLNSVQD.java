@@ -25,129 +25,6 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create analytical model
 	 */
-	static double[] paramVectorBitcoin = new double[]{
-			0.8376,
-			3.1844,
-			3.058,
-			1.0413,
-			0.1514,
-			1.8458
-	};
-
-	static double[] paramBlackScholes = new double[]{
-			0.2,
-			0,
-			0,
-			0,
-			0,
-			0
-	};
-
-	static double[] paramVectorInitial = new double[]{
-			0.156642865,
-			3.0535407638972996,
-			0,
-			0.191510584,
-			0,
-			1.211288
-	};
-
-	static double[] paramVectorInitialWithPreCalibratedKappas = new double[]{
-			0.768464,
-			3,
-			3,
-			0.2,
-			0,
-			0.211288
-	};
-
-	static double[] paramVectorInitialWithPreCalibratedKappasCalibrated = new double[]{
-			0.7402544355787374,
-			3.0535407638972996,
-			0,
-			0.45813110391681006,
-			-0.6147477954027077,
-			0.8502781895224665
-	};
-
-	static double[] paramVectorCalibrated = new double[]{
-			0.13731016014532768,
-			4,
-			0,
-			0.14664386051912978,
-			-1.4890940544243099,
-			1.5351312426087254
-	};
-
-	static double[] paramVectorInitialMarch = new double[]{
-			0.768464,
-			4,
-			0,
-			0.497749705,
-			-0.81402,
-			1.211288
-	};
-
-	static double[] paramVectorInitialMarchCalibrated = new double[]{
-			0.7620015635018382,
-			4.0,
-			0.0,
-			0.47376982758578084,
-			-0.6857270328141885,
-			0.8741962423663083
-	};
-
-	static double[] paramVectorInitialFebruary = new double[]{
-			0.1598567708165421,
-			4,
-			0,
-			0.189967208,
-			-0.40790656321439606,
-			0.20752601856648067
-	};
-
-	static double[] paramVectorInitialFebruaryCalibrated = new double[]{
-			0.1598580238458368,
-			4,
-			0,
-			0.1436794749651145,
-			-1.452186033001682,
-			1.6262530348098245
-	};
-
-	static double[] paramVectorInitialMarchCalibratedImproved = new double[]{
-			0.6921704766354998,
-			0.5160497941112346,
-			0.0,
-			0.19543814508348928,
-			-0.40790656321439606,
-			0.20752601856648067
-	};
-
-	static double[] paramVectorHeston = new double[]{
-			0.024536987
-			, 4.
-			, 0.036676304
-			, 1.211288333
-			, -0.672024524
-	};
-
-	static double[] paramVectorHestonMarch = new double[]{
-			0.590537467
-			, 4
-			, 0.247754769
-			, 0.813577246
-			, -0.994513338
-	};
-
-	static double[] paramVectorHestonFebruary = new double[]{
-			0.034583515
-			, 4
-			, 0.03608754
-			, 1.2835035
-			, -0.634272101
-	};
-
 	static double[] selectedParamsLNSVQD;
 	static double[] selectedParamsHeston;
 	static double[] selectedParamsToCalibrate;
@@ -157,6 +34,7 @@ public abstract class TestsSetupForLNSVQD {
 	 */
 	static DayCountConvention dayCountConvention = new DayCountConvention_ACT_365();
 	static List<Pair<Double, Double>> acfAtLags;
+	static List<Pair<Double, Double>> lnSigmaSteadyStateDist;
 
 	/**
 	 * Create forward stucture
@@ -198,9 +76,9 @@ public abstract class TestsSetupForLNSVQD {
 	public void setDAXHestonSetupSIM() {
 		valuationDate = LocalDate.parse("2024-09-30");
 		spot0 = 1;
-		selectedParamsLNSVQD = paramVectorCalibrated;
-		selectedParamsHeston = paramVectorHeston;
-		selectedParamsToCalibrate = paramVectorInitial; // paramVectorInitial;
+		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXSepCalib;
+		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXSep;
+		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXSep;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
@@ -393,14 +271,39 @@ public abstract class TestsSetupForLNSVQD {
 		acfAtLags.add(new Pair<>(60.,0.415146521));
 		acfAtLags.add(new Pair<>(70.,0.383064415));
 		acfAtLags.add(new Pair<>(80.,0.33402509));
+
+		// Steady state distribution
+		lnSigmaSteadyStateDist = new ArrayList<>();
+		lnSigmaSteadyStateDist.add(new Pair<>(-2.2, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-2.1, 0.017767478));
+		lnSigmaSteadyStateDist.add(new Pair<>(-2., 0.076477404));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.9, 0.129393588));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.8, 0.1201236));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.7, 0.129007339));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.6, 0.123599846));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.5, 0.09578988));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.4, 0.100038625));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.3, 0.065276168));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.2, 0.059868675));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.1, 0.0397837));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1., 0.01622248));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.9, 0.010428737));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.8, 0.005021244));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.7, 0.002703747));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.6, 0.002703747));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.5, 0.001544998));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.4, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.3, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.2, 0.001158749));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.1, 0.00077249 ));
 	}
 
 	public void setDAXHestonMarchSetupSIM() {
 		valuationDate = LocalDate.parse("2020-03-12");
 		spot0 = 1;
-		selectedParamsLNSVQD = paramVectorInitialMarchCalibrated;
-		selectedParamsHeston = paramVectorHestonMarch;
-		selectedParamsToCalibrate = paramVectorInitialWithPreCalibratedKappas; // paramVectorInitial;
+		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXMarchCalib;
+		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXMarch;
+		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXMarch;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
@@ -593,14 +496,39 @@ public abstract class TestsSetupForLNSVQD {
 		acfAtLags.add(new Pair<>(60.,0.415146521));
 		acfAtLags.add(new Pair<>(70.,0.383064415));
 		acfAtLags.add(new Pair<>(80.,0.33402509));
+
+		// Steady state distribution
+		lnSigmaSteadyStateDist = new ArrayList<>();
+		lnSigmaSteadyStateDist.add(new Pair<>(-2.2, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-2.1, 0.017767478));
+		lnSigmaSteadyStateDist.add(new Pair<>(-2., 0.076477404));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.9, 0.129393588));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.8, 0.1201236));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.7, 0.129007339));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.6, 0.123599846));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.5, 0.09578988));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.4, 0.100038625));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.3, 0.065276168));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.2, 0.059868675));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.1, 0.0397837));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1., 0.01622248));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.9, 0.010428737));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.8, 0.005021244));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.7, 0.002703747));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.6, 0.002703747));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.5, 0.001544998));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.4, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.3, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.2, 0.001158749));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.1, 0.00077249 ));
 	}
 
 	public void setDAXHestonFebruarySetupSIM() {
 		valuationDate = LocalDate.parse("2025-02-28");
 		spot0 = 1;
-		selectedParamsLNSVQD = paramVectorInitialFebruaryCalibrated;
-		selectedParamsHeston = paramVectorHestonFebruary;
-		selectedParamsToCalibrate = paramVectorInitialWithPreCalibratedKappasCalibrated; // paramVectorInitial;
+		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXFebCalib;
+		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXFeb;
+		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXFeb;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
@@ -792,13 +720,38 @@ public abstract class TestsSetupForLNSVQD {
 		acfAtLags.add(new Pair<>(60.,0.415146521));
 		acfAtLags.add(new Pair<>(70.,0.383064415));
 		acfAtLags.add(new Pair<>(80.,0.33402509));
+
+		// Steady state distribution
+		lnSigmaSteadyStateDist = new ArrayList<>();
+		lnSigmaSteadyStateDist.add(new Pair<>(-2.2, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-2.1, 0.017767478));
+		lnSigmaSteadyStateDist.add(new Pair<>(-2., 0.076477404));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.9, 0.129393588));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.8, 0.1201236));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.7, 0.129007339));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.6, 0.123599846));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.5, 0.09578988));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.4, 0.100038625));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.3, 0.065276168));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.2, 0.059868675));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.1, 0.0397837));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1., 0.01622248));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.9, 0.010428737));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.8, 0.005021244));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.7, 0.002703747));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.6, 0.002703747));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.5, 0.001544998));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.4, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.3, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.2, 0.001158749));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.1, 0.00077249 ));
 	}
 
 	public void setBTCSetupSIM() {
 		valuationDate = LocalDate.parse("2024-09-30");
 		spot0 = 67843.219;
-		selectedParamsLNSVQD = paramVectorBitcoin;
-		selectedParamsHeston = paramVectorHeston;
+		selectedParamsLNSVQD = ParametersLNSVQD.paramVectorBitcoin;
+		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXSep;
 
 		disountCurve = new FlatYieldCurve(valuationDate, 0., dayCountConvention);
 		forwardCurve = new FlatYieldCurve(valuationDate, 0., dayCountConvention);

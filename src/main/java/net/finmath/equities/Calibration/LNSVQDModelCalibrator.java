@@ -29,7 +29,7 @@ public class LNSVQDModelCalibrator {
 	static double shiftSize = 1E-8;
 
 
-	private static double[] getAcfsFromVolPaths(double[][] volaPaths, int numLags, int lagSize) {
+	public static double[] getAcfsFromVolPaths(double[][] volaPaths, int numLags, int lagSize) {
 		PearsonsCorrelation pearsonsCorrelation = new PearsonsCorrelation();
 		int numberOfPaths = volaPaths[0].length;
 		double[] empiricalAcfAtLags = new double[numLags];
@@ -151,11 +151,21 @@ public class LNSVQDModelCalibrator {
 		ParameterValidator parameterValidator = new ParameterValidator() {
 			@Override
 			public RealVector validate(RealVector params) {
-				RealVector newVec = params;
-				newVec.setEntry(0, Math.min(Math.max(0.0, params.getEntry(0)), 10));
-				newVec.setEntry(1, Math.min(Math.max(0.0, params.getEntry(1)), 10));
-				return newVec;
+				RealVector paramsNew = params;
+				if(params.getEntry(0) < 0) {
+					paramsNew.setEntry(0, Math.abs(params.getEntry(0)));
 				}
+				if(params.getEntry(0) < 0) {
+					paramsNew.setEntry(0, Math.abs(params.getEntry(1)));
+				}
+				if(params.getEntry(0) > 10) {
+					paramsNew.setEntry(0, Math.random() * 5);
+				}
+				if(params.getEntry(1) > 10) {
+					paramsNew.setEntry(1, Math.random() * 5);
+				}
+				return paramsNew;
+			}
 		};
 
 		LeastSquaresProblem leastSquaresProblem = new LeastSquaresBuilder()

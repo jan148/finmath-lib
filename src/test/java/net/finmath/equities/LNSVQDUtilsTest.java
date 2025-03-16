@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
 
@@ -100,17 +101,13 @@ public class LNSVQDUtilsTest {
 	}
 
 	@Test
-	public void sth() {
-		double[] values = {
-				0.133045447, 0.132996909, 0.133052429, 0.133012922, 0.133032868,
-				0.133012363, 0.13301381, 0.133016248, 0.132991382, 0.133045026
-		};
-
-
-		double[] bds = LNSVQDUtils.getConfidenceInterval(values, 0.05);
-		System.out.println(bds[0]);
-		System.out.println(bds[1]);
-
+	public void testBessel() {
+		double[] points = IntStream.range(0, 300).mapToDouble(i -> 0.01 * i + 0.01).toArray();
+		double[] res = new double[points.length];
+		for(int j = 0; j < points.length; j++) {
+			res[j] = LNSVQDUtils.modifiedBesselSecondKind(points[j], -4);
+			System.out.println(points[j] + "\t" + res[j]);
+		}
 	}
 
 }

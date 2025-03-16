@@ -1,0 +1,99 @@
+package net.finmath.equities;
+
+public class ParametersLNSVQD {
+	static double[] paramVectorHestonDAXSep = new double[]{
+			0.024536987
+			, 4.
+			, 0.036676304
+			, 1.211288333
+			, -0.672024524
+	};
+
+	static double[] paramVectorHestonDAXMarch = new double[]{
+			0.590537467
+			, 4
+			, 0.247754769
+			, 0.813577246
+			, -0.994513338
+	};
+
+	static double[] paramVectorHestonDAXFeb = new double[]{
+			0.034583515
+			, 4
+			, 0.03608754
+			, 1.2835035
+			, -0.634272101
+	};
+	static double[] paramVectorBitcoin = new double[]{
+			0.8376,
+			3.1844,
+			3.058,
+			1.0413,
+			0.1514,
+			1.8458
+	};
+
+	static double[] paramBlackScholes = new double[]{
+			0.2,
+			0,
+			0,
+			0,
+			0,
+			0
+	};
+
+	static double[] paramInitDAXSep = new double[]{
+			0.137310669,
+			3.1565426287720286, // From python
+			1.9367244258255474, // From python
+			0.146643909,
+			-1.489064245,
+			1.535139247
+	};
+
+	static double[] paramInitDAXMarch = new double[]{
+			0.9,
+			3.1565426287720286, // From python
+			1.9367244258255474, // From python
+			0.19653087434223157,
+			0,
+			0.4961622351116479
+	};
+
+	static double[] paramInitDAXFeb = new double[]{
+			0.1598567708165421,
+			3.1565426287720286, // From python
+			1.9367244258255474, // From python
+			0.189967208,
+			-0.40790656321439606,
+			0.20752601856648067
+	};
+
+	static double[] paramInitDAXSepCalib = new double[]{
+			0.142500909,
+			3.156542629,
+			1.936724426,
+			0.148543719,
+			-1.428750299,
+			1.517108709
+	};
+
+	static double[] paramInitDAXMarchCalib = new double[]{
+			0.78096181461525,
+			3.1565426287720286, // From python
+			1.9367244258255474, // From python
+			0.4961670369028076,
+			-0.7351529740014809,
+			0.6002284343654938,
+	};
+
+	static double[] paramInitDAXFebCalib = new double[]{
+			0.166627036,
+			3.156542629,
+			1.936724426,
+			0.142816729,
+			-1.389449622,
+			1.605751601,
+	};
+
+}

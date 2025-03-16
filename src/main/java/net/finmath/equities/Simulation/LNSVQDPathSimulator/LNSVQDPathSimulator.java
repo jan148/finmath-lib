@@ -30,4 +30,8 @@ public abstract class LNSVQDPathSimulator extends PathSimulator {
 		lnsvqdModel.setVolatilityParameters(volatilityParameters);
 	}
 
+	public LNSVQDModel getLnsvqdModel() {
+		return lnsvqdModel;
+	}
+
 }
