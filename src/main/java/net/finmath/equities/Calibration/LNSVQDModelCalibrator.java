@@ -151,13 +151,11 @@ public class LNSVQDModelCalibrator {
 		ParameterValidator parameterValidator = new ParameterValidator() {
 			@Override
 			public RealVector validate(RealVector params) {
-				if(params.getEntry(0) >= 0 && params.getEntry(1) >= 0) {return params;}
-				else {RealVector paramsNew = params;
-					paramsNew.setEntry(0, 10);
-					paramsNew.setEntry(1, 10);
-					return paramsNew;
+				RealVector newVec = params;
+				newVec.setEntry(0, Math.min(Math.max(0.0, params.getEntry(0)), 10));
+				newVec.setEntry(1, Math.min(Math.max(0.0, params.getEntry(1)), 10));
+				return newVec;
 				}
-			}
 		};
 
 		LeastSquaresProblem leastSquaresProblem = new LeastSquaresBuilder()

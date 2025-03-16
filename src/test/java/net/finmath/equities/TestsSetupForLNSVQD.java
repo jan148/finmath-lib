@@ -45,20 +45,29 @@ public abstract class TestsSetupForLNSVQD {
 
 	static double[] paramVectorInitial = new double[]{
 			0.156642865,
-			4,
+			3.0535407638972996,
 			0,
 			0.191510584,
-			-0.81402,
+			0,
 			1.211288
 	};
 
 	static double[] paramVectorInitialWithPreCalibratedKappas = new double[]{
-			0.156642865,
-			4.012705001125997,
-			4,
-			0.19481803777387482,
+			0.768464,
+			3,
+			3,
+			0.2,
 			0,
-			0.8975621744372831
+			0.211288
+	};
+
+	static double[] paramVectorInitialWithPreCalibratedKappasCalibrated = new double[]{
+			0.7402544355787374,
+			3.0535407638972996,
+			0,
+			0.45813110391681006,
+			-0.6147477954027077,
+			0.8502781895224665
 	};
 
 	static double[] paramVectorCalibrated = new double[]{
@@ -191,7 +200,7 @@ public abstract class TestsSetupForLNSVQD {
 		spot0 = 1;
 		selectedParamsLNSVQD = paramVectorCalibrated;
 		selectedParamsHeston = paramVectorHeston;
-		selectedParamsToCalibrate = paramVectorInitialWithPreCalibratedKappas; // paramVectorInitial;
+		selectedParamsToCalibrate = paramVectorInitial; // paramVectorInitial;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
@@ -591,7 +600,7 @@ public abstract class TestsSetupForLNSVQD {
 		spot0 = 1;
 		selectedParamsLNSVQD = paramVectorInitialFebruaryCalibrated;
 		selectedParamsHeston = paramVectorHestonFebruary;
-		selectedParamsToCalibrate = paramVectorInitialWithPreCalibratedKappas; // paramVectorInitial;
+		selectedParamsToCalibrate = paramVectorInitialWithPreCalibratedKappasCalibrated; // paramVectorInitial;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {

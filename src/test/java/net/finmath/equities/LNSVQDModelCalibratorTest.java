@@ -11,16 +11,16 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 
 	@Test
 	public void precalibrateMeanReversion() throws Exception {
-		setDAXHestonFebruarySetupSIM();
+		setDAXHestonSetupSIM();
 
 		/**
 		 * 1. Calibrate and get cvalibrated paramerters
 		 */
 		double[] calibratedParameters;
-		double maturity = maturityGrid[maturityGrid.length - 1];
-		int numberOfPaths = 10000;
-		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(maturityGrid,
-						(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
+		double maturity = 3; //maturityGrid[maturityGrid.length - 1];
+		int numberOfPaths = 1000;
+		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(new double[]{},
+						(int) (Math.round(maturity * 365.) * maturity), 0, maturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 		LNSVQDPathSimulator lnsvqdPathSimulator = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure,
 				numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
@@ -31,7 +31,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 	}
 	@Test
 	public void calibrateTest() throws Exception {
-		setDAXHestonFebruarySetupSIM();
+		setDAXHestonSetupSIM();
 
 		/**
 		 * 1. Calibrate and get cvalibrated paramerters
