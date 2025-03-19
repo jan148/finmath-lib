@@ -62,8 +62,8 @@ public class ParametersLNSVQD {
 
 	static double[] paramInitDAXFeb = new double[]{
 			0.1598567708165421,
-			3.1565426287720286, // From python
-			1.9367244258255474, // From python
+			3.560176604850655, // 3.1565426287720286, // From python
+			0, // 1.9367244258255474, // From python
 			0.189967208,
 			-0.40790656321439606,
 			0.20752601856648067
@@ -87,7 +87,7 @@ public class ParametersLNSVQD {
 			0.6002284343654938,
 	};
 
-	static double[] paramInitDAXFebCalib = new double[]{
+	static double[] paramInitDAXFebCalibOld = new double[]{
 			0.166627036,
 			3.156542629,
 			1.936724426,
@@ -95,5 +95,16 @@ public class ParametersLNSVQD {
 			-1.389449622,
 			1.605751601,
 	};
+
+	static double[] paramInitDAXFebCalib = new double[]{
+			0.162735884
+			, 3.560176605
+			, 0
+			, 0.142510755
+			, -1.372319642
+			, 1.54799513
+	};
+
+
 
 }

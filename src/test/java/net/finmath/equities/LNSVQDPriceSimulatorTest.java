@@ -150,7 +150,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 	@Test
 	public void testCliquetOption() throws Exception {
 		// Set the right case
-		setDAXHestonFebruarySetupSIM(); // setDAXHestonMarchSetupSIM(); //setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
+		setDAXHestonMarchSetupSIM(); // setDAXHestonMarchSetupSIM(); //setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
 
 		// Set Cliquet params
 		double maturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
