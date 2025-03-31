@@ -57,8 +57,8 @@ public class LNSVQDPathSimulatorMC extends LNSVQDPathSimulator{
 
 				if(isBackwardEuler) {
 					UnivariateObjectiveFunction rootFunction = new UnivariateObjectiveFunction(
-							l -> -brownianIncrements[pathIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[pathIndex][1] * lnsvqdModel.getEpsilon())
-									- (zeta.value(Math.exp(l)) * deltaT) - volNewTransformed[pathIndex] + l
+							l -> Math.abs(-brownianIncrements[pathIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[pathIndex][1] * lnsvqdModel.getEpsilon())
+									- (zeta.value(Math.exp(l)) * deltaT) - volNewTransformed[pathIndex] + l)
 					);
 					UnivariatePointValuePair result = brentOptimizer.optimize(
 							rootFunction,

@@ -31,7 +31,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 	@Test
 	public void testEuropeanOption() throws Exception {
 		// Set the right case
-		setDAXHestonMarchSetupSIM(); //setBTCSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
+		setDAXHestonSetupSIM(); //setBTCSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
 
 		// Get option values
 		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
@@ -42,7 +42,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		sw.stop();
 		System.out.println("time: " + sw.getTime());
 
-		List<Integer> seeds = random.ints(10).boxed().collect(Collectors.toList());
+		List<Integer> seeds = random.ints(20).boxed().collect(Collectors.toList());
 
 		double[][][] pricesMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
 		double[][][] pricesQMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
@@ -73,7 +73,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 				LNSVQDPathSimulatorQMC pathSimulatorQMC = new LNSVQDPathSimulatorQMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
 				// sw.reset();
 				// sw.start();
-				pathSimulatorQMC.precalculatePaths(seed, true);
+				// pathSimulatorQMC.precalculatePaths(seed, true);
 				// sw.stop();
 				// System.out.println("time QMC: " + sw.getTime());
 
@@ -95,7 +95,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					// QMC
 					double simulatedOptionPriceQMC;
 					try {
-						simulatedOptionPriceQMC = simulPricerQMC.getEuropeanPriceAuto(strike, maturity);
+						simulatedOptionPriceQMC = 0; // simulPricerQMC.getEuropeanPriceAuto(strike, maturity);
 					} catch(AssertionError e) {
 						System.err.println("Caught AssertionError: " + e.getMessage());
 						simulatedOptionPriceQMC = 1000000;
@@ -118,7 +118,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					pricesQMCForPair[j] = pricesQMC[j][m][s];
 				}
 
-				double averagePrice = Math.max(Arrays.stream(pricesMCForPair).average().getAsDouble(), 1E-10);
+				double averagePrice = Math.max(Arrays.stream(pricesMCForPair).average().getAsDouble(), 1E-15);
 				double varMC = Arrays.stream(pricesMCForPair).map(x -> Math.pow(x - averagePrice, 2)).sum() / (seeds.size() - 1);
 				double stdErrMC = Math.sqrt(varMC) / Math.sqrt(seeds.size());
 				double[] confidenceIntervalMC = LNSVQDUtils.getConfidenceInterval(pricesMCForPair, 0.05);
@@ -143,6 +143,10 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 				System.out.println(volAna[m * numStrikesPerMaturity + s] + "\t"
 						+ impliedVolMC + "\t" + stdErrMC + "\t" + impliedVolLowerMC + "\t" + impliedVolUpperMC + "\t"
 						+ impliedVolQMC + "\t" + stdErrQMC + "\t" + impliedVolLowerQMC + "\t" + impliedVolUpperQMC + "\t");
+
+				/*System.out.println(volAna[m * numStrikesPerMaturity + s] + "\t"
+						+ averagePrice + "\t" + stdErrMC + "\t" + lbMc + "\t" + ubMc + "\t"
+						+ averagePriceQMC + "\t" + stdErrQMC + "\t" + lbQmc + "\t" + ubQmc + "\t");*/
 			}
 		}
 	}
@@ -150,7 +154,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 	@Test
 	public void testCliquetOption() throws Exception {
 		// Set the right case
-		setDAXHestonMarchSetupSIM(); // setDAXHestonMarchSetupSIM(); //setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
+		setDAXHestonFebruarySetupSIM(); // setDAXHestonMarchSetupSIM(); //setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
 
 		// Set Cliquet params
 		double maturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
@@ -254,7 +258,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 			}
 			pricesHestonQMC[seeds.indexOf(seed)] = simulatedOptionPriceHestonQMC;
 
-			System.out.println(simulatedOptionPriceHestonQMC);
+			System.out.println(simulatedOptionPrice);
 			System.out.println("Finished seed " + seed);
 		}
 

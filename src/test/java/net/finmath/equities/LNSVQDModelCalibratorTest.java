@@ -11,7 +11,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 
 	@Test
 	public void printModelACF() throws Exception {
-		setDAXHestonFebruarySetupSIM();
+		setDAXHestonMarchSetupSIM(); // setDAXHestonFebruarySetupSIM();
 
 		double maturity = 10; //maturityGrid[maturityGrid.length - 1];
 		int numberOfPaths = 1000;
@@ -47,7 +47,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 
 	@Test
 	public void calibrateTest() throws Exception {
-		setDAXHestonFebruarySetupSIM();
+		setDAXHestonMarchSetupSIM();
 
 		/**
 		 * 1. Calibrate and get cvalibrated paramerters

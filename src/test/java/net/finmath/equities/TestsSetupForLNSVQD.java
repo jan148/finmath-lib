@@ -59,7 +59,7 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create simulation model (not finmath)
 	 */
-	static int numberOfPaths = 100;
+	static int numberOfPaths = 100000;
 
 	/**
 	 * Declare volatility surface; will be insatntiated later
@@ -312,47 +312,46 @@ public abstract class TestsSetupForLNSVQD {
 		}).toArray(LocalDate[]::new);
 
 		discountDates = LNSVQDUtils.createLocalDateList(new String[]{
-				"2020-03-23",
-				"2020-03-30",
-				"2020-04-16",
-				"2020-05-18",
-				"2020-06-16",
-				"2020-07-16",
-				"2020-08-17",
-				"2020-09-16",
-				"2020-10-16",
-				"2020-11-16",
-				"2020-12-16",
-				"2021-01-18",
-				"2021-02-16",
-				"2021-03-16",
-				"2021-09-16",
-				"2022-03-16",
-				"2023-03-16",
-				"2024-03-18"
+				"2020-03-19",
+				"2020-03-26",
+				"2020-04-14",
+				"2020-05-12",
+				"2020-06-12",
+				"2020-07-13",
+				"2020-08-12",
+				"2020-09-14",
+				"2020-10-12",
+				"2020-11-12",
+				"2020-12-14",
+				"2021-01-12",
+				"2021-02-12",
+				"2021-03-12",
+				"2021-09-13",
+				"2022-03-14",
+				"2023-03-13",
+				"2024-03-12"
 		});
 
 		discountFactors = new double[]{
-				1.0001509700,
-				1.0002493800,
-				1.0004873900,
-				1.0009228300,
-				1.0014010000,
-				1.0018781400,
-				1.0023918600,
-				1.0028818000,
-				1.0033950900,
-				1.0039425200,
-				1.0044668800,
-				1.0050507800,
-				1.0055805300,
-				1.0060629100,
-				1.0093010300,
-				1.0124776200,
-				1.0185304000,
-				1.0238196400
+				1.0001114324,
+				1.0002151063,
+				1.0005360772,
+				1.0010092075,
+				1.0015382526,
+				1.0021125334,
+				1.0026675971,
+				1.0032760273,
+				1.0038369459,
+				1.0044707285,
+				1.0051353471,
+				1.0057276188,
+				1.0063636702,
+				1.0069114705,
+				1.0107826153,
+				1.0145816867,
+				1.0213373294,
+				1.0274204190
 		};
-
 
 		disountCurve = new YieldCurve("Discount curve"
 				, valuationDate
@@ -451,36 +450,36 @@ public abstract class TestsSetupForLNSVQD {
 		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<VolatilityPoint>();
 
 		// Create and adf volatility points
-		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 0.60, 0.723512803, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 0.80, 0.65872135, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.00, 0.613484389, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.20, 0.583073626, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.40, 0.564207765, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 0.60, 0.723512803, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 0.80, 0.65872135, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.00, 0.613484389, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.20, 0.583073626, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.40, 0.564207765, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 0.60, 0.723512803, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 0.80, 0.65872135, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.00, 0.613484389, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.20, 0.583073626, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.40, 0.564207765, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 0.60, 0.655702448, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 0.80, 0.597767129, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.00, 0.557298712, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.20, 0.530002894, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.40, 0.512931818, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 0.60, 0.593709634, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 0.80, 0.542123144, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.00, 0.50606706, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.20, 0.48164473, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.40, 0.466216855, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 0.60, 0.548502278, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 0.80, 0.501609555, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.00, 0.468812555, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.20, 0.446505728, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.40, 0.43227795, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 0.60, 0.785448623, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 0.80, 0.64250993, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.00, 0.522559669, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.20, 0.4330327, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.40, 0.389166585, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 0.60, 0.63284719, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 0.80, 0.525241632, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.00, 0.435594447, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.20, 0.365653625, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.40, 0.322900301, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 0.60, 0.555076443, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 0.80, 0.464934416, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.00, 0.390344892, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.20, 0.33129643, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.40, 0.292097563, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 0.60, 0.498391651, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 0.80, 0.4213057, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.00, 0.358264968, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.20, 0.308548525, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.40, 0.274590694, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 0.60, 0.460228523, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 0.80, 0.392186506, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.00, 0.337122623, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.20, 0.293820364, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.40, 0.263493011, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 0.60, 0.429366647, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 0.80, 0.369927047, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.00, 0.32209488, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.20, 0.284219166, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.40, 0.25657709, spot0));
 
 		// Create volatility surface
 		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);
