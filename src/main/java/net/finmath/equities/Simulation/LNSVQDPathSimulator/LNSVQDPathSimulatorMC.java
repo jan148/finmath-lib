@@ -35,9 +35,9 @@ public class LNSVQDPathSimulatorMC extends LNSVQDPathSimulator{
 		Arrays.fill(assetPath, Math.log(lnsvqdModel.getSpot0()));
 		Arrays.fill(volPath, lnsvqdModel.getSigma0());
 
-		if(!saveMemory) {
-			path[0][0] = assetPath;
-			path[1][0] = volPath;
+		if (!saveMemory) {
+			path[0][0] = Arrays.copyOf(assetPath, assetPath.length);
+			path[1][0] = Arrays.copyOf(volPath, volPath.length);
 		}
 
 		double[] volNewTransformed = new double[numberOfPaths];

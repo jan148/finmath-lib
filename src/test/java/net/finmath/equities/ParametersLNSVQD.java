@@ -10,11 +10,11 @@ public class ParametersLNSVQD {
 	};
 
 	static double[] paramVectorHestonDAXMarch = new double[]{
-			0.590537467
+			0.524442119
 			, 4
-			, 0.247754769
-			, 0.813577246
-			, -0.994513338
+			, 0.086423244
+			, 2.190580015
+			, -0.73124787
 	};
 
 	static double[] paramVectorHestonDAXFeb = new double[]{
@@ -53,8 +53,8 @@ public class ParametersLNSVQD {
 
 	static double[] paramInitDAXMarch = new double[]{
 			0.751963407
-			, 3.560176605
-			, 0
+			, 3.1565426287720286 // From python
+			, 1.9367244258255474 // From python
 			, 0.467763099
 			, -0.652852033
 			, 0.859636078

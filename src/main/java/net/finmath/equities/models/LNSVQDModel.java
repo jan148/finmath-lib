@@ -29,7 +29,7 @@ public class LNSVQDModel extends AbstractProcessModel {
 	/**
 	 * Model parameters under the EMM
 	 */
-	public final double spot0;
+	public double spot0;
 	public double sigma0;
 	public double kappa1;
 	public double kappa2;
@@ -269,6 +269,10 @@ public class LNSVQDModel extends AbstractProcessModel {
 	 * Setters
 	 * ***************************************************+
 	 */
+	public void setSpot(double spot) {
+		this.spot0 = spot;
+	}
+
 	public void setVolatilityParameters(double[] parameterVector) {
 		// Perform necessary checks
 		// checkMartingalityOfDiscountedAssetProcess(kappa2, beta);

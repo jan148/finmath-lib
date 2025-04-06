@@ -36,9 +36,9 @@ public class HestonPathSimulatorMC extends HestonPathSimulator {
 		Arrays.fill(assetPath, Math.log(equityForwardStructure.getSpot()));
 		Arrays.fill(volPath, sigma0);
 
-		if(!saveMemory) {
-			path[0][0] = assetPath;
-			path[1][0] = volPath;
+		if (!saveMemory) {
+			path[0][0] = Arrays.copyOf(assetPath, assetPath.length);
+			path[1][0] = Arrays.copyOf(volPath, volPath.length);
 		}
 
 		for(int i = 1; i < timeGrid.length; i++) {

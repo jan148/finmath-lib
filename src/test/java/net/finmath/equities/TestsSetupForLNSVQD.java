@@ -59,7 +59,7 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create simulation model (not finmath)
 	 */
-	static int numberOfPaths = 100000;
+	static int numberOfPaths = 10000;
 
 	/**
 	 * Declare volatility surface; will be insatntiated later
@@ -300,7 +300,7 @@ public abstract class TestsSetupForLNSVQD {
 
 	public void setDAXHestonMarchSetupSIM() {
 		valuationDate = LocalDate.parse("2020-03-12");
-		spot0 = 1;
+		spot0 = 9254.07;
 		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXMarchCalib;
 		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXMarch;
 		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXMarch;

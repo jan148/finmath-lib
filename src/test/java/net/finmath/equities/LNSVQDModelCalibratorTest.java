@@ -56,7 +56,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 		int[] indicesCalibratedParams = {
 				0
 				/*, 1*/
-				/*, 2*/
+				, 2
 				, 3
 				, 4
 				, 5
