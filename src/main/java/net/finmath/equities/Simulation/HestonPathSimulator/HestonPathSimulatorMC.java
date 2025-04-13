@@ -22,26 +22,26 @@ public class HestonPathSimulatorMC extends HestonPathSimulator {
 	}
 
 	@Override
-	public void precalculatePaths(int seed, Boolean saveMemory) {
+	public void precalculatePaths(int seed, Boolean saveMemory, int startingIndex, double[] startingValue, Boolean martingaleCorrection) {
 		MersenneTwister mersenneTwister = new MersenneTwister(seed);
-		int currentMaturityIndex = 0;
+		int currentMaturityIndex = Arrays.stream(maturities).filter(x -> x < timeGrid[startingIndex]).toArray().length;
 
-		assetPathAtMaturities = new double[maturities.length][numberOfPaths];
+		if(assetPathAtMaturities == null) {assetPathAtMaturities = new double[maturities.length][numberOfPaths];}
 		if(!saveMemory) {
 			path = new double[2][timeGrid.length][numberOfPaths];
 		}
 
 		double assetPath[] = new double[numberOfPaths];
 		double volPath[] = new double[numberOfPaths];
-		Arrays.fill(assetPath, Math.log(equityForwardStructure.getSpot()));
-		Arrays.fill(volPath, sigma0);
+		Arrays.fill(assetPath, Math.log(startingValue[0]));
+		Arrays.fill(volPath, startingValue[1]);
 
 		if (!saveMemory) {
 			path[0][0] = Arrays.copyOf(assetPath, assetPath.length);
 			path[1][0] = Arrays.copyOf(volPath, volPath.length);
 		}
 
-		for(int i = 1; i < timeGrid.length; i++) {
+		for(int i = startingIndex; i < timeGrid.length; i++) { // TODO: Delete hack
 			double deltaT = timeGrid[i] - timeGrid[i - 1];
 			double sqrtDeltaT = Math.sqrt(deltaT);
 			assert (sqrtDeltaT > 0) : "sqrt(delta) = 0!";
@@ -96,13 +96,14 @@ public class HestonPathSimulatorMC extends HestonPathSimulator {
 					path[0][i][j] = assetPath[j];
 				}
 			}
-			// TODO: Check
 			// Apply martingale correction and increment maturity index
 			if(maturities[currentMaturityIndex] == timeGrid[i]) {
-				double avg = Math.log(Arrays.stream(assetPathAtMaturities[currentMaturityIndex]).map(x -> Math.exp(x)).average().getAsDouble());
-				for(int p = 0; p < numberOfPaths; p++) {
-					assetPath[p] -= avg;
-					assetPathAtMaturities[currentMaturityIndex][p] = assetPath[p];
+				if(martingaleCorrection) {
+					double avg = Math.log(Arrays.stream(assetPathAtMaturities[currentMaturityIndex]).map(x -> Math.exp(x)).average().getAsDouble());
+					for(int p = 0; p < numberOfPaths; p++) {
+						assetPath[p] -= avg;
+						assetPathAtMaturities[currentMaturityIndex][p] = assetPath[p];
+					}
 				}
 				currentMaturityIndex++;
 			}

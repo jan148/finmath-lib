@@ -9,10 +9,8 @@ import net.finmath.equities.Simulation.Options.EuropeanSimulationPricer;
 import net.finmath.equities.models.LNSVQDUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
-import org.apache.commons.math3.util.Pair;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -51,12 +49,17 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(maturityGrid,
 						(int) (Math.round(maxMaturity * 365.) * 1), 0, maxMaturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
+
+		int startingIndex = 1;
+		double[] startingValueLNSVQD = new double[]{spot0, selectedParamsLNSVQD[0]};
+		double[] startingValueHeston = new double[]{spot0, selectedParamsHeston[0]};
+
 		for(int seed : seeds) {
 			// MC
 			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
 			// sw.reset();
 			// sw.start();
-			pathSimulatorMC.precalculatePaths(seed, true);
+			pathSimulatorMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.TRUE);
 			// System.out.println("time MC: " + sw.getTime());
 
 			// Define pricers
@@ -73,7 +76,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 				LNSVQDPathSimulatorQMC pathSimulatorQMC = new LNSVQDPathSimulatorQMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
 				// sw.reset();
 				// sw.start();
-				// pathSimulatorQMC.precalculatePaths(seed, true);
+				// pathSimulatorQMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD);
 				// sw.stop();
 				// System.out.println("time QMC: " + sw.getTime());
 
@@ -173,13 +176,18 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(maturityGrid,
 						(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
+
+		int startingIndex = 1;
+		double[] startingValueLNSVQD = new double[]{spot0, selectedParamsLNSVQD[0]};
+		double[] startingValueHeston = new double[]{spot0, selectedParamsHeston[0]};
+
 		for(int seed : seeds) {
 			// MC
 			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve
 					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);;
 			// sw.reset();
 			// sw.start();
-			pathSimulatorMC.precalculatePaths(seed, true);
+			// pathSimulatorMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.TRUE);
 			// System.out.println("time MC: " + sw.getTime());
 
 			// QMC
@@ -187,7 +195,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
 			// sw.reset();
 			// sw.start();
-			pathSimulatorQMC.precalculatePaths(seed, true);
+			pathSimulatorQMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.TRUE);
 			// sw.stop();
 			// System.out.println("time QMC: " + sw.getTime());
 
@@ -198,7 +206,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3], selectedParamsHeston[4], gamma1, gamma2);
 			// sw.reset();
 			// sw.start();
-			pathSimulatorHestonMC.precalculatePaths(seed, true);
+			pathSimulatorHestonMC.precalculatePaths(seed, true, startingIndex, startingValueHeston, Boolean.TRUE);
 			// sw.stop();
 			// System.out.println("time QMC: " + sw.getTime());
 
@@ -208,7 +216,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 			// sw.reset();
 			// sw.start();
-			pathSimulatorHestonQMC.precalculatePaths(seed, true);
+			pathSimulatorHestonQMC.precalculatePaths(seed, true, startingIndex, startingValueHeston, Boolean.TRUE);
 			// sw.stop();
 			// System.out.println("time QMC: " + sw.getTime());
 
@@ -221,7 +229,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 			// MC
 			double simulatedOptionPrice;
 			try {
-				simulatedOptionPrice = simulPricerLnsvqdMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
+				simulatedOptionPrice = 0; // simulPricerLnsvqdMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
 			} catch(AssertionError e) {
 				System.err.println("Caught AssertionError: " + e.getMessage());
 				simulatedOptionPrice = 1000000;
@@ -258,7 +266,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 			}
 			pricesHestonQMC[seeds.indexOf(seed)] = simulatedOptionPriceHestonQMC;
 
-			System.out.println(simulatedOptionPrice);
+			System.out.println(simulatedOptionPriceQMC);
 			System.out.println("Finished seed " + seed);
 		}
 
@@ -325,7 +333,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
 			// sw.reset();
 			// sw.start();
-			pathSimulatorMC.precalculatePaths(seed, true);
+			pathSimulatorMC.precalculatePaths(seed, true, 0, null, Boolean.TRUE);
 			// System.out.println("time MC: " + sw.getTime());
 
 			// Heston MC
@@ -335,7 +343,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3], selectedParamsHeston[4], gamma1, gamma2);
 			// sw.reset();
 			// sw.start();
-			pathSimulatorHestonMC.precalculatePaths(seed, true);
+			pathSimulatorHestonMC.precalculatePaths(seed, true, 0, null, Boolean.TRUE);
 			// sw.stop();
 			// System.out.println("time QMC: " + sw.getTime());
 

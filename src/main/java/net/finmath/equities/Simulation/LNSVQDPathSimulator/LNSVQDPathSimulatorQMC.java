@@ -26,7 +26,7 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 	}
 
 	@Override
-	public void precalculatePaths(int seed, Boolean saveMemory) {
+	public void precalculatePaths(int seed, Boolean saveMemory, int startingIndex, double[] startingValue, Boolean martingaleCorrection) {
 		ArrayList<Double> timeGridList = Arrays.stream(timeGrid)
 				.boxed()
 				.collect(Collectors.toCollection(ArrayList::new));
@@ -57,12 +57,14 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 		 */
 		BrentOptimizer brentOptimizer = new BrentOptimizer(1e-8, 1e-8);
 
-		assetPathAtMaturities = new double[maturities.length][numberOfPaths];
+		if(assetPathAtMaturities == null) {
+			assetPathAtMaturities = new double[maturities.length][numberOfPaths];
+		}
 
 		if(!saveMemory) {
 			path = new double[2][timeGrid.length][numberOfPaths];
-			Arrays.fill(path[0][0], Math.log(lnsvqdModel.getSpot0()));
-			Arrays.fill(path[1][0], lnsvqdModel.getSigma0());
+			Arrays.fill(path[0][0], Math.log(startingValue[0]));
+			Arrays.fill(path[1][0], startingValue[1]);
 		}
 
 		for(int j = 0; j < numberOfPaths; j++) {
@@ -70,11 +72,11 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 			double[] standardNormals = LNSVQDUtils.getStdNormalsFromUnifVec(vec, scrambleNumber);
 			double[][] brownianIncrements = brownianBridge.generateBrownianIncrementsOnePath(standardNormals, mersenneTwister); // new double[numberOfPaths][2];
 			// Fill Paths
-			double asset = Math.log(lnsvqdModel.getSpot0());
-			double vol = lnsvqdModel.getSigma0();
-			double volTransformed = Math.log(lnsvqdModel.getSigma0());
-			int currentMaturityIndex = 0;
-			for(int i = 1; i < timeGrid.length; i++) {
+			double asset = Math.log(startingValue[0]);
+			double vol = startingValue[1];
+			double volTransformed = Math.log(startingValue[1]);
+			int currentMaturityIndex = Arrays.stream(maturities).filter(x -> x < timeGrid[startingIndex]).toArray().length;
+			for(int i = startingIndex; i < timeGrid.length; i++) {
 				int currentIncrementIndex = i - 1;
 
 				double deltaT = timeGrid[i] - timeGrid[i - 1];
@@ -116,12 +118,13 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 				}
 			}
 		}
-		// TODO: Check
 		// Apply martingale correction; Can only apply it after complete rollout, might be problematic
-		for(int m = 0; m < maturities.length; m++) {
-			double avg = Math.log(Arrays.stream(assetPathAtMaturities[m]).map(x -> Math.exp(x)).average().getAsDouble());
-			for(int p = 0; p < numberOfPaths; p++) {
-				assetPathAtMaturities[m][p] -= avg;
+		if(martingaleCorrection) {
+			for(int m = 0; m < maturities.length; m++) {
+				double avg = Math.log(Arrays.stream(assetPathAtMaturities[m]).map(x -> Math.exp(x)).average().getAsDouble());
+				for(int p = 0; p < numberOfPaths; p++) {
+					assetPathAtMaturities[m][p] -= avg;
+				}
 			}
 		}
 	}

@@ -14,6 +14,6 @@ public abstract class PathSimulator {
 	public double[] maturities;
 	public double path[][][];
 	public double assetPathAtMaturities[][];
-	public abstract void precalculatePaths(int seed, Boolean saveMemory);
+	public abstract void precalculatePaths(int seed, Boolean saveMemory, int startingIndex, double[] startingValue, Boolean martingaleCorrection);
 
 }

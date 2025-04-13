@@ -12,7 +12,7 @@ public class CliquetSimulationPricer<T extends PathSimulator>{
 		this.pathSimulator = pathSimulator;
 	}
 
-	public double[] getPayoffsAtMaturity(double maturity, double floorL, double capL, double floorG, double capG) {
+	public double[] getPayoffsAtMaturity(double floorL, double capL, double floorG, double capG) {
 		double[] payoffsAtMaturity = new double[pathSimulator.numberOfPaths];
 
 		for(int j = 0; j < pathSimulator.numberOfPaths; j++) {
@@ -20,7 +20,8 @@ public class CliquetSimulationPricer<T extends PathSimulator>{
 			double[] pathAtPayPoints = IntStream.range(0, pathSimulator.maturities.length)
 					.mapToDouble(i ->
 					{
-						double forwardFactor = pathSimulator.equityForwardStructure.getForward(maturity);
+						double t = pathSimulator.maturities[i];
+						double forwardFactor = pathSimulator.equityForwardStructure.getForward(t);
 						return Math.exp(pathSimulator.assetPathAtMaturities[i][pathIndex]) * forwardFactor;
 					})
 					.toArray();
@@ -36,7 +37,7 @@ public class CliquetSimulationPricer<T extends PathSimulator>{
 
 	public double getCliquetPrice(double maturity, double floorL, double capL, double floorG, double capG) throws Exception {
 		double discountFactor = pathSimulator.discountCurve.getDiscountFactor(maturity);
-		double[] payoffsAtMaturity = getPayoffsAtMaturity(maturity, floorL, capL, floorG, capG);
+		double[] payoffsAtMaturity = getPayoffsAtMaturity(floorL, capL, floorG, capG);
 		// for(double payoff : payoffsAtMaturity) {assert(!Double.isNaN(payoff)) : "Nan encountered";}
 		double expectationAtMaturity = Arrays.stream(payoffsAtMaturity).average().getAsDouble();
 		double price = expectationAtMaturity * discountFactor;

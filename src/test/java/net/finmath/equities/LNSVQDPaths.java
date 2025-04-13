@@ -16,7 +16,7 @@ public class LNSVQDPaths extends TestsSetupForLNSVQD {
 						(int) (Math.round(maxMaturity * 365.) * 1), 0, maxMaturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 		LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
-		pathSimulatorMC.precalculatePaths(seed, false);
+		pathSimulatorMC.precalculatePaths(seed, false, 0, null, Boolean.TRUE);
 		for(int t = 0; t < timeGrid.length; t++) {
 			for(int k = 0; k < numberOfPaths; k++) {
 				System.out.print(pathSimulatorMC.path[1][t][k] + "\t");
@@ -40,7 +40,7 @@ public class LNSVQDPaths extends TestsSetupForLNSVQD {
 				, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3], selectedParamsHeston[4], gamma1, gamma2);
 		// sw.reset();
 		// sw.start();
-		pathSimulatorHestonMC.precalculatePaths(seed, false);
+		pathSimulatorHestonMC.precalculatePaths(seed, false, 0, null, Boolean.TRUE);
 		for(int t = 0; t < timeGrid.length; t++) {
 			for(int k = 0; k < numberOfPaths; k++) {
 				System.out.print(pathSimulatorHestonMC.path[1][t][k] + "\t");

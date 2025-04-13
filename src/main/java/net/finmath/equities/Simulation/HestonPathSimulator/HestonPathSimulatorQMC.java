@@ -5,18 +5,11 @@ import net.finmath.equities.marketdata.YieldCurve;
 import net.finmath.equities.models.EquityForwardStructure;
 import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.functions.NormalDistribution;
-import org.apache.commons.math3.optim.MaxEval;
-import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
-import org.apache.commons.math3.optim.univariate.BrentOptimizer;
-import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
-import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
-import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.SobolSequenceGenerator;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -35,7 +28,7 @@ public class HestonPathSimulatorQMC extends HestonPathSimulator {
 	}
 
 	@Override
-	public void precalculatePaths(int seed, Boolean saveMemory) {
+	public void precalculatePaths(int seed, Boolean saveMemory, int startingIndex, double[] startingValue, Boolean martingaleCorrection) {
 		ArrayList<Double> timeGridList = Arrays.stream(timeGrid)
 				.boxed()
 				.collect(Collectors.toCollection(ArrayList::new));
@@ -62,12 +55,12 @@ public class HestonPathSimulatorQMC extends HestonPathSimulator {
 
 		net.finmath.randomnumbers.MersenneTwister mersenneTwister = new net.finmath.randomnumbers.MersenneTwister(seed);
 
-		assetPathAtMaturities = new double[maturities.length][numberOfPaths];
+		if(assetPathAtMaturities == null) {assetPathAtMaturities = new double[maturities.length][numberOfPaths];}
 
 		if(!saveMemory) {
 			path = new double[2][timeGrid.length][numberOfPaths];
-			Arrays.fill(path[0][0], Math.log(equityForwardStructure.getSpot()));
-			Arrays.fill(path[1][0], sigma0);
+			Arrays.fill(path[0][0], Math.log(startingValue[0]));
+			Arrays.fill(path[1][0], startingValue[1]);
 		}
 
 		for(int j = 0; j < numberOfPaths; j++) {
@@ -75,10 +68,10 @@ public class HestonPathSimulatorQMC extends HestonPathSimulator {
 			double[] standardNormals = LNSVQDUtils.getStdNormalsFromUnifVec(vec, scrambleNumber);
 			double[][] brownianIncrements = brownianBridge.generateBrownianIncrementsOnePath(standardNormals, mersenneTwister); // new double[numberOfPaths][2];
 			// Fill Paths
-			double asset = Math.log(equityForwardStructure.getSpot());
-			double vol = sigma0;
-			int currentMaturityIndex = 0;
-			for(int i = 1; i < timeGrid.length; i++) {
+			double asset = Math.log(startingValue[0]);
+			double vol = startingValue[1];
+			int currentMaturityIndex = Arrays.stream(maturities).filter(x -> x < timeGrid[startingIndex]).toArray().length;
+			for(int i = startingIndex; i < timeGrid.length; i++) {
 				int currentIncrementIndex = i - 1;
 
 				double deltaT = timeGrid[i] - timeGrid[i - 1];
@@ -137,10 +130,12 @@ public class HestonPathSimulatorQMC extends HestonPathSimulator {
 		}
 		// TODO: Check
 		// Apply martingale correction; Can only apply it after complete rollout, might be problematic
-		for(int m = 0; m < maturities.length; m++) {
-			double avg = Math.log(Arrays.stream(assetPathAtMaturities[m]).map(x -> Math.exp(x)).average().getAsDouble());
-			for(int p = 0; p < numberOfPaths; p++) {
-				assetPathAtMaturities[m][p] -= avg;
+		if(martingaleCorrection) {
+			for(int m = 0; m < maturities.length; m++) {
+				double avg = Math.log(Arrays.stream(assetPathAtMaturities[m]).map(x -> Math.exp(x)).average().getAsDouble());
+				for(int p = 0; p < numberOfPaths; p++) {
+					assetPathAtMaturities[m][p] -= avg;
+				}
 			}
 		}
 	}

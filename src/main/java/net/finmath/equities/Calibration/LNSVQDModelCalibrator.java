@@ -1,9 +1,7 @@
 package net.finmath.equities.Calibration;
 
 import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDPathSimulator;
-import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDPathSimulatorMC;
 import net.finmath.equities.marketdata.VolatilityPoint;
-import net.finmath.equities.models.LNSVQDModel;
 import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.equities.models.VolatilityPointsSurface;
 import net.finmath.equities.pricer.LNSVQDModelAnalyticalPricer;
@@ -64,7 +62,7 @@ public class LNSVQDModelCalibrator {
 		// assert(initialVolatilityParameters[0] == 0 && initialVolatilityParameters[4] == 0) : "simga0 & beta need to be set to zero for calibration of mr-params!";
 		int[] parameterIndices = new int[]{1, 2};
 		lnsvqdPathSimulator.setVolatilityParameters(initialVolatilityParameters);
-		lnsvqdPathSimulator.precalculatePaths(3105, false);
+		lnsvqdPathSimulator.precalculatePaths(3105, false, 0, null, Boolean.TRUE);
 		double[][] volPaths = lnsvqdPathSimulator.path[1];
 		double[] initX = getAcfsFromVolPaths(volPaths, numLags, lagSize);
 		final double[] targetValues = acfAtLags.stream()
@@ -114,7 +112,7 @@ public class LNSVQDModelCalibrator {
 			LNSVQDUtils.printArray(Arrays.stream(paramsFull).toArray());
 
 			lnsvqdPathSimulator.setVolatilityParameters(paramsFull);
-			lnsvqdPathSimulator.precalculatePaths(3105, false);
+			lnsvqdPathSimulator.precalculatePaths(3105, false, 0, null, Boolean.TRUE);
 			double[][] volPathsCurrentParams = lnsvqdPathSimulator.path[1];
 			double[] modelAcf = getAcfsFromVolPaths(volPathsCurrentParams, numLags, lagSize);
 
@@ -126,7 +124,7 @@ public class LNSVQDModelCalibrator {
 				double[] paramsFullShifted = paramsFull.clone();
 				paramsFullShifted[parameterIndices[j]] = paramsFullShifted[parameterIndices[j]] + shiftSize;
 				lnsvqdPathSimulator.setVolatilityParameters(paramsFullShifted);
-				lnsvqdPathSimulator.precalculatePaths(3105, false);
+				lnsvqdPathSimulator.precalculatePaths(3105, false, 0, null, Boolean.TRUE);
 				double[][] volPathsAtShiftedParams = lnsvqdPathSimulator.path[1];
 				double[] modelAcfAtShiftedParams = getAcfsFromVolPaths(volPathsAtShiftedParams, numLags, lagSize);
 				for(int i = 0; i < forwardShiftedValues[j].length; i++) {
@@ -190,7 +188,7 @@ public class LNSVQDModelCalibrator {
 
 		// Retrieve the optimal value (cost function value)
 		lnsvqdPathSimulator.setVolatilityParameters(calibratedParameters);
-		lnsvqdPathSimulator.precalculatePaths(3105, false);
+		lnsvqdPathSimulator.precalculatePaths(3105, false, 0, null, Boolean.TRUE);
 		double[][] volPathsFinal = lnsvqdPathSimulator.path[1];
 		double[] endX = getAcfsFromVolPaths(volPathsFinal, numLags, lagSize);
 		LNSVQDUtils.printArray(endX);

@@ -21,7 +21,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 		lnsvqdModelAnalyticalPricer.setVolatilityParameters(selectedParamsLNSVQD);
 		LNSVQDPathSimulator lnsvqdPathSimulator = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure,
 				numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
-		lnsvqdPathSimulator.precalculatePaths(3105, false);
+		lnsvqdPathSimulator.precalculatePaths(3105, false, 0, null, Boolean.TRUE);
 		double[][] volaPaths = lnsvqdPathSimulator.path[1];
 		double[] acs = LNSVQDModelCalibrator.getAcfsFromVolPaths(volaPaths, acfAtLags.size(), 10);
 		LNSVQDUtils.printArray(acs);
