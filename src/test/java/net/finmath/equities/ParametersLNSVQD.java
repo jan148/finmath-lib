@@ -25,12 +25,12 @@ public class ParametersLNSVQD {
 			, -0.634272101
 	};
 	static double[] paramVectorBitcoin = new double[]{
-			0.8376,
-			3.1844,
-			3.058,
-			1.0413,
-			0.1514,
-			1.8458
+			5, // 0.8376,
+			4.8606,
+			4.7938,
+			1.0139,
+			0.1985,
+			2.3690
 	};
 
 	static double[] paramBlackScholes = new double[]{

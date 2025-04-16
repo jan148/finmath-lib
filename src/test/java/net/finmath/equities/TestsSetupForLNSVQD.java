@@ -748,7 +748,7 @@ public abstract class TestsSetupForLNSVQD {
 
 	public void setBTCSetupSIM() {
 		valuationDate = LocalDate.parse("2024-09-30");
-		spot0 = 67843.219;
+		spot0 = 1;
 		selectedParamsLNSVQD = ParametersLNSVQD.paramVectorBitcoin;
 		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXSep;
 

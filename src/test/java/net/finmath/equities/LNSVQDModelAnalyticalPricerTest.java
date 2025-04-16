@@ -66,16 +66,20 @@ class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 
 	@Test
 	public void printE2() {
+		setBTCSetupSIM();
+
 		double ttm = 1;
-		double y = 1;
-		int numStepsForODEIntegration = (int) (ttm * 365 * lnsvqdModelAnalyticalPricer.numStepsForODEIntegrationPerYear);
+		double y = -1.085746;
+		int numStepsForODEIntegration = (int) (ttm * lnsvqdModelAnalyticalPricer.numStepsForODEIntegrationPerYear);
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, numStepsForODEIntegration);
 		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 
 		System.out.println("TTM \t Real part \t Imaginary part");
 		for(int i = 0; i < timeGrid.length; i++) {
 			double t = timeGrid[i];
-			Complex value = lnsvqdModelAnalyticalPricer.calculateExponentialAffineApproximation(t, charFuncArgs).multiply(charFuncArgs[0].multiply(lnsvqdModelAnalyticalPricer.getX0()).add(charFuncArgs[1].multiply(lnsvqdModelAnalyticalPricer.getI0())).exp());
+			Complex value = lnsvqdModelAnalyticalPricer.calculateExponentialAffineApproximation(t, charFuncArgs)
+					.multiply(charFuncArgs[0].multiply(lnsvqdModelAnalyticalPricer.getX0())
+							.add(charFuncArgs[1].multiply(lnsvqdModelAnalyticalPricer.getI0())).exp());
 			double realPart = value.getReal();
 			double imaginaryPart = value.getImaginary();
 			System.out.println(t + "\t" + realPart + "\t" + imaginaryPart);
