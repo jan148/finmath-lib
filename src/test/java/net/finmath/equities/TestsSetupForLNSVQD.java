@@ -59,7 +59,7 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create simulation model (not finmath)
 	 */
-	static int numberOfPaths = 10000;
+	static int numberOfPaths = 100000;
 
 	/**
 	 * Declare volatility surface; will be insatntiated later
@@ -76,9 +76,9 @@ public abstract class TestsSetupForLNSVQD {
 	public void setDAXHestonSetupSIM() {
 		valuationDate = LocalDate.parse("2024-09-30");
 		spot0 = 1;
-		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXSepCalib;
+		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXSepCalibKappa2Positive;
 		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXSep;
-		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXSep;
+		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXSepKappa2Positive; // ParametersLNSVQD.paramInitDAXSep;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
@@ -300,10 +300,10 @@ public abstract class TestsSetupForLNSVQD {
 
 	public void setDAXHestonMarchSetupSIM() {
 		valuationDate = LocalDate.parse("2020-03-12");
-		spot0 = 9254.07;
-		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXMarchCalib;
+		spot0 = 1;
+		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXMarchCalibKappa2Positive;
 		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXMarch;
-		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXMarch;
+		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXMarchKappa2Positive; // ParametersLNSVQD.paramInitDAXMarch;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
@@ -525,9 +525,9 @@ public abstract class TestsSetupForLNSVQD {
 	public void setDAXHestonFebruarySetupSIM() {
 		valuationDate = LocalDate.parse("2025-02-28");
 		spot0 = 1;
-		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXFebCalib;
+		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXFebCalibKappa2Positive;
 		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXFeb;
-		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXFeb;
+		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXFebKappa2Positive; // ParametersLNSVQD.paramInitDAXFeb;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
@@ -748,7 +748,7 @@ public abstract class TestsSetupForLNSVQD {
 
 	public void setBTCSetupSIM() {
 		valuationDate = LocalDate.parse("2024-09-30");
-		spot0 = 1;
+		spot0 = 67843.219;
 		selectedParamsLNSVQD = ParametersLNSVQD.paramVectorBitcoin;
 		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXSep;
 
@@ -776,7 +776,7 @@ public abstract class TestsSetupForLNSVQD {
 		maturityGrid = new double[]{0.10122575874485597};
 
 		// Initialize volatilityPoints
-		ArrayList<Pair<Double, Double>> strikeMatPairs = new ArrayList<>();
+		strikeMatPairs = new ArrayList<>();
 
 		// Create and adf volatility points
 		strikeMatPairs.add(new Pair(ttm, 45000.));

@@ -28,7 +28,7 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 		setDAXHestonMarchSetupSIM();
 
 		int[] seeds = IntStream.range(0, 10).toArray();
-		numberOfPaths = 1000;
+		numberOfPaths = 10000;
 
 		// Set Cliquet params
 		double maturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
@@ -41,9 +41,9 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 						(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 
-		int minPercOfSpot = 25;
-		int maxPercOfSpot = 425;
-		double shiftSize = 1E-3;
+		int minPercOfSpot = 250;
+		int maxPercOfSpot = 350;
+		double shiftSize = 1E-4;
 		int incs = 25;
 
 		double[] shiftBy = IntStream.range(0, (maxPercOfSpot - minPercOfSpot) / incs).mapToDouble(n -> (minPercOfSpot + n * incs) / 100.).toArray();

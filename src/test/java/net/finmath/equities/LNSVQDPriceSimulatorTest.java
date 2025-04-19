@@ -157,7 +157,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 	@Test
 	public void testCliquetOption() throws Exception {
 		// Set the right case
-		setDAXHestonMarchSetupSIM(); // setDAXHestonMarchSetupSIM(); //setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
+		setDAXHestonSetupSIM(); // setDAXHestonMarchSetupSIM(); //setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
 
 		// Set Cliquet params
 		double maturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
@@ -187,7 +187,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);;
 			// sw.reset();
 			// sw.start();
-			// pathSimulatorMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.TRUE);
+			pathSimulatorMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.TRUE);
 			// System.out.println("time MC: " + sw.getTime());
 
 			// QMC
@@ -229,7 +229,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 			// MC
 			double simulatedOptionPrice;
 			try {
-				simulatedOptionPrice = 0; // simulPricerLnsvqdMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
+				simulatedOptionPrice = simulPricerLnsvqdMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
 			} catch(AssertionError e) {
 				System.err.println("Caught AssertionError: " + e.getMessage());
 				simulatedOptionPrice = 1000000;

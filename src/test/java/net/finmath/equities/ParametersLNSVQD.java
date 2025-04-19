@@ -25,12 +25,12 @@ public class ParametersLNSVQD {
 			, -0.634272101
 	};
 	static double[] paramVectorBitcoin = new double[]{
-			5, // 0.8376,
-			4.8606,
-			4.7938,
-			1.0139,
-			0.1985,
-			2.3690
+			0.8376,
+			3.1844,
+			3.058,
+			1.0413,
+			0.1514,
+			1.8458
 	};
 
 	static double[] paramBlackScholes = new double[]{
@@ -51,19 +51,46 @@ public class ParametersLNSVQD {
 			1.535139247
 	};
 
+	static double[] paramInitDAXSepKappa2Positive = new double[]{
+			0.137310669,
+			3.1565426287720286,
+			1.9367244258255474,
+			0.146643909,
+			-1.489064245,
+			1.535139247
+	};
+
 	static double[] paramInitDAXMarch = new double[]{
 			0.751963407
-			, 3.1565426287720286 // From python
-			, 1.9367244258255474 // From python
+			, 3.560176604850655 // 3.1565426287720286,
+			, 0 // 1.9367244258255474,
 			, 0.467763099
 			, -0.652852033
 			, 0.859636078
+	};
+
+	static double[] paramInitDAXMarchKappa2Positive = new double[]{
+			0.7183550169994655
+			, 3.1565426287720286 // From python
+			, 1.9367244258255474 // From python
+			, 0.2169627604050273
+			, -1.4891723022148557
+			, 0.9240577536198922
 	};
 
 	static double[] paramInitDAXFeb = new double[]{
 			0.1598567708165421,
 			3.560176604850655, // 3.1565426287720286, // From python
 			0, // 1.9367244258255474, // From python
+			0.189967208,
+			-0.40790656321439606,
+			0.20752601856648067
+	};
+
+	static double[] paramInitDAXFebKappa2Positive = new double[]{
+			0.1598567708165421,
+			3.1565426287720286, // From python
+			1.9367244258255474, // From python
 			0.189967208,
 			-0.40790656321439606,
 			0.20752601856648067
@@ -78,13 +105,13 @@ public class ParametersLNSVQD {
 			1.4653117049022548
 	};
 
-	static double[] paramInitDAXMarchCalibOld = new double[]{
-			0.78096181461525,
-			3.1565426287720286, // From python
-			1.9367244258255474, // From python
-			0.4961670369028076,
-			-0.7351529740014809,
-			0.6002284343654938,
+	static double[] paramInitDAXSepCalibKappa2Positive = new double[]{
+			0.14250090891079703,
+			3.1565426287720286,
+			1.9367244258255474,
+			0.14854371929914006,
+			-1.4287502987787102,
+			1.5171087093484412
 	};
 
 	static double[] paramInitDAXMarchCalib = new double[]{
@@ -94,6 +121,15 @@ public class ParametersLNSVQD {
 			, 0.2169627604050273
 			, -1.4891723022148557
 			, 0.9240577536198922
+	};
+
+	static double[] paramInitDAXMarchCalibKappa2Positive = new double[]{
+			0.7218799691090293,
+			3.1565426287720286, // From python
+			1.9367244258255474, // From python
+			0.2424508550509456,
+			-1.6202793135618887,
+			1.151888849105794,
 	};
 
 	static double[] paramInitDAXFebCalibOld = new double[]{
@@ -112,6 +148,15 @@ public class ParametersLNSVQD {
 			, 0.142510755
 			, -1.372319642
 			, 1.54799513
+	};
+
+	static double[] paramInitDAXFebCalibKappa2Positive = new double[]{
+			0.1666270357888853
+			, 3.1565426287720286
+			, 1.9367244258255474
+			, 0.14281672921287228
+			, -1.3894496216581893
+			, 1.6057516010167643
 	};
 
 }
