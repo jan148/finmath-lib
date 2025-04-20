@@ -88,7 +88,7 @@ public class HestonPathSimulatorQMC extends HestonPathSimulator {
 				// double A = k2 + 0.5 * k4;
 
 				// Fill Paths
-				double incAsset = 1 / sqrtDeltaT * brownianIncrements[currentIncrementIndex][0];
+				double incAsset = 1 / sqrtDeltaT * brownianIncrements[currentIncrementIndex][1];
 
 				// Vol
 				double incVol;
@@ -98,12 +98,12 @@ public class HestonPathSimulatorQMC extends HestonPathSimulator {
 						+ theta * epsilon * epsilon / (2 * kappa) * (1 - Math.exp(-kappa * deltaT)) * (1 - Math.exp(-kappa * deltaT));
 				double psi = s2 / (m * m);
 				if(psi <= psiCritical) {
-					incVol = 1 / sqrtDeltaT * brownianIncrements[currentIncrementIndex][1];
+					incVol = 1 / sqrtDeltaT * brownianIncrements[currentIncrementIndex][0];
 					double b = Math.sqrt(2 / psi - 1 + Math.sqrt(2 / psi) * Math.sqrt(2 / psi - 1));
 					double a = m / (1 + b * b);
 					vol = a * (b + incVol) * (b + incVol);
 				} else {
-					incVol = NormalDistribution.cumulativeDistribution(1 / sqrtDeltaT * brownianIncrements[currentIncrementIndex][1]) ;
+					incVol = NormalDistribution.cumulativeDistribution(1 / sqrtDeltaT * brownianIncrements[currentIncrementIndex][0]) ;
 					double p = (psi - 1) / (psi + 1);
 					double beta = (1 - p) / m;
 					// System.out.println((1 - p) / beta + "\t" + m);

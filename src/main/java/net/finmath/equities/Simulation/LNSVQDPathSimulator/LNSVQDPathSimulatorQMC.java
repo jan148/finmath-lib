@@ -83,7 +83,7 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 				if(isBackwardEuler) {
 					double copyVolTransformed = volTransformed; // Need to copy bc. of static context
 					UnivariateObjectiveFunction rootFunction = new UnivariateObjectiveFunction(
-							l -> -brownianIncrements[currentIncrementIndex][0] * lnsvqdModel.getBeta() - (brownianIncrements[currentIncrementIndex][1] * lnsvqdModel.getEpsilon())
+							l -> -brownianIncrements[currentIncrementIndex][1] * lnsvqdModel.getBeta() - (brownianIncrements[currentIncrementIndex][0] * lnsvqdModel.getEpsilon())
 									- (zeta.value(Math.exp(l)) * deltaT) - copyVolTransformed + l
 					);
 					UnivariatePointValuePair result = brentOptimizer.optimize(
@@ -100,9 +100,9 @@ public class LNSVQDPathSimulatorQMC extends LNSVQDPathSimulator {
 					// TODO: Check replacement by zeta
 					volTransformed = volTransformed + ((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / vol - lnsvqdModel.getKappa1())
 							+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - vol) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT
-							+ lnsvqdModel.getBeta() * brownianIncrements[currentIncrementIndex][0] + lnsvqdModel.getEpsilon() * brownianIncrements[currentIncrementIndex][1];
+							+ lnsvqdModel.getBeta() * brownianIncrements[currentIncrementIndex][1] + lnsvqdModel.getEpsilon() * brownianIncrements[currentIncrementIndex][0];
 				}
-				asset = asset + vol * vol * (-0.5) * deltaT + vol * brownianIncrements[currentIncrementIndex][0];
+				asset = asset + vol * vol * (-0.5) * deltaT + vol * brownianIncrements[currentIncrementIndex][1];
 				vol = Math.exp(volTransformed);
 
 				// System.out.println(maturities[currentMaturityIndex] + "\t" + timeGrid[i]);

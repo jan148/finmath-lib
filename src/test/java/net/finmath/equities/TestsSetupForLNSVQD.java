@@ -78,7 +78,7 @@ public abstract class TestsSetupForLNSVQD {
 		spot0 = 1;
 		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXSepCalibKappa2Positive;
 		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXSep;
-		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXSepKappa2Positive; // ParametersLNSVQD.paramInitDAXSep;
+		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXSepKappa2Positive; // ParametersLNSVQD.paramInitDAXSepCalib; //  ;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {

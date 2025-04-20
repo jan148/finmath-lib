@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 	/**
@@ -40,7 +41,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		sw.stop();
 		System.out.println("time: " + sw.getTime());
 
-		List<Integer> seeds = random.ints(10).boxed().collect(Collectors.toList());
+		List<Integer> seeds = IntStream.range(0, 10).boxed().collect(Collectors.toList()); // random.ints(10).boxed().collect(Collectors.toList());
 
 		double[][][] pricesMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
 		double[][][] pricesQMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
@@ -56,7 +57,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 		for(int seed : seeds) {
 			// MC
-			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
+			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, true);
 			// sw.reset();
 			// sw.start();
 			pathSimulatorMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.TRUE);
@@ -73,7 +74,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 				double[] timeGridQMC = LNSVQDUtils.addTimePointsToArray(maturityGridQMC,
 								(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
 						.stream().distinct().mapToDouble(Double::doubleValue).toArray();
-				LNSVQDPathSimulatorQMC pathSimulatorQMC = new LNSVQDPathSimulatorQMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
+				LNSVQDPathSimulatorQMC pathSimulatorQMC = new LNSVQDPathSimulatorQMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGridQMC, maturityGrid, lnsvqdModelAnalyticalPricer, false);
 				// sw.reset();
 				// sw.start();
 				// pathSimulatorQMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD);
@@ -156,8 +157,10 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 	@Test
 	public void testCliquetOption() throws Exception {
+		numberOfPaths = 100;
+
 		// Set the right case
-		setDAXHestonSetupSIM(); // setDAXHestonMarchSetupSIM(); //setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
+		setDAXHestonFebruarySetupSIM(); // setDAXHestonMarchSetupSIM(); //setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
 
 		// Set Cliquet params
 		double maturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();

@@ -25,7 +25,7 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 	@Test
 	public void testCliquetDeltaGamma() throws Exception {
 		// Set the right case
-		setDAXHestonMarchSetupSIM();
+		setDAXHestonSetupSIM();
 
 		int[] seeds = IntStream.range(0, 10).toArray();
 		numberOfPaths = 10000;
@@ -41,8 +41,8 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 						(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 
-		int minPercOfSpot = 250;
-		int maxPercOfSpot = 350;
+		int minPercOfSpot = 25;
+		int maxPercOfSpot = 425;
 		double shiftSize = 1E-4;
 		int incs = 25;
 
