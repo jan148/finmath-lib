@@ -74,12 +74,12 @@ public class LNSVQDPathSimulatorMC extends LNSVQDPathSimulator{
 					// TODO: Check replacement by zeta
 					volNewTransformed[j] = volNewTransformed[j] + ((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / volPath[j] - lnsvqdModel.getKappa1())
 							+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - volPath[j]) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT
-							+ lnsvqdModel.getBeta() * brownianIncrements[j][0] + lnsvqdModel.getEpsilon() * brownianIncrements[j][1]; // lnsvqdModel.getTheta() * brownianIncrements[j][0]; //
+							+ lnsvqdModel.getBeta() * brownianIncrements[j][0] + lnsvqdModel.getEpsilon() * brownianIncrements[j][1]; // Math.sqrt(lnsvqdModel.getTotalInstVar()) * brownianIncrements[j][0]; //
 				}
 				assetPath[j] = assetPath[j] + volPath[j] * volPath[j] * (-0.5) * deltaT + volPath[j] * brownianIncrements[j][0];
 
 				// Alternative: QE discretization of asset path
-				/*double volPathOld = volPath[j];
+			/*	double volPathOld = volPath[j];
 				volPath[j] = Math.exp(volNewTransformed[j]);
 				double psi = lnsvqdModel.beta / Math.sqrt(lnsvqdModel.getTotalInstVar());
 				double K0 = -lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() * psi / Math.sqrt(lnsvqdModel.getTotalInstVar());

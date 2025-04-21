@@ -36,10 +36,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
 
 		// Get analytical prices
-		StopWatch sw = StopWatch.createStarted();
 		double[] volAna = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs);
-		sw.stop();
-		System.out.println("time: " + sw.getTime());
 
 		List<Integer> seeds = IntStream.range(0, 10).boxed().collect(Collectors.toList()); // random.ints(10).boxed().collect(Collectors.toList());
 
@@ -57,11 +54,8 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 
 		for(int seed : seeds) {
 			// MC
-			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, true);
-			// sw.reset();
-			// sw.start();
+			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
 			pathSimulatorMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.TRUE);
-			// System.out.println("time MC: " + sw.getTime());
 
 			// Define pricers
 			EuropeanSimulationPricer simulPricerMC = new EuropeanSimulationPricer<>(pathSimulatorMC);
@@ -75,11 +69,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 								(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
 						.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 				LNSVQDPathSimulatorQMC pathSimulatorQMC = new LNSVQDPathSimulatorQMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGridQMC, maturityGrid, lnsvqdModelAnalyticalPricer, false);
-				// sw.reset();
-				// sw.start();
 				// pathSimulatorQMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD);
-				// sw.stop();
-				// System.out.println("time QMC: " + sw.getTime());
 
 				// Define pricer
 				EuropeanSimulationPricer simulPricerQMC = new EuropeanSimulationPricer<>(pathSimulatorQMC);

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
 
@@ -155,7 +156,7 @@ class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 	@Test
 	public void printPricesWrtPricerParams() throws Exception {
 		setDAXHestonSetupSIM();
-		int[] vals = new int[]{100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600};
+		int[] vals = IntStream.range(1, 11).map(i -> 40 * i).toArray();
 		double[][] impliedVolsPerStepCounter = new double[vals.length][strikeMatPairs.size()];
 		for(int j = 0; j < vals.length; j++) {
 			lnsvqdModelAnalyticalPricer.setUpperBoundForIntegration(vals[j]); // lnsvqdModelAnalyticalPricer.numStepsForODEIntegrationPerYear = vals[j];
@@ -173,6 +174,6 @@ class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 
 			assertEquals(0., range, 1E-4);
 		}
-
 	}
+
 }

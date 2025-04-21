@@ -47,7 +47,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 
 	@Test
 	public void calibrateTest() throws Exception {
-		setDAXHestonMarchSetupSIM();
+		setDAXHestonSetupSIM();
 
 		/**
 		 * 1. Calibrate and get cvalibrated paramerters

@@ -28,7 +28,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * Numerical parameters
 	 */
 	// 1. For ODE-solution
-	public static int numStepsForODEIntegrationPerYear = 365;
+	public static int numStepsForODEIntegrationPerYear = 365; // 365;
 
 	// 2. For unbounded integration
 	// Integration bounds params
@@ -51,8 +51,9 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	}
 
 	public void setUpperBoundForIntegration(double upperBoundForIntegration) {
-		numberOfEvaluationPoints = (int) upperBoundForIntegration * 10;
-		simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBoundForIntegration, numberOfEvaluationPoints, false);
+		upperBound = upperBoundForIntegration;
+		numberOfEvaluationPoints = (int) upperBound * 10;
+		simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, numberOfEvaluationPoints, false);
 		setYGridForIntegrationSimpson();
 	}
 
