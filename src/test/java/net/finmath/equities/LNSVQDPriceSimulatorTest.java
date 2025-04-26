@@ -38,7 +38,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 		// Get analytical prices
 		double[] volAna = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs);
 
-		List<Integer> seeds = IntStream.range(0, 10).boxed().collect(Collectors.toList()); // random.ints(10).boxed().collect(Collectors.toList());
+		List<Integer> seeds = random.ints(10).boxed().collect(Collectors.toList());
 
 		double[][][] pricesMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
 		double[][][] pricesQMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
@@ -97,6 +97,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					pricesQMC[seeds.indexOf(seed)][m][s] = simulatedOptionPriceQMC;
 				}
 			}
+			System.out.println(pricesMC[seeds.indexOf(seed)][4][3]);
 			System.out.println("Finished seed " + seed);
 		}
 

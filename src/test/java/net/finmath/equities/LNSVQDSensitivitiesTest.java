@@ -27,8 +27,8 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 		// Set the right case
 		setDAXHestonSetupSIM();
 
-		int[] seeds = IntStream.range(0, 10).toArray();
-		numberOfPaths = 10000;
+		int[] seeds = IntStream.range(0, 20).toArray();
+		numberOfPaths = 1000;
 
 		// Set Cliquet params
 		double maturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
@@ -42,19 +42,10 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 
 		int minPercOfSpot = 25;
-		int maxPercOfSpot = 425;
-		double shiftSize = 1E-4;
-		int incs = 25;
+		int maxPercOfSpot = 300;
+		double shiftSize = 1E-2; // 0.01
 
-		double[] shiftBy = IntStream.range(0, (maxPercOfSpot - minPercOfSpot) / incs).mapToDouble(n -> (minPercOfSpot + n * incs) / 100.).toArray();
-		double[] shiftBy2 = Arrays.stream(shiftBy).map(x -> x + shiftSize).toArray();
-		double[] shiftBy3 = Arrays.stream(shiftBy2).map(x -> x - 2 * shiftSize).toArray();
-		double[] shiftPercs = DoubleStream.concat(
-						DoubleStream.concat(Arrays.stream(shiftBy), Arrays.stream(shiftBy2)),
-						Arrays.stream(shiftBy3)
-				)
-				.sorted()
-				.toArray();
+		double[] shiftPercs = IntStream.range(minPercOfSpot, maxPercOfSpot + 1).mapToDouble(n -> n / 100.).toArray();
 
 		double[][] pricesLnsvqdMC = new double[seeds.length][shiftPercs.length];
 		double[][] pricesLnsvqdQMC = new double[seeds.length][shiftPercs.length];
@@ -171,7 +162,7 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 		}
 
 
-		LNSVQDUtils.printArray(shiftBy);
+		LNSVQDUtils.printArray(shiftPercs);
 
 		double[][] firstAndSecondOrderLNMC = getFirstAndSecondOrderDerivatives(pricesLnsvqdMCAvg, shiftSize);
 		double[][] firstAndSecondOrderLNQMC = getFirstAndSecondOrderDerivatives(pricesLnsvqdQMCAvg, shiftSize);
@@ -187,29 +178,21 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 	}
 
 	private double[][] getFirstAndSecondOrderDerivatives(double[] values, double shiftSize) {
-		int numValues = values.length / 3;
+		int numValues = values.length;
 
 		double[][] output = new double[3][numValues];
-		double[] firstVals = new double[numValues];
-		double[] secondVals = new double[numValues];
-		double[] thirdVals  = new double[numValues];
-		for (int i = 0; i < numValues; i++) {
-			firstVals[i] = values[3 * i + 1];
-			secondVals[i] = values[3 * i + 2];
-			thirdVals[i] = values[3 * i];
-		}
 
 		double[] firstDeriv = new double[numValues];
-		for (int i = 0; i < numValues; i++) {
-			firstDeriv[i] = (secondVals[i] - thirdVals[i]) / (2 * shiftSize);
+		for (int i = 1; i < numValues - 2; i++) {
+			firstDeriv[i] = (values[i + 1] - values[i - 1]) / (2 * shiftSize);
 		}
 
 		double[] secondDeriv = new double[numValues];
-		for (int i = 0; i < numValues; i++) {
-			secondDeriv[i] = (secondVals[i] - 2 * firstVals[i] + thirdVals[i]) / (shiftSize * shiftSize);
+		for (int i = 2; i < numValues - 4; i++) {
+			secondDeriv[i] = (firstDeriv[i + 1] - 2 * firstDeriv[i] + firstDeriv[i - 1]) / (shiftSize * shiftSize);
 		}
 
-		output[0] = firstVals;
+		output[0] = values;
 		output[1] = firstDeriv;
 		output[2] = secondDeriv;
 

@@ -70,9 +70,9 @@ public class ParametersLNSVQD {
 	};
 
 	static double[] paramInitDAXMarchKappa2Positive = new double[]{
-			0.7183550169994655
-			, 3.1565426287720286 // From python
-			, 1.9367244258255474 // From python
+			1
+			, 4.403227439859688 // , 3.1565426287720286 // From python
+			, 3.536886176176098 // , 1.5132879713105358 //, 1.9367244258255474 // From python
 			, 0.2169627604050273
 			, -1.4891723022148557
 			, 0.9240577536198922

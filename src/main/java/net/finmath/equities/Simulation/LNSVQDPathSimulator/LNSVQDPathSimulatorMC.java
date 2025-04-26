@@ -74,27 +74,13 @@ public class LNSVQDPathSimulatorMC extends LNSVQDPathSimulator{
 					// TODO: Check replacement by zeta
 					volNewTransformed[j] = volNewTransformed[j] + ((lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() / volPath[j] - lnsvqdModel.getKappa1())
 							+ lnsvqdModel.getKappa2() * (lnsvqdModel.getTheta() - volPath[j]) - 0.5 * lnsvqdModel.getTotalInstVar()) * deltaT
-							+ lnsvqdModel.getBeta() * brownianIncrements[j][0] + lnsvqdModel.getEpsilon() * brownianIncrements[j][1]; // Math.sqrt(lnsvqdModel.getTotalInstVar()) * brownianIncrements[j][0]; //
+							+ lnsvqdModel.getBeta() * brownianIncrements[j][0] + lnsvqdModel.getEpsilon() * brownianIncrements[j][1]; //Math.sqrt(lnsvqdModel.getTotalInstVar()) * brownianIncrements[j][0]; //lnsvqdModel.getBeta() * brownianIncrements[j][0] + lnsvqdModel.getEpsilon() * brownianIncrements[j][1]; //
 				}
 				assetPath[j] = assetPath[j] + volPath[j] * volPath[j] * (-0.5) * deltaT + volPath[j] * brownianIncrements[j][0];
-
-				// Alternative: QE discretization of asset path
-			/*	double volPathOld = volPath[j];
-				volPath[j] = Math.exp(volNewTransformed[j]);
-				double psi = lnsvqdModel.beta / Math.sqrt(lnsvqdModel.getTotalInstVar());
-				double K0 = -lnsvqdModel.getKappa1() * lnsvqdModel.getTheta() * psi / Math.sqrt(lnsvqdModel.getTotalInstVar());
-				double K1 = (lnsvqdModel.getKappa1() * psi - psi) / Math.sqrt(lnsvqdModel.getTotalInstVar());
-				double K2 = lnsvqdModel.getKappa2() * psi / Math.sqrt(lnsvqdModel.getTotalInstVar()) - 0.5;
-				double K3 = psi / Math.sqrt(lnsvqdModel.getTotalInstVar());
-				double K4 = deltaT * (1 - psi * psi);
-				assetPath[j] = assetPath[j]
-						+ K0
-						+ K1 * volPathOld
-						+ K2 * volPathOld * volPathOld
-						+ K3 * volPath[j]
-						+ Math.sqrt(K4 * volPathOld * volPathOld) * (brownianIncrements[j][1] / sqrtDeltaT);*/
-
-				volPath[j] = Math.exp(volNewTransformed[j]);
+				volPath[j] = volPath[j] *
+						Math.exp(zeta.value(volNewTransformed[j]) * deltaT + lnsvqdModel.getTotalInstVar() * brownianIncrements[j][1]);
+				volNewTransformed[j] = Math.log(volPath[j]);
+				// volPath[j] = Math.exp(volNewTransformed[j]);
 
 				if(maturities[currentMaturityIndex] == timeGrid[i]) {
 					assetPathAtMaturities[currentMaturityIndex][j] = assetPath[j];

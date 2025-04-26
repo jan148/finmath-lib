@@ -76,9 +76,9 @@ public abstract class TestsSetupForLNSVQD {
 	public void setDAXHestonSetupSIM() {
 		valuationDate = LocalDate.parse("2024-09-30");
 		spot0 = 1;
-		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXSepCalibKappa2Positive;
+		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXFebCalib; // ParametersLNSVQD.paramInitDAXSepCalibKappa2Positive;
 		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXSep;
-		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXSepKappa2Positive; // ParametersLNSVQD.paramInitDAXSepCalib; //  ;
+		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXSepKappa2Positive;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
