@@ -1,36 +1,24 @@
 package net.finmath.equities;
 
-import net.finmath.equities.Simulation.HestonPathSimulator.HestonPathSimulatorMC;
-import net.finmath.equities.Simulation.HestonPathSimulator.HestonPathSimulatorQMC;
-import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDPathSimulatorMC;
-import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDPathSimulatorQMC;
 import net.finmath.equities.Simulation.Options.CliquetSimulationPricer;
 import net.finmath.equities.Simulation.Options.EuropeanSimulationPricer;
+import net.finmath.equities.Simulation.PathSimulator;
 import net.finmath.equities.models.LNSVQDUtils;
-import org.apache.commons.lang3.time.StopWatch;
-import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
+import net.finmath.modelling.descriptor.AssetModelDescriptor;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
-	/**
-	 * Stat utils
-	 */
-	StandardDeviation standardDeviation = new StandardDeviation();
 	Random random = new Random();
 
-	/**
-	 * Test cases: DAX: setDAXHestonSetupSIM(); BTC: setBTCSetupSIM()
-	 */
-	@Test
-	public void testEuropeanOption() throws Exception {
+	/*@Test
+	public void getImpliedVolsLNSVQD() throws Exception {
 		// Set the right case
-		setDAXHestonSetupSIM(); //setBTCSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
+		loadS24(); //loadBitcoin(); //loadBitcoin(); // loadS24();
 
 		// Get option values
 		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
@@ -48,14 +36,13 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 						(int) (Math.round(maxMaturity * 365.) * 1), 0, maxMaturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 
-		int startingIndex = 1;
+		int startingIndex = 0;
 		double[] startingValueLNSVQD = new double[]{spot0, selectedParamsLNSVQD[0]};
-		double[] startingValueHeston = new double[]{spot0, selectedParamsHeston[0]};
 
 		for(int seed : seeds) {
 			// MC
 			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
-			pathSimulatorMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.TRUE);
+			pathSimulatorMC.precalculatePaths(seed, true, startingIndex + 1, startingValueLNSVQD, Boolean.TRUE);
 
 			// Define pricers
 			EuropeanSimulationPricer simulPricerMC = new EuropeanSimulationPricer<>(pathSimulatorMC);
@@ -68,8 +55,8 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 				double[] timeGridQMC = LNSVQDUtils.addTimePointsToArray(maturityGridQMC,
 								(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
 						.stream().distinct().mapToDouble(Double::doubleValue).toArray();
-				LNSVQDPathSimulatorQMC pathSimulatorQMC = new LNSVQDPathSimulatorQMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGridQMC, maturityGrid, lnsvqdModelAnalyticalPricer, false);
-				// pathSimulatorQMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD);
+				LNSVQDPathSimulatorQMC pathSimulatorQMC = new LNSVQDPathSimulatorQMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGridQMC, maturityGridQMC, lnsvqdModelAnalyticalPricer, false);
+				pathSimulatorQMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.TRUE);
 
 				// Define pricer
 				EuropeanSimulationPricer simulPricerQMC = new EuropeanSimulationPricer<>(pathSimulatorQMC);
@@ -89,7 +76,7 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 					// QMC
 					double simulatedOptionPriceQMC;
 					try {
-						simulatedOptionPriceQMC = 0; // simulPricerQMC.getEuropeanPriceAuto(strike, maturity);
+						simulatedOptionPriceQMC = simulPricerQMC.getEuropeanPriceAuto(strike, maturity);
 					} catch(AssertionError e) {
 						System.err.println("Caught AssertionError: " + e.getMessage());
 						simulatedOptionPriceQMC = 1000000;
@@ -139,19 +126,19 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 						+ impliedVolMC + "\t" + stdErrMC + "\t" + impliedVolLowerMC + "\t" + impliedVolUpperMC + "\t"
 						+ impliedVolQMC + "\t" + stdErrQMC + "\t" + impliedVolLowerQMC + "\t" + impliedVolUpperQMC + "\t");
 
-				/*System.out.println(volAna[m * numStrikesPerMaturity + s] + "\t"
+				*//*System.out.println(volAna[m * numStrikesPerMaturity + s] + "\t"
 						+ averagePrice + "\t" + stdErrMC + "\t" + lbMc + "\t" + ubMc + "\t"
-						+ averagePriceQMC + "\t" + stdErrQMC + "\t" + lbQmc + "\t" + ubQmc + "\t");*/
+						+ averagePriceQMC + "\t" + stdErrQMC + "\t" + lbQmc + "\t" + ubQmc + "\t");*//*
 			}
 		}
-	}
+	}*/
 
 	@Test
 	public void testCliquetOption() throws Exception {
 		numberOfPaths = 100;
 
 		// Set the right case
-		setDAXHestonFebruarySetupSIM(); // setDAXHestonMarchSetupSIM(); //setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
+		loadS20(); // loadS20(); //loadS24(); //loadBitcoin(); // loadS24();
 
 		// Set Cliquet params
 		double maturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
@@ -171,54 +158,36 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 						(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 
-		int startingIndex = 1;
+		int startingIndex = 0;
 		double[] startingValueLNSVQD = new double[]{spot0, selectedParamsLNSVQD[0]};
 		double[] startingValueHeston = new double[]{spot0, selectedParamsHeston[0]};
 
 		for(int seed : seeds) {
-			// MC
-			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve
-					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);;
-			// sw.reset();
-			// sw.start();
-			pathSimulatorMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.TRUE);
-			// System.out.println("time MC: " + sw.getTime());
+			PathSimulator pathSimulatorLnsvqdMc = new PathSimulator(valuationDate, disountCurve
+					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid);
+			PathSimulator pathSimulatorLnsvqdQmc = new PathSimulator(valuationDate, disountCurve
+					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid);
+			PathSimulator pathSimulatorHestonMC = new PathSimulator(valuationDate, disountCurve
+					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid);
+			PathSimulator pathSimulatorHestonQMC = new PathSimulator(valuationDate, disountCurve
+					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid);
 
-			// QMC
-			LNSVQDPathSimulatorQMC pathSimulatorQMC = new LNSVQDPathSimulatorQMC(valuationDate, disountCurve
-					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
-			// sw.reset();
-			// sw.start();
-			pathSimulatorQMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.TRUE);
-			// sw.stop();
-			// System.out.println("time QMC: " + sw.getTime());
 
-			// Heston MC
-			double gamma1 = 1;
-			double gamma2 = 0;
-			HestonPathSimulatorMC pathSimulatorHestonMC = new HestonPathSimulatorMC(valuationDate, disountCurve
-					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3], selectedParamsHeston[4], gamma1, gamma2);
-			// sw.reset();
-			// sw.start();
-			pathSimulatorHestonMC.precalculatePaths(seed, true, startingIndex, startingValueHeston, Boolean.TRUE);
-			// sw.stop();
-			// System.out.println("time QMC: " + sw.getTime());
+			pathSimulatorLnsvqdMc.precalculatePaths(seed, true, startingIndex,
+					startingValueLNSVQD, Boolean.TRUE, "LNSVQD", "MC", lnsvqdModelDescriptor, null);
+			pathSimulatorLnsvqdQmc.precalculatePaths(seed, true, startingIndex,
+					startingValueLNSVQD, Boolean.TRUE, "LNSVQD", "QMC", lnsvqdModelDescriptor, null);
+			pathSimulatorHestonMC.precalculatePaths(seed, true, startingIndex,
+					startingValueHeston, Boolean.TRUE, "Heston", "MC", null, hestonModelDescriptor);
+			pathSimulatorHestonQMC.precalculatePaths(seed, true, startingIndex,
+					startingValueHeston, Boolean.TRUE, "Heston", "QMC", null, hestonModelDescriptor);
 
-			// Heston QMC
-			HestonPathSimulatorQMC pathSimulatorHestonQMC = new HestonPathSimulatorQMC(valuationDate, disountCurve
-					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3], selectedParamsHeston[4], gamma1, gamma2);
-
-			// sw.reset();
-			// sw.start();
-			pathSimulatorHestonQMC.precalculatePaths(seed, true, startingIndex, startingValueHeston, Boolean.TRUE);
-			// sw.stop();
-			// System.out.println("time QMC: " + sw.getTime());
 
 			// Define pricers
-			CliquetSimulationPricer simulPricerLnsvqdMC = new CliquetSimulationPricer<>(pathSimulatorMC);
-			CliquetSimulationPricer simulPricerLnsvqdQMC = new CliquetSimulationPricer<>(pathSimulatorQMC);
-			CliquetSimulationPricer simulPricerHestonMC = new CliquetSimulationPricer<>(pathSimulatorHestonMC);
-			CliquetSimulationPricer simulPricerHestonQMC = new CliquetSimulationPricer<>(pathSimulatorHestonQMC);
+			CliquetSimulationPricer simulPricerLnsvqdMC = new CliquetSimulationPricer(pathSimulatorLnsvqdMc);
+			CliquetSimulationPricer simulPricerLnsvqdQMC = new CliquetSimulationPricer(pathSimulatorLnsvqdQmc);
+			CliquetSimulationPricer simulPricerHestonMC = new CliquetSimulationPricer(pathSimulatorHestonMC);
+			CliquetSimulationPricer simulPricerHestonQMC = new CliquetSimulationPricer(pathSimulatorHestonQMC);
 
 			// MC
 			double simulatedOptionPrice;
@@ -296,127 +265,6 @@ public class LNSVQDPriceSimulatorTest extends TestsSetupForLNSVQD {
 				+ averagePriceQMC + "\t" + stdErrQMC + "\t" + lbQMC + "\t" + ubQMC + "\t"
 				+ averagePriceHestonMC + "\t" + stdErrHestonMC + "\t" + lbHestonMC + "\t" + ubHestonMC + "\t"
 				+ averagePriceHestonQMC + "\t" + stdErrHestonQMC + "\t" + lbHestonQMC + "\t" + ubHestonQMC);
-	}
-
-	@Test
-	public void testHestonEuropean() throws Exception {
-		// Set the right case
-		setDAXHestonSetupSIM(); //setBTCSetupSIM(); // setDAXHestonSetupSIM();
-
-		// Get option values
-		int numStrikesPerMaturity = strikeMatPairs.size() / maturityGrid.length;
-
-		// Get analytical prices
-		StopWatch sw = StopWatch.createStarted();
-		double[] volAna = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs);
-		double[] pricesAna = lnsvqdModelAnalyticalPricer.getEuropeanOptionPricesAuto(strikeMatPairs);
-		sw.stop();
-		System.out.println("time: " + sw.getTime());
-
-		List<Integer> seeds = random.ints(10).boxed().collect(Collectors.toList());
-
-		double[][][] pricesMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
-		double[][][] pricesHestonMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
-
-		double maxMaturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
-		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(maturityGrid,
-						(int) (Math.round(maxMaturity * 365.) * 1), 0, maxMaturity, true)
-				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
-		for(int seed : seeds) {
-			// MC
-			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
-			// sw.reset();
-			// sw.start();
-			pathSimulatorMC.precalculatePaths(seed, true, 0, null, Boolean.TRUE);
-			// System.out.println("time MC: " + sw.getTime());
-
-			// Heston MC
-			double gamma1 = 1;
-			double gamma2 = 0;
-			HestonPathSimulatorMC pathSimulatorHestonMC = new HestonPathSimulatorMC(valuationDate, disountCurve
-					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3], selectedParamsHeston[4], gamma1, gamma2);
-			// sw.reset();
-			// sw.start();
-			pathSimulatorHestonMC.precalculatePaths(seed, true, 0, null, Boolean.TRUE);
-			// sw.stop();
-			// System.out.println("time QMC: " + sw.getTime());
-
-			// Define pricers
-			EuropeanSimulationPricer simulPricerMC = new EuropeanSimulationPricer<>(pathSimulatorMC);
-			EuropeanSimulationPricer simulPricerHestonMC = new EuropeanSimulationPricer<>(pathSimulatorHestonMC);
-
-			for(int m = 0; m < maturityGrid.length; m++) {
-				double maturity = maturityGrid[m];
-
-				for(int s = 0; s < numStrikesPerMaturity; s++) {
-					double strike = strikeMatPairs.get(m * numStrikesPerMaturity + s).getValue();
-
-					double simulatedOptionPrice;
-					try {
-						simulatedOptionPrice = simulPricerMC.getEuropeanPriceAuto(strike, maturity);
-					} catch(AssertionError e) {
-						System.err.println("Caught AssertionError: " + e.getMessage());
-						simulatedOptionPrice = 1000000;
-					}
-					pricesMC[seeds.indexOf(seed)][m][s] = simulatedOptionPrice;
-
-					// MC Heston
-					double simulatedOptionPriceHestonMC;
-					try {
-						simulatedOptionPriceHestonMC = simulPricerHestonMC.getEuropeanPriceAuto(strike, maturity);
-					} catch(AssertionError e) {
-						System.err.println("Caught AssertionError: " + e.getMessage());
-						simulatedOptionPriceHestonMC = 1000000;
-					}
-					pricesHestonMC[seeds.indexOf(seed)][m][s] = simulatedOptionPriceHestonMC;
-				}
-			}
-			System.out.println("Finished seed " + seed);
-		}
-
-		for(int m = 0; m < maturityGrid.length; m++) {
-			for(int s = 0; s < numStrikesPerMaturity; s++) {
-				double maturity = strikeMatPairs.get(m * numStrikesPerMaturity + s).getKey();
-				double strike = strikeMatPairs.get(m * numStrikesPerMaturity + s).getValue();
-
-				double[] pricesMCForPair = new double[seeds.size()];
-				double[] pricesHestonMCForPair = new double[seeds.size()];
-				for(int j = 0; j < seeds.size(); j++) {
-					pricesMCForPair[j] = pricesMC[j][m][s];
-					pricesHestonMCForPair[j] = pricesHestonMC[j][m][s];
-				}
-
-				double averagePrice = Math.max(Arrays.stream(pricesMCForPair).average().getAsDouble(), 1E-10);
-				double varMC = Arrays.stream(pricesMCForPair).map(x -> Math.pow(x - averagePrice, 2)).sum() / (seeds.size() - 1);
-				double stdErrMC = Math.sqrt(varMC) / Math.sqrt(seeds.size());
-				double[] confidenceIntervalMC = LNSVQDUtils.getConfidenceInterval(pricesMCForPair, 0.05);
-				double lbMc = Math.max(confidenceIntervalMC[0], 1E-10);
-				double ubMc = Math.max(confidenceIntervalMC[1], 1E-10);
-
-				double impliedVolMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, averagePrice);
-				double impliedVolLowerMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, lbMc);
-				double impliedVolUpperMC = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, ubMc);
-
-				double averagePriceHestonMC = Math.max(Arrays.stream(pricesHestonMCForPair).average().getAsDouble(), 1E-10);
-				double varHestonMC = Arrays.stream(pricesHestonMCForPair).map(x -> Math.pow(x - averagePriceHestonMC, 2)).sum() / (seeds.size() - 1);
-				double stdErrHestonMC = Math.sqrt(varHestonMC) / Math.sqrt(seeds.size());
-				double[] confidenceIntervalHestonMC = LNSVQDUtils.getConfidenceInterval(pricesHestonMCForPair, 0.05);
-				double lbHestonMc = Math.max(confidenceIntervalHestonMC[0], 1E-10);
-				double ubHestonMc = Math.max(confidenceIntervalHestonMC[1], 1E-10);
-
-				double impliedVolHestonMc = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, averagePriceHestonMC);
-				double impliedVolLowerHestonMc = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, lbHestonMc);
-				double impliedVolUpperHestonMc = lnsvqdModelAnalyticalPricer.getImpliedVolFromPrice(strike, maturity, ubHestonMc);
-
-				/*System.out.println(volAna[m * numStrikesPerMaturity + s] + "\t"
-						+ impliedVolMC + "\t" + stdErrMC + "\t" + impliedVolLowerMC + "\t" + impliedVolUpperMC + "\t"
-						+ impliedVolHestonMc + "\t" + stdErrHestonMC + "\t" + impliedVolLowerHestonMc + "\t" + impliedVolUpperHestonMc + "\t");
-*/
-				System.out.println(pricesAna[m * numStrikesPerMaturity + s] + "\t"
-						+ averagePrice + "\t" + stdErrMC + "\t" + lbMc + "\t" + ubMc + "\t"
-						+ averagePriceHestonMC + "\t" + stdErrHestonMC + "\t" + lbHestonMc + "\t" + ubHestonMc + "\t");
-			}
-		}
 	}
 
 }

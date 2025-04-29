@@ -5,10 +5,10 @@ import net.finmath.equities.Simulation.PathSimulator;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
-public class CliquetSimulationPricer<T extends PathSimulator>{
-	T pathSimulator;
+public class CliquetSimulationPricer{
+	PathSimulator pathSimulator;
 
-	public CliquetSimulationPricer(T pathSimulator) {
+	public CliquetSimulationPricer(PathSimulator pathSimulator) {
 		this.pathSimulator = pathSimulator;
 	}
 
@@ -43,5 +43,4 @@ public class CliquetSimulationPricer<T extends PathSimulator>{
 		double price = expectationAtMaturity * discountFactor;
 		return price;
 	}
-
 }

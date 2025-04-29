@@ -1,9 +1,5 @@
 package net.finmath.equities;
 
-import net.finmath.equities.Simulation.HestonPathSimulator.HestonPathSimulatorMC;
-import net.finmath.equities.Simulation.HestonPathSimulator.HestonPathSimulatorQMC;
-import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDPathSimulatorMC;
-import net.finmath.equities.Simulation.LNSVQDPathSimulator.LNSVQDPathSimulatorQMC;
 import net.finmath.equities.Simulation.Options.CliquetSimulationPricer;
 import net.finmath.equities.models.LNSVQDUtils;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
@@ -11,9 +7,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Random;
-import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 	/**
@@ -22,13 +16,13 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 	StandardDeviation standardDeviation = new StandardDeviation();
 	Random random = new Random();
 
-	@Test
+	/*@Test
 	public void testCliquetDeltaGamma() throws Exception {
 		// Set the right case
-		setDAXHestonSetupSIM();
+		loadS25();
 
-		int[] seeds = IntStream.range(0, 20).toArray();
-		numberOfPaths = 1000;
+		int[] seeds = IntStream.range(0, 1).toArray();
+		numberOfPaths = 100000;
 
 		// Set Cliquet params
 		double maturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
@@ -41,8 +35,8 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 						(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 
-		int minPercOfSpot = 25;
-		int maxPercOfSpot = 300;
+		int minPercOfSpot = 50;
+		int maxPercOfSpot = 150;
 		double shiftSize = 1E-2; // 0.01
 
 		double[] shiftPercs = IntStream.range(minPercOfSpot, maxPercOfSpot + 1).mapToDouble(n -> n / 100.).toArray();
@@ -53,7 +47,7 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 		double[][] pricesHestonQMC = new double[seeds.length][shiftPercs.length];
 
 		for(int s = 0; s < seeds.length; s++) {
-			int seed = seeds[s];
+			int seed = random.nextInt();
 
 			// MC
 			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve
@@ -85,21 +79,22 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 			for(int k = 0; k < shiftPercs.length; k++) {
 				double shift = shiftPercs[k];
 
-				int startingIndex = 94;
+				Boolean martingaleCorrection = Boolean.FALSE;
+				int startingIndex = 93;
 				double[] startingValueLNSVQD =  new double[]{spot0 * shift, selectedParamsLNSVQD[0]};
 				double[] startingValueHeston =  new double[]{spot0 * shift, selectedParamsHeston[0]};
 
 				// LNSVQD MC
-				pathSimulatorMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.FALSE);
+				pathSimulatorMC.precalculatePaths(seed, true, startingIndex + 1, startingValueLNSVQD, martingaleCorrection);
 
-				// LNSVQD MC
-				pathSimulatorQMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, Boolean.FALSE);
+				// LNSVQD QMC
+				pathSimulatorQMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, martingaleCorrection);
 
 				// Heston MC
-				pathSimulatorHestonMC.precalculatePaths(seed, true, startingIndex, startingValueHeston, Boolean.FALSE);
+				pathSimulatorHestonMC.precalculatePaths(seed, true, startingIndex + 1, startingValueHeston, martingaleCorrection, );
 
 				// Heston QMC
-				pathSimulatorHestonQMC.precalculatePaths(seed, true, startingIndex, startingValueHeston, Boolean.FALSE);
+				pathSimulatorHestonQMC.precalculatePaths(seed, true, startingIndex, startingValueHeston, martingaleCorrection, );
 
 				// Define pricers
 				CliquetSimulationPricer simulPricerLNSVQDMC = new CliquetSimulationPricer<>(pathSimulatorMC);
@@ -161,7 +156,6 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 			pricesHestonQMCAvg[j] = IntStream.range(0, seeds.length).mapToDouble(i -> pricesHestonQMC[i][index]).average().getAsDouble();
 		}
 
-
 		LNSVQDUtils.printArray(shiftPercs);
 
 		double[][] firstAndSecondOrderLNMC = getFirstAndSecondOrderDerivatives(pricesLnsvqdMCAvg, shiftSize);
@@ -175,7 +169,7 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 			LNSVQDUtils.printArray(firstAndSecondOrderHestonMC[i]);
 			LNSVQDUtils.printArray(firstAndSecondOrderHestonQMC[i]);
 		}
-	}
+	}*/
 
 	private double[][] getFirstAndSecondOrderDerivatives(double[] values, double shiftSize) {
 		int numValues = values.length;
@@ -183,13 +177,13 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 		double[][] output = new double[3][numValues];
 
 		double[] firstDeriv = new double[numValues];
-		for (int i = 1; i < numValues - 2; i++) {
+		for (int i = 1; i < numValues - 1; i++) {
 			firstDeriv[i] = (values[i + 1] - values[i - 1]) / (2 * shiftSize);
 		}
 
 		double[] secondDeriv = new double[numValues];
-		for (int i = 2; i < numValues - 4; i++) {
-			secondDeriv[i] = (firstDeriv[i + 1] - 2 * firstDeriv[i] + firstDeriv[i - 1]) / (shiftSize * shiftSize);
+		for (int i = 1; i < numValues - 1; i++) {
+			secondDeriv[i] = (values[i + 1] - 2 * values[i] + values[i - 1]) / (shiftSize * shiftSize);
 		}
 
 		output[0] = values;

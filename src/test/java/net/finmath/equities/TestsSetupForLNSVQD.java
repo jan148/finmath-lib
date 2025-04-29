@@ -6,6 +6,8 @@ import net.finmath.equities.models.EquityForwardStructure;
 import net.finmath.equities.pricer.LNSVQDModelAnalyticalPricer;
 import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.equities.models.VolatilityPointsSurface;
+import net.finmath.modelling.descriptor.HestonModelDescriptor;
+import net.finmath.modelling.descriptor.LNSVQDModelDescriptor;
 import net.finmath.time.daycount.DayCountConvention;
 import net.finmath.time.daycount.DayCountConvention_ACT_365;
 import org.apache.commons.math3.util.Pair;
@@ -29,6 +31,11 @@ public abstract class TestsSetupForLNSVQD {
 	static double[] selectedParamsHeston;
 	static double[] selectedParamsToCalibrate;
 
+	/**
+	 * Model descriptors
+	 */
+	static LNSVQDModelDescriptor lnsvqdModelDescriptor;
+static HestonModelDescriptor hestonModelDescriptor;
 	/**
 	 * Other
 	 */
@@ -59,7 +66,7 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create simulation model (not finmath)
 	 */
-	static int numberOfPaths = 100000;
+	static int numberOfPaths = 10000;
 
 	/**
 	 * Declare volatility surface; will be insatntiated later
@@ -73,14 +80,246 @@ public abstract class TestsSetupForLNSVQD {
 	 * UTILS
 	 * ***************************************************+
 	 */
-	public void setDAXHestonSetupSIM() {
-		valuationDate = LocalDate.parse("2024-09-30");
+	public void loadS20() {
+		valuationDate = LocalDate.parse("2020-03-12");
 		spot0 = 1;
-		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXFebCalib; // ParametersLNSVQD.paramInitDAXSepCalibKappa2Positive;
-		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXSep;
-		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXSepKappa2Positive;
+		selectedParamsLNSVQD = ParametersLNSVQD.s20LnsvqdCalib2;
+		selectedParamsHeston = ParametersLNSVQD.s20HestonCalib;
+		selectedParamsToCalibrate = ParametersLNSVQD.s20LnsvqdInit2; // ParametersLNSVQD.paramInitDAXMarch;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
+		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
+			long days = Math.round(ttm * 365);
+			return valuationDate.plusDays(days);
+		}).toArray(LocalDate[]::new);
+
+		discountDates = LNSVQDUtils.createLocalDateList(new String[]{
+				"2020-03-19",
+				"2020-03-26",
+				"2020-04-14",
+				"2020-05-12",
+				"2020-06-12",
+				"2020-07-13",
+				"2020-08-12",
+				"2020-09-14",
+				"2020-10-12",
+				"2020-11-12",
+				"2020-12-14",
+				"2021-01-12",
+				"2021-02-12",
+				"2021-03-12",
+				"2021-09-13",
+				"2022-03-14",
+				"2023-03-13",
+				"2024-03-12"
+		});
+
+		discountFactors = new double[]{
+				1.0001114324,
+				1.0002151063,
+				1.0005360772,
+				1.0010092075,
+				1.0015382526,
+				1.0021125334,
+				1.0026675971,
+				1.0032760273,
+				1.0038369459,
+				1.0044707285,
+				1.0051353471,
+				1.0057276188,
+				1.0063636702,
+				1.0069114705,
+				1.0107826153,
+				1.0145816867,
+				1.0213373294,
+				1.0274204190
+		};
+
+		disountCurve = new YieldCurve("Discount curve"
+				, valuationDate
+				, dayCountConvention
+				, discountDates
+				, discountFactors);
+
+		forwardDates = LNSVQDUtils.createLocalDateList(new String[]{
+				"2020-03-20",
+				"2020-04-17",
+				"2020-05-15",
+				"2020-06-19",
+				"2020-09-18",
+				"2020-12-18",
+				"2021-06-18",
+				"2021-12-17",
+				"2022-06-17",
+				"2022-12-16",
+				"2023-12-15"
+		});
+
+		forwardDiscountFactors = new double[]{
+				1.000413517,
+				1.002016627,
+				0.999862638,
+				0.999768006,
+				1.004269671,
+				1.007155568,
+				1.006625749,
+				1.008821234,
+				1.008656759,
+				1.009848938,
+				1.008563601
+		};
+
+		forwardCurve = new YieldCurve("Discount curve"
+				, valuationDate
+				, dayCountConvention
+				, forwardDates
+				, forwardDiscountFactors);
+
+		affineDividends = new AffineDividend[]{new AffineDividend(valuationDate, 0., 0.)};
+		affineDividendStream = new AffineDividendStream(affineDividends);
+		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, forwardCurve, affineDividendStream, dayCountConvention);
+
+		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
+				spot0
+				, selectedParamsLNSVQD[0]
+				, selectedParamsLNSVQD[1]
+				, selectedParamsLNSVQD[2]
+				, selectedParamsLNSVQD[3]
+				, selectedParamsLNSVQD[4]
+				, selectedParamsLNSVQD[5]
+				, 0
+				, valuationDate
+				, disountCurve
+				, equityForwardStructure);
+
+		double[] forwards = Arrays.stream(maturityGrid).map(x -> equityForwardStructure.getForward(x)).toArray();
+
+		// Initialize volatilityPoints
+		strikeMatPairs = new ArrayList<>();
+
+		// Create and adf volatility points
+		strikeMatPairs.add(new Pair<>(maturityGrid[0], 0.60 * forwards[0]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[0], 0.80 * forwards[0]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.00 * forwards[0]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.20 * forwards[0]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.40 * forwards[0]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[1], 0.60 * forwards[1]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[1], 0.80 * forwards[1]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.00 * forwards[1]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.20 * forwards[1]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.40 * forwards[1]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[2], 0.60 * forwards[2]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[2], 0.80 * forwards[2]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.00 * forwards[2]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.20 * forwards[2]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.40 * forwards[2]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[3], 0.60 * forwards[3]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[3], 0.80 * forwards[3]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.00 * forwards[3]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.20 * forwards[3]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.40 * forwards[3]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[4], 0.60 * forwards[4]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[4], 0.80 * forwards[4]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.00 * forwards[4]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.20 * forwards[4]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.40 * forwards[4]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[5], 0.60 * forwards[5]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[5], 0.80 * forwards[5]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.00 * forwards[5]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.20 * forwards[5]));
+		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.40 * forwards[5]));
+
+		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<VolatilityPoint>();
+
+		// Create and adf volatility points
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 0.60, 0.785448623, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 0.80, 0.64250993, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.00, 0.522559669, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.20, 0.4330327, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.40, 0.389166585, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 0.60, 0.63284719, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 0.80, 0.525241632, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.00, 0.435594447, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.20, 0.365653625, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.40, 0.322900301, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 0.60, 0.555076443, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 0.80, 0.464934416, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.00, 0.390344892, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.20, 0.33129643, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.40, 0.292097563, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 0.60, 0.498391651, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 0.80, 0.4213057, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.00, 0.358264968, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.20, 0.308548525, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.40, 0.274590694, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 0.60, 0.460228523, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 0.80, 0.392186506, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.00, 0.337122623, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.20, 0.293820364, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.40, 0.263493011, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 0.60, 0.429366647, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 0.80, 0.369927047, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.00, 0.32209488, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.20, 0.284219166, spot0));
+		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.40, 0.25657709, spot0));
+
+		// Create volatility surface
+		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);
+
+		// ACF
+		acfAtLags = new ArrayList<>();
+		acfAtLags.add(new Pair<>(0., 1.));
+		acfAtLags.add(new Pair<>(10.,0.782428986));
+		acfAtLags.add(new Pair<>(20.,0.626013798));
+		acfAtLags.add(new Pair<>(30.,0.52663777));
+		acfAtLags.add(new Pair<>(40.,0.474562316));
+		acfAtLags.add(new Pair<>(50.,0.438915541));
+		acfAtLags.add(new Pair<>(60.,0.415146521));
+		acfAtLags.add(new Pair<>(70.,0.383064415));
+		acfAtLags.add(new Pair<>(80.,0.33402509));
+
+		// Steady state distribution
+		lnSigmaSteadyStateDist = new ArrayList<>();
+		lnSigmaSteadyStateDist.add(new Pair<>(-2.2, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-2.1, 0.017767478));
+		lnSigmaSteadyStateDist.add(new Pair<>(-2., 0.076477404));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.9, 0.129393588));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.8, 0.1201236));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.7, 0.129007339));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.6, 0.123599846));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.5, 0.09578988));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.4, 0.100038625));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.3, 0.065276168));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.2, 0.059868675));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1.1, 0.0397837));
+		lnSigmaSteadyStateDist.add(new Pair<>(-1., 0.01622248));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.9, 0.010428737));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.8, 0.005021244));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.7, 0.002703747));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.6, 0.002703747));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.5, 0.001544998));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.4, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.3, 0.000772499));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.2, 0.001158749));
+		lnSigmaSteadyStateDist.add(new Pair<>(-0.1, 0.00077249 ));
+
+		// Model desciptors
+		lnsvqdModelDescriptor = new LNSVQDModelDescriptor(spot0, selectedParamsLNSVQD[0], selectedParamsLNSVQD[1]
+				, selectedParamsLNSVQD[2], selectedParamsLNSVQD[3], selectedParamsLNSVQD[4], selectedParamsLNSVQD[5],  0);
+		hestonModelDescriptor = new HestonModelDescriptor(valuationDate, spot0, null
+				, null, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3]
+				, selectedParamsHeston[4]);
+	}
+
+	public void loadS24() {
+		valuationDate = LocalDate.parse("2024-09-30");
+		spot0 = 1;
+		selectedParamsLNSVQD = ParametersLNSVQD.s24LnsvqdCalib; // ParametersLNSVQD.paramInitDAXFebCalib; // ParametersLNSVQD.paramInitDAXSepCalibKappa2Positive;
+		selectedParamsHeston = ParametersLNSVQD.s24HestonCalib;
+		selectedParamsToCalibrate = ParametersLNSVQD.s24LnsvqdInit2;
+
+		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
+		maturityGrid = new double[]{0.2, 0.25, 0.3, 0.35, 0.4};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
 			long days = Math.round(ttm * 365);
 			return valuationDate.plusDays(days);
@@ -298,236 +537,12 @@ public abstract class TestsSetupForLNSVQD {
 		lnSigmaSteadyStateDist.add(new Pair<>(-0.1, 0.00077249 ));
 	}
 
-	public void setDAXHestonMarchSetupSIM() {
-		valuationDate = LocalDate.parse("2020-03-12");
-		spot0 = 1;
-		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXMarchCalibKappa2Positive;
-		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXMarch;
-		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXMarchKappa2Positive; // ParametersLNSVQD.paramInitDAXMarch;
-
-		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
-		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
-			long days = Math.round(ttm * 365);
-			return valuationDate.plusDays(days);
-		}).toArray(LocalDate[]::new);
-
-		discountDates = LNSVQDUtils.createLocalDateList(new String[]{
-				"2020-03-19",
-				"2020-03-26",
-				"2020-04-14",
-				"2020-05-12",
-				"2020-06-12",
-				"2020-07-13",
-				"2020-08-12",
-				"2020-09-14",
-				"2020-10-12",
-				"2020-11-12",
-				"2020-12-14",
-				"2021-01-12",
-				"2021-02-12",
-				"2021-03-12",
-				"2021-09-13",
-				"2022-03-14",
-				"2023-03-13",
-				"2024-03-12"
-		});
-
-		discountFactors = new double[]{
-				1.0001114324,
-				1.0002151063,
-				1.0005360772,
-				1.0010092075,
-				1.0015382526,
-				1.0021125334,
-				1.0026675971,
-				1.0032760273,
-				1.0038369459,
-				1.0044707285,
-				1.0051353471,
-				1.0057276188,
-				1.0063636702,
-				1.0069114705,
-				1.0107826153,
-				1.0145816867,
-				1.0213373294,
-				1.0274204190
-		};
-
-		disountCurve = new YieldCurve("Discount curve"
-				, valuationDate
-				, dayCountConvention
-				, discountDates
-				, discountFactors);
-
-		forwardDates = LNSVQDUtils.createLocalDateList(new String[]{
-				"2020-03-20",
-				"2020-04-17",
-				"2020-05-15",
-				"2020-06-19",
-				"2020-09-18",
-				"2020-12-18",
-				"2021-06-18",
-				"2021-12-17",
-				"2022-06-17",
-				"2022-12-16",
-				"2023-12-15"
-		});
-
-		forwardDiscountFactors = new double[]{
-				1.000413517,
-				1.002016627,
-				0.999862638,
-				0.999768006,
-				1.004269671,
-				1.007155568,
-				1.006625749,
-				1.008821234,
-				1.008656759,
-				1.009848938,
-				1.008563601
-		};
-
-		forwardCurve = new YieldCurve("Discount curve"
-				, valuationDate
-				, dayCountConvention
-				, forwardDates
-				, forwardDiscountFactors);
-
-		affineDividends = new AffineDividend[]{new AffineDividend(valuationDate, 0., 0.)};
-		affineDividendStream = new AffineDividendStream(affineDividends);
-		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, forwardCurve, affineDividendStream, dayCountConvention);
-
-		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
-				spot0
-				, selectedParamsLNSVQD[0]
-				, selectedParamsLNSVQD[1]
-				, selectedParamsLNSVQD[2]
-				, selectedParamsLNSVQD[3]
-				, selectedParamsLNSVQD[4]
-				, selectedParamsLNSVQD[5]
-				, 0
-				, valuationDate
-				, disountCurve
-				, equityForwardStructure);
-
-		double[] forwards = Arrays.stream(maturityGrid).map(x -> equityForwardStructure.getForward(x)).toArray();
-
-		// Initialize volatilityPoints
-		strikeMatPairs = new ArrayList<>();
-
-		// Create and adf volatility points
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 0.60 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 0.80 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.00 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.20 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.40 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 0.60 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 0.80 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.00 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.20 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.40 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 0.60 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 0.80 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.00 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.20 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.40 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 0.60 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 0.80 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.00 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.20 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.40 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 0.60 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 0.80 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.00 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.20 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.40 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 0.60 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 0.80 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.00 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.20 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.40 * forwards[5]));
-
-		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<VolatilityPoint>();
-
-		// Create and adf volatility points
-		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 0.60, 0.785448623, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 0.80, 0.64250993, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.00, 0.522559669, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.20, 0.4330327, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[0].toString(), 1.40, 0.389166585, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 0.60, 0.63284719, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 0.80, 0.525241632, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.00, 0.435594447, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.20, 0.365653625, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[1].toString(), 1.40, 0.322900301, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 0.60, 0.555076443, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 0.80, 0.464934416, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.00, 0.390344892, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.20, 0.33129643, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[2].toString(), 1.40, 0.292097563, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 0.60, 0.498391651, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 0.80, 0.4213057, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.00, 0.358264968, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.20, 0.308548525, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[3].toString(), 1.40, 0.274590694, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 0.60, 0.460228523, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 0.80, 0.392186506, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.00, 0.337122623, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.20, 0.293820364, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[4].toString(), 1.40, 0.263493011, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 0.60, 0.429366647, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 0.80, 0.369927047, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.00, 0.32209488, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.20, 0.284219166, spot0));
-		volatilityPoints.add(makeVolatilityPoint(dates[5].toString(), 1.40, 0.25657709, spot0));
-
-		// Create volatility surface
-		volatilityPointsSurface = new VolatilityPointsSurface(volatilityPoints, valuationDate, dayCountConvention);
-
-		// ACF
-		acfAtLags = new ArrayList<>();
-		acfAtLags.add(new Pair<>(0., 1.));
-		acfAtLags.add(new Pair<>(10.,0.782428986));
-		acfAtLags.add(new Pair<>(20.,0.626013798));
-		acfAtLags.add(new Pair<>(30.,0.52663777));
-		acfAtLags.add(new Pair<>(40.,0.474562316));
-		acfAtLags.add(new Pair<>(50.,0.438915541));
-		acfAtLags.add(new Pair<>(60.,0.415146521));
-		acfAtLags.add(new Pair<>(70.,0.383064415));
-		acfAtLags.add(new Pair<>(80.,0.33402509));
-
-		// Steady state distribution
-		lnSigmaSteadyStateDist = new ArrayList<>();
-		lnSigmaSteadyStateDist.add(new Pair<>(-2.2, 0.000772499));
-		lnSigmaSteadyStateDist.add(new Pair<>(-2.1, 0.017767478));
-		lnSigmaSteadyStateDist.add(new Pair<>(-2., 0.076477404));
-		lnSigmaSteadyStateDist.add(new Pair<>(-1.9, 0.129393588));
-		lnSigmaSteadyStateDist.add(new Pair<>(-1.8, 0.1201236));
-		lnSigmaSteadyStateDist.add(new Pair<>(-1.7, 0.129007339));
-		lnSigmaSteadyStateDist.add(new Pair<>(-1.6, 0.123599846));
-		lnSigmaSteadyStateDist.add(new Pair<>(-1.5, 0.09578988));
-		lnSigmaSteadyStateDist.add(new Pair<>(-1.4, 0.100038625));
-		lnSigmaSteadyStateDist.add(new Pair<>(-1.3, 0.065276168));
-		lnSigmaSteadyStateDist.add(new Pair<>(-1.2, 0.059868675));
-		lnSigmaSteadyStateDist.add(new Pair<>(-1.1, 0.0397837));
-		lnSigmaSteadyStateDist.add(new Pair<>(-1., 0.01622248));
-		lnSigmaSteadyStateDist.add(new Pair<>(-0.9, 0.010428737));
-		lnSigmaSteadyStateDist.add(new Pair<>(-0.8, 0.005021244));
-		lnSigmaSteadyStateDist.add(new Pair<>(-0.7, 0.002703747));
-		lnSigmaSteadyStateDist.add(new Pair<>(-0.6, 0.002703747));
-		lnSigmaSteadyStateDist.add(new Pair<>(-0.5, 0.001544998));
-		lnSigmaSteadyStateDist.add(new Pair<>(-0.4, 0.000772499));
-		lnSigmaSteadyStateDist.add(new Pair<>(-0.3, 0.000772499));
-		lnSigmaSteadyStateDist.add(new Pair<>(-0.2, 0.001158749));
-		lnSigmaSteadyStateDist.add(new Pair<>(-0.1, 0.00077249 ));
-	}
-
-	public void setDAXHestonFebruarySetupSIM() {
+	public void loadS25() {
 		valuationDate = LocalDate.parse("2025-02-28");
 		spot0 = 1;
-		selectedParamsLNSVQD = ParametersLNSVQD.paramInitDAXFebCalibKappa2Positive;
-		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXFeb;
-		selectedParamsToCalibrate = ParametersLNSVQD.paramInitDAXFebKappa2Positive; // ParametersLNSVQD.paramInitDAXFeb;
+		selectedParamsLNSVQD = ParametersLNSVQD.s25LnsvqdCalib2;
+		selectedParamsHeston = ParametersLNSVQD.s25HestonCalib;
+		selectedParamsToCalibrate = ParametersLNSVQD.s25LnsvqdInit2; // ParametersLNSVQD.paramInitDAXFeb;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
@@ -746,11 +761,11 @@ public abstract class TestsSetupForLNSVQD {
 		lnSigmaSteadyStateDist.add(new Pair<>(-0.1, 0.00077249 ));
 	}
 
-	public void setBTCSetupSIM() {
+	public void loadBitcoin() {
 		valuationDate = LocalDate.parse("2024-09-30");
 		spot0 = 67843.219;
-		selectedParamsLNSVQD = ParametersLNSVQD.paramVectorBitcoin;
-		selectedParamsHeston = ParametersLNSVQD.paramVectorHestonDAXSep;
+		selectedParamsLNSVQD = ParametersLNSVQD.lnsvqdBitcoin;
+		selectedParamsHeston = ParametersLNSVQD.s24HestonCalib;
 
 		disountCurve = new FlatYieldCurve(valuationDate, 0., dayCountConvention);
 		forwardCurve = new FlatYieldCurve(valuationDate, 0., dayCountConvention);

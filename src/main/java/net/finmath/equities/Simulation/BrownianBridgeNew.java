@@ -61,7 +61,7 @@ public class BrownianBridgeNew {
 
 				if(j == 1) {
 					brownianMotionArr[timeIndex][componentIndex] =
-							brownianMotionArr[timeIndexEarlierTimeStep][componentIndex] + standardNormal[j - 1] * Math.sqrt(time);
+							brownianMotionArr[timeIndexEarlierTimeStep][componentIndex] + standardNormal[j - 1] * Math.sqrt(time - timeEarlier);
 				} else {
 					brownianMotionArr[timeIndex][componentIndex] =
 							brownianMotionArr[timeIndexEarlierTimeStep][componentIndex]

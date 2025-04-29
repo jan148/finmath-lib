@@ -20,11 +20,6 @@ import java.time.LocalDate;
 import java.util.Map;
 import java.util.function.Function;
 
-/**
- * TODO:
- * 1. Delete the quantitites that are derived from the parameter values create methods for them instead (less error-prone)
- */
-
 public class LNSVQDModel extends AbstractProcessModel {
 	/**
 	 * Model parameters under the EMM
@@ -443,16 +438,6 @@ public class LNSVQDModel extends AbstractProcessModel {
 			impliedVol = Black76Model.optionImpliedVolatility(forward, strike, maturity, price / discountFactor, false);
 		}
 		return impliedVol;
-	}
-
-	public double getLogVolSteadyStatePDF(double val) {
-		double q = 2 * kappa1 * theta / totalInstVar;
-		double b = 2 * kappa2 / totalInstVar;
-		double eta = 2 * (kappa2 * theta - kappa1) / totalInstVar - 1;
-		double bessel = LNSVQDUtils.modifiedBesselSecondKind(2 * Math.sqrt(q * b), eta);
-		double c = Double.isNaN(bessel) ? 0 : Math.pow(b / q, eta / 2) / (2 * bessel);
-		double density = c * Math.exp(eta * val - (q * Math.exp(-val) + b * Math.exp(val)));
-		return density;
 	}
 
 }

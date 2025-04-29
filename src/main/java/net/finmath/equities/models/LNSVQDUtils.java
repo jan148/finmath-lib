@@ -130,7 +130,7 @@ public class LNSVQDUtils {
 		}
 	}
 
-	// TODO
+
 	public static List<Double> addTimePointsToArray(double[] array, int numberOfInsertionPoints) throws Exception {
 		double from = Arrays.stream(array).min().getAsDouble();
 		double to = Arrays.stream(array).max().getAsDouble();
@@ -259,11 +259,11 @@ public class LNSVQDUtils {
 	public static int[] sortTimeIndices(int numberOfPoints, int[] prioritizedIndices) {
 		double highestIndex = numberOfPoints - 1;
 		List<Integer> sortedIndices = new ArrayList<>();
-		List<Integer> priotitizedIndicesAsList = Arrays.stream(prioritizedIndices).boxed().collect(Collectors.toList());
+		List<Integer> priotitizedIndicesAsList = prioritizedIndices != null ? Arrays.stream(prioritizedIndices).boxed().collect(Collectors.toList()) : new ArrayList<>();
 		sortedIndices.add(0);
 		sortedIndices.add(numberOfPoints - 1);
 
-		for(int k = 0; k < prioritizedIndices.length; k++) {
+		for(int k = 0; k < priotitizedIndicesAsList.size(); k++) {
 			int selectedIndex;
 			double vdcNumber = LNSVQDUtils.modifiedVanDerCorput(k + 1, 2);
 			selectedIndex = (int) Math.floor(vdcNumber * prioritizedIndices[prioritizedIndices.length - 1]);
@@ -288,7 +288,7 @@ public class LNSVQDUtils {
 			sortedIndices.add(selectedIndex);
 		}
 
-		for(int k = 0; k < numberOfPoints - prioritizedIndices.length - 2; k++) {
+		for(int k = 0; k < numberOfPoints - priotitizedIndicesAsList.size() - 2; k++) {
 			int selectedIndex;
 			double vdcNumber = LNSVQDUtils.modifiedVanDerCorput(k + 1, 2);
 			selectedIndex = (int) Math.floor(vdcNumber * highestIndex);
@@ -317,7 +317,6 @@ public class LNSVQDUtils {
 		return sortedArray;
 	}
 
-	// [][]
 	public static int[][] createSchedulingArray(int numberOfPoints, int[] prioritizedIndices) {
 		int[][] schedulingArray = new int[numberOfPoints][3];
 		int[] sortedArray = LNSVQDUtils.sortTimeIndices(numberOfPoints, prioritizedIndices);
@@ -384,17 +383,6 @@ public class LNSVQDUtils {
 			x += Math.pow(2, -(i + 1)) * (binaryString.charAt(i) - '0');
 		}
 		return x;
-	}
-
-	public static double modifiedBesselSecondKind(double arg, double param) {
-		SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(0, 100, 100);
-		DoubleUnaryOperator integrand = new DoubleUnaryOperator() {
-			@Override
-			public double applyAsDouble(double operand) {
-				return Math.exp(-arg * Math.cosh(operand)) * Math.cosh(param * operand);
-			}
-		};
-		return simpsonRealIntegrator.integrate(integrand);
 	}
 
 }

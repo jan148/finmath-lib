@@ -100,14 +100,4 @@ public class LNSVQDUtilsTest {
 
 	}
 
-	@Test
-	public void testBessel() {
-		double[] points = IntStream.range(0, 300).mapToDouble(i -> 0.01 * i + 0.01).toArray();
-		double[] res = new double[points.length];
-		for(int j = 0; j < points.length; j++) {
-			res[j] = LNSVQDUtils.modifiedBesselSecondKind(points[j], -4);
-			System.out.println(points[j] + "\t" + res[j]);
-		}
-	}
-
 }

@@ -4,10 +4,8 @@ import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.montecarlo.RandomVariableFactory;
 import net.finmath.montecarlo.RandomVariableFromArrayFactory;
 import org.apache.commons.math3.complex.Complex;
-import org.apache.commons.math3.util.Pair;
 import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
@@ -20,26 +18,10 @@ import static org.junit.Assert.assertEquals;
  */
 class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 	/**
-	 * RandomVariableFactory
-	 */
-	RandomVariableFactory randomVariableFactory = new RandomVariableFromArrayFactory();
-
-	/**
 	 * Tolerance level
 	 */
 	private final double delta = 10E-3;
 
-	@Test
-	public void printMatrices() {
-		Complex complex0 = Complex.ZERO;
-		Complex[][] M0 = {
-				{complex0, complex0, complex0, complex0, complex0},
-				{complex0, new Complex(0, 0.5), complex0, complex0, complex0},
-				{complex0, new Complex(1, 0.5), complex0, complex0, complex0},
-				{complex0, complex0, complex0, complex0, complex0},
-				{complex0, complex0, complex0, complex0, complex0}};
-		System.out.println(M0[2][1]);
-	}
 
 	/**
 	 * ***************************************************+
@@ -67,7 +49,7 @@ class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 
 	@Test
 	public void printE2() {
-		setBTCSetupSIM();
+		loadBitcoin();
 
 		double ttm = 1;
 		double y = -1.085746;
@@ -155,7 +137,7 @@ class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 	 */
 	@Test
 	public void printPricesWrtPricerParams() throws Exception {
-		setDAXHestonSetupSIM();
+		loadS24();
 		int[] vals = IntStream.range(1, 11).map(i -> 40 * i).toArray();
 		double[][] impliedVolsPerStepCounter = new double[vals.length][strikeMatPairs.size()];
 		for(int j = 0; j < vals.length; j++) {
