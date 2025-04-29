@@ -21,7 +21,7 @@ public class LNSVQDPaths extends TestsSetupForLNSVQD {
 						(int) (Math.round(maxMaturity * 365.) * 1), 0, maxMaturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 		PathSimulator pathSimulatorMC = new PathSimulator(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid);
-		pathSimulatorMC.precalculatePaths(seed, false, 1, startingValueLNSVQD, Boolean.TRUE, "LNSVQD", "MC", lnsvqdModelDescriptor, null);
+		pathSimulatorMC.precalculatePaths(seed, false, 0, startingValueLNSVQD, Boolean.TRUE, "LNSVQD", "MC", lnsvqdModelDescriptor, null);
 		for(int t = 0; t < timeGrid.length; t++) {
 			System.out.print(timeGrid[t] + "\t");
 			for(int k = 0; k < numberOfPaths; k++) {
@@ -45,11 +45,8 @@ public class LNSVQDPaths extends TestsSetupForLNSVQD {
 		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(maturityGrid,
 						(int) (Math.round(maxMaturity * 365.) * 1), 0, maxMaturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
-		// Heston MC
-		double gamma1 = 1;
-		double gamma2 = 0;
 		PathSimulator pathSimulatorMC = new PathSimulator(valuationDate, disountCurve, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid);
-		pathSimulatorMC.precalculatePaths(seed, false, 1, startingValueHeston, Boolean.TRUE, "Heston", "MC", null, hestonModelDescriptor);
+		pathSimulatorMC.precalculatePaths(seed, false, 0, startingValueHeston, Boolean.TRUE, "Heston", "MC", null, hestonModelDescriptor);
 		for(int t = 0; t < timeGrid.length; t++) {
 			System.out.print(timeGrid[t] + "\t");
 			for(int k = 0; k < numberOfPaths; k++) {
@@ -58,4 +55,5 @@ public class LNSVQDPaths extends TestsSetupForLNSVQD {
 			System.out.println();
 		}
 	}
+
 }

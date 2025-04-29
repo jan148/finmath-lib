@@ -16,8 +16,9 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 /**
- * This class is a path simulator for the QE-scheme for the Heston model.
- * It simulates ln(S) and V, the logarithm of the asset and the variance.
+ * This class is a path simulator. It accomodates the simulation of the Heston model
+ * and the LNSVQD for MC or QMC. It simulates ln(S) and sigma (LNSVQD) / V (Heston),
+ * the logarithm of the asset and the volatilty (LNSVQD) / variance (Heston).
  *
  * @author Jan Berger
  */
@@ -80,11 +81,11 @@ public class PathSimulator {
 		}
 
 		for(int j = 0; j < numberOfPaths; j++) {
-			double[][] increments = new double[2][timeGridFromStartingIndex.length - 1];
+			double[][] increments = new double[timeGridFromStartingIndex.length - 1][2];
 			if(mcMethod == "MC") {
-				for (int r = 0; r < 2; r++) {
-					for (int c = 0; c < increments[0].length; c++) {
-						double deltaT = timeGridFromStartingIndex[c + 1] - timeGridFromStartingIndex[c];
+				for (int r = 0; r < increments.length; r++) {
+					for (int c = 0; c < 2; c++) {
+						double deltaT = timeGridFromStartingIndex[r + 1] - timeGridFromStartingIndex[r];
 						increments[r][c] = Math.sqrt(deltaT) * NormalDistribution.inverseCumulativeDistribution(mersenneTwister.nextDouble());
 					}
 				}
@@ -113,15 +114,19 @@ public class PathSimulator {
 				double[] nextVal = model == "Heston" ? hestonGetNextObs(new double[]{asset, vol}, deltaT, incsForTimeStep, hestonModelDescriptor)
 						: lnsvqdGetNextObs(new double[]{asset, vol}, deltaT, incsForTimeStep, lnsvqdModelDescriptor);
 
+				asset = nextVal[0];
+				vol = nextVal[1];
+
 				if(maturitiesFromStartingIndex[currentMaturityIndex] == timeGridFromStartingIndex[i]) {
 					assetPathAtMaturities[currentMaturityIndex + (maturities.length - maturitiesFromStartingIndex.length)][j] = asset;
 					currentMaturityIndex = currentMaturityIndex + 1;
 				}
+
 				if(!saveMemory) {
 					// Vol path
-					path[1][i][j] = vol;
+					path[1][i + startingIndex][j] = vol;
 					// Asset path
-					path[0][i][j] = asset;
+					path[0][i + startingIndex][j] = asset;
 				}
 			}
 		}
@@ -171,13 +176,14 @@ public class PathSimulator {
 		// Asset
 		double asset;
 		double assetPrev = currentValue[0]; // Needed for asset
+		double incAsset =  1 / sqrtDeltaT * brownianIncrement[1];
 		double k0 = -rho * kappa * theta / epsilon * deltaT;
 		double k1 = gamma1 * deltaT * (kappa * rho / epsilon - 0.5) - rho / epsilon;
 		double k2 = gamma2 * deltaT * (kappa * rho / epsilon - 0.5) + rho / epsilon;
 		double k3 = gamma1 * deltaT * (1 - rho * rho);
 		double k4 = gamma2 * deltaT * (1 - rho * rho);
 		// double A = k2 + 0.5 * k4;
-		asset = assetPrev + k0 + k1 * volPrev + k2 * vol + Math.sqrt(k3 * volPrev + k4 * vol) * brownianIncrement[1];
+		asset = assetPrev + k0 + k1 * volPrev + k2 * vol + Math.sqrt(k3 * volPrev + k4 * vol) * incAsset;
 
 		return new double[] {asset, vol};
 	}

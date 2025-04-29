@@ -5,6 +5,12 @@ import net.finmath.randomnumbers.MersenneTwister;
 
 import java.util.*;
 
+/**
+ * Construction of a Brownian bridg; The order of construction of the Brownian observations are
+ * determined by the scheduling array.
+ *
+ * @author Jan Berger
+ */
 public class BrownianBridgeNew {
 	private final ArrayList<Double> timeDiscretization;
 	private int[][] schedulingArray;

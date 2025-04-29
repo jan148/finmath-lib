@@ -1,6 +1,7 @@
 package net.finmath.equities;
 
 import net.finmath.equities.Simulation.Options.CliquetSimulationPricer;
+import net.finmath.equities.Simulation.PathSimulator;
 import net.finmath.equities.models.LNSVQDUtils;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.junit.Test;
@@ -16,7 +17,7 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 	StandardDeviation standardDeviation = new StandardDeviation();
 	Random random = new Random();
 
-	/*@Test
+	@Test
 	public void testCliquetDeltaGamma() throws Exception {
 		// Set the right case
 		loadS25();
@@ -49,32 +50,22 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 		for(int s = 0; s < seeds.length; s++) {
 			int seed = random.nextInt();
 
-			// MC
-			LNSVQDPathSimulatorMC pathSimulatorMC = new LNSVQDPathSimulatorMC(valuationDate, disountCurve
-					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);;
-			pathSimulatorMC.assetPathAtMaturities = new double[maturityGrid.length][numberOfPaths];
-			Arrays.fill(pathSimulatorMC.assetPathAtMaturities[0], Math.log(spot0));
+			// Init path simulators
+			PathSimulator pathSimulatorLnsvqdMc = new PathSimulator(valuationDate, disountCurve
+					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid);
+			PathSimulator pathSimulatorLnsvqdQmc = new PathSimulator(valuationDate, disountCurve
+					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid);
+			PathSimulator pathSimulatorHestonMC = new PathSimulator(valuationDate, disountCurve
+					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid);
+			PathSimulator pathSimulatorHestonQMC = new PathSimulator(valuationDate, disountCurve
+					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid);
 
-			// QMC
-			LNSVQDPathSimulatorQMC pathSimulatorQMC = new LNSVQDPathSimulatorQMC(valuationDate, disountCurve
-					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
-			pathSimulatorQMC.assetPathAtMaturities = new double[maturityGrid.length][numberOfPaths];
-			Arrays.fill(pathSimulatorQMC.assetPathAtMaturities[0], Math.log(spot0));
+			// Define pricers
+			CliquetSimulationPricer simulPricerLnsvqdMC = new CliquetSimulationPricer(pathSimulatorLnsvqdMc);
+			CliquetSimulationPricer simulPricerLnsvqdQMC = new CliquetSimulationPricer(pathSimulatorLnsvqdQmc);
+			CliquetSimulationPricer simulPricerHestonMC = new CliquetSimulationPricer(pathSimulatorHestonMC);
+			CliquetSimulationPricer simulPricerHestonQMC = new CliquetSimulationPricer(pathSimulatorHestonQMC);
 
-			double gamma1 = 1;
-			double gamma2 = 0;
-
-			// Heston MC
-			HestonPathSimulatorMC pathSimulatorHestonMC = new HestonPathSimulatorMC(valuationDate, disountCurve
-					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3], selectedParamsHeston[4], gamma1, gamma2);
-			pathSimulatorHestonMC.assetPathAtMaturities = new double[maturityGrid.length][numberOfPaths];
-			Arrays.fill(pathSimulatorHestonMC.assetPathAtMaturities[0], Math.log(spot0));
-
-			// Heston QMC
-			HestonPathSimulatorQMC pathSimulatorHestonQMC = new HestonPathSimulatorQMC(valuationDate, disountCurve
-					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3], selectedParamsHeston[4], gamma1, gamma2);
-			pathSimulatorHestonQMC.assetPathAtMaturities = new double[maturityGrid.length][numberOfPaths];
-			Arrays.fill(pathSimulatorHestonQMC.assetPathAtMaturities[0], Math.log(spot0));
 
 			for(int k = 0; k < shiftPercs.length; k++) {
 				double shift = shiftPercs[k];
@@ -84,28 +75,20 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 				double[] startingValueLNSVQD =  new double[]{spot0 * shift, selectedParamsLNSVQD[0]};
 				double[] startingValueHeston =  new double[]{spot0 * shift, selectedParamsHeston[0]};
 
-				// LNSVQD MC
-				pathSimulatorMC.precalculatePaths(seed, true, startingIndex + 1, startingValueLNSVQD, martingaleCorrection);
-
-				// LNSVQD QMC
-				pathSimulatorQMC.precalculatePaths(seed, true, startingIndex, startingValueLNSVQD, martingaleCorrection);
-
-				// Heston MC
-				pathSimulatorHestonMC.precalculatePaths(seed, true, startingIndex + 1, startingValueHeston, martingaleCorrection, );
-
-				// Heston QMC
-				pathSimulatorHestonQMC.precalculatePaths(seed, true, startingIndex, startingValueHeston, martingaleCorrection, );
-
-				// Define pricers
-				CliquetSimulationPricer simulPricerLNSVQDMC = new CliquetSimulationPricer<>(pathSimulatorMC);
-				CliquetSimulationPricer simulPricerLNSVQDQMC = new CliquetSimulationPricer<>(pathSimulatorQMC);
-				CliquetSimulationPricer simulPricerHestonMC = new CliquetSimulationPricer<>(pathSimulatorHestonMC);
-				CliquetSimulationPricer simulPricerHestonQMC = new CliquetSimulationPricer<>(pathSimulatorHestonQMC);
+				// Precalculate paths
+				pathSimulatorLnsvqdMc.precalculatePaths(seed, true, startingIndex,
+						startingValueLNSVQD, Boolean.TRUE, "LNSVQD", "MC", lnsvqdModelDescriptor, null);
+				pathSimulatorLnsvqdQmc.precalculatePaths(seed, true, startingIndex,
+						startingValueLNSVQD, Boolean.TRUE, "LNSVQD", "QMC", lnsvqdModelDescriptor, null);
+				pathSimulatorHestonMC.precalculatePaths(seed, true, startingIndex,
+						startingValueHeston, Boolean.TRUE, "Heston", "MC", null, hestonModelDescriptor);
+				pathSimulatorHestonQMC.precalculatePaths(seed, true, startingIndex,
+						startingValueHeston, Boolean.TRUE, "Heston", "QMC", null, hestonModelDescriptor);
 
 				// MC LNSVQD
 				double simulatedOptionPriceLNSVQDMC;
 				try {
-					simulatedOptionPriceLNSVQDMC = simulPricerLNSVQDMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
+					simulatedOptionPriceLNSVQDMC = simulPricerLnsvqdMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
 				} catch(AssertionError e) {
 					System.err.println("Caught AssertionError: " + e.getMessage());
 					simulatedOptionPriceLNSVQDMC = 1000000;
@@ -115,7 +98,7 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 				// QMC Heston
 				double simulatedOptionPriceLNSVQDQMC;
 				try {
-					simulatedOptionPriceLNSVQDQMC = simulPricerLNSVQDQMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
+					simulatedOptionPriceLNSVQDQMC = simulPricerLnsvqdQMC.getCliquetPrice(maturity, floorL, capL, floorG, capG);
 				} catch(AssertionError e) {
 					System.err.println("Caught AssertionError: " + e.getMessage());
 					simulatedOptionPriceLNSVQDQMC = 1000000;
@@ -169,7 +152,7 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 			LNSVQDUtils.printArray(firstAndSecondOrderHestonMC[i]);
 			LNSVQDUtils.printArray(firstAndSecondOrderHestonQMC[i]);
 		}
-	}*/
+	}
 
 	private double[][] getFirstAndSecondOrderDerivatives(double[] values, double shiftSize) {
 		int numValues = values.length;

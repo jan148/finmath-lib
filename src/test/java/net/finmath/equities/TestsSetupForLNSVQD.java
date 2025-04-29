@@ -307,19 +307,19 @@ static HestonModelDescriptor hestonModelDescriptor;
 		lnsvqdModelDescriptor = new LNSVQDModelDescriptor(spot0, selectedParamsLNSVQD[0], selectedParamsLNSVQD[1]
 				, selectedParamsLNSVQD[2], selectedParamsLNSVQD[3], selectedParamsLNSVQD[4], selectedParamsLNSVQD[5],  0);
 		hestonModelDescriptor = new HestonModelDescriptor(valuationDate, spot0, null
-				, null, selectedParamsHeston[0], selectedParamsHeston[1], selectedParamsHeston[2], selectedParamsHeston[3]
+				, null, selectedParamsHeston[0], selectedParamsHeston[2], selectedParamsHeston[1], selectedParamsHeston[3]
 				, selectedParamsHeston[4]);
 	}
 
 	public void loadS24() {
 		valuationDate = LocalDate.parse("2024-09-30");
 		spot0 = 1;
-		selectedParamsLNSVQD = ParametersLNSVQD.s24LnsvqdCalib; // ParametersLNSVQD.paramInitDAXFebCalib; // ParametersLNSVQD.paramInitDAXSepCalibKappa2Positive;
+		selectedParamsLNSVQD = ParametersLNSVQD.s24LnsvqdCalib2; // ParametersLNSVQD.paramInitDAXFebCalib; // ParametersLNSVQD.paramInitDAXSepCalibKappa2Positive;
 		selectedParamsHeston = ParametersLNSVQD.s24HestonCalib;
 		selectedParamsToCalibrate = ParametersLNSVQD.s24LnsvqdInit2;
 
 		maturityGrid = new double[]{0.25, 0.5, 0.75, 1, 1.25, 1.5};
-		maturityGrid = new double[]{0.2, 0.25, 0.3, 0.35, 0.4};
+		// maturityGrid = new double[]{0.2, 0.25, 0.3, 0.35, 0.4};
 		LocalDate[] dates = Arrays.stream(maturityGrid).mapToObj(ttm -> {
 			long days = Math.round(ttm * 365);
 			return valuationDate.plusDays(days);
@@ -535,6 +535,13 @@ static HestonModelDescriptor hestonModelDescriptor;
 		lnSigmaSteadyStateDist.add(new Pair<>(-0.3, 0.000772499));
 		lnSigmaSteadyStateDist.add(new Pair<>(-0.2, 0.001158749));
 		lnSigmaSteadyStateDist.add(new Pair<>(-0.1, 0.00077249 ));
+
+		// Model desciptors
+		lnsvqdModelDescriptor = new LNSVQDModelDescriptor(spot0, selectedParamsLNSVQD[0], selectedParamsLNSVQD[1]
+				, selectedParamsLNSVQD[2], selectedParamsLNSVQD[3], selectedParamsLNSVQD[4], selectedParamsLNSVQD[5],  0);
+		hestonModelDescriptor = new HestonModelDescriptor(valuationDate, spot0, null
+				, null, selectedParamsHeston[0], selectedParamsHeston[2], selectedParamsHeston[1], selectedParamsHeston[3]
+				, selectedParamsHeston[4]);
 	}
 
 	public void loadS25() {
@@ -759,6 +766,13 @@ static HestonModelDescriptor hestonModelDescriptor;
 		lnSigmaSteadyStateDist.add(new Pair<>(-0.3, 0.000772499));
 		lnSigmaSteadyStateDist.add(new Pair<>(-0.2, 0.001158749));
 		lnSigmaSteadyStateDist.add(new Pair<>(-0.1, 0.00077249 ));
+
+		// Model desciptors
+		lnsvqdModelDescriptor = new LNSVQDModelDescriptor(spot0, selectedParamsLNSVQD[0], selectedParamsLNSVQD[1]
+				, selectedParamsLNSVQD[2], selectedParamsLNSVQD[3], selectedParamsLNSVQD[4], selectedParamsLNSVQD[5],  0);
+		hestonModelDescriptor = new HestonModelDescriptor(valuationDate, spot0, null
+				, null, selectedParamsHeston[0], selectedParamsHeston[2], selectedParamsHeston[1], selectedParamsHeston[3]
+				, selectedParamsHeston[4]);
 	}
 
 	public void loadBitcoin() {
