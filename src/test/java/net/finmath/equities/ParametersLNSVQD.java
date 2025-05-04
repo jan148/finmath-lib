@@ -42,6 +42,15 @@ public class ParametersLNSVQD {
 			0
 	};
 
+	static double[] brownianMotion = new double[]{
+			1,
+			0,
+			0,
+			0,
+			0,
+			0
+	};
+
 	static double[] s20LnsvqdInit = new double[]{
 			0.751963407
 			, 3.560176604850655 // 3.1565426287720286,

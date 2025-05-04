@@ -1,9 +1,12 @@
 package net.finmath.equities.Calibration;
 
 import net.finmath.equities.marketdata.VolatilityPoint;
+import net.finmath.equities.marketdata.YieldCurve;
+import net.finmath.equities.models.EquityForwardStructure;
 import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.equities.models.VolatilityPointsSurface;
 import net.finmath.equities.pricer.LNSVQDModelAnalyticalPricer;
+import net.finmath.marketdata.model.curves.DiscountCurve;
 import org.apache.commons.math3.fitting.leastsquares.*;
 import org.apache.commons.math3.linear.Array2DRowRealMatrix;
 import org.apache.commons.math3.linear.ArrayRealVector;
@@ -12,6 +15,7 @@ import org.apache.commons.math3.linear.RealVector;
 import org.apache.commons.math3.stat.correlation.PearsonsCorrelation;
 import org.apache.commons.math3.util.Pair;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -52,11 +56,18 @@ public class LNSVQDModelCalibrator {
 
 	public static double[] calibrate(final double[] initialVolatilityParameters,
 	                                 int[] parameterIndices,
-	                                 LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer,
+	                                 final LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricer,
 	                                 VolatilityPointsSurface volatilitySurface) throws Exception {
+		double spot0 = lnsvqdModelAnalyticalPricer.getSpot0();
+		LocalDate valuationDate = lnsvqdModelAnalyticalPricer.getSpotDate();
+		YieldCurve discountCurve = lnsvqdModelAnalyticalPricer.getDiscountCurve();
+		EquityForwardStructure equityForwardStructure = lnsvqdModelAnalyticalPricer.getEquityForwardStructure();
+		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricerMain = lnsvqdModelAnalyticalPricer.copyWithNewParameters(
+				spot0, initialVolatilityParameters[0], initialVolatilityParameters[1], initialVolatilityParameters[2], initialVolatilityParameters[3]
+				, initialVolatilityParameters[4], initialVolatilityParameters[5], 0, valuationDate, discountCurve, equityForwardStructure);
+
 		System.out.println("-------------------------------------");
-		lnsvqdModelAnalyticalPricer.setVolatilityParameters(initialVolatilityParameters);
-		final double[] initX = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
+		final double[] initX = lnsvqdModelAnalyticalPricerMain.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
 				.stream()
 				.mapToDouble(VolatilityPoint::getVolatility)
 				.toArray();
@@ -85,9 +96,6 @@ public class LNSVQDModelCalibrator {
 		double[] calibratedParameters = initialVolatilityParameters.clone();
 		double[] outputParamsOptimizer = initialVolatilityParameters.clone();
 
-		/**
-		 * Create optimizer / Apache
-		 */
 		// ---------------------------
 		LevenbergMarquardtOptimizer levenbergMarquardtOptimizer = new LevenbergMarquardtOptimizer()
 				.withCostRelativeTolerance(1.0e-6)
@@ -106,10 +114,12 @@ public class LNSVQDModelCalibrator {
 			System.out.print("Current params: ");
 			LNSVQDUtils.printArray(Arrays.stream(paramsFull).toArray());
 
-			lnsvqdModelAnalyticalPricer.setVolatilityParameters(paramsFull);
+			LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricerNew = lnsvqdModelAnalyticalPricer.copyWithNewParameters(
+					spot0, paramsFull[0], paramsFull[1], paramsFull[2], paramsFull[3], paramsFull[4], paramsFull[5], 0
+					, valuationDate, discountCurve, equityForwardStructure);
 			double[] impliedVols;
 			try {
-				impliedVols = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
+				impliedVols = lnsvqdModelAnalyticalPricerNew.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
 						.stream()
 						.mapToDouble(VolatilityPoint::getVolatility)
 						.toArray();
@@ -124,9 +134,11 @@ public class LNSVQDModelCalibrator {
 			for(int j = 0; j < params.getDimension(); j++) {
 				double[] paramsFullShifted = paramsFull.clone();
 				paramsFullShifted[parameterIndices[j]] = paramsFullShifted[parameterIndices[j]] + shiftSize;
-				lnsvqdModelAnalyticalPricer.setVolatilityParameters(paramsFullShifted);
+				LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricerShifted = lnsvqdModelAnalyticalPricer.copyWithNewParameters(
+						spot0, paramsFullShifted[0], paramsFullShifted[1], paramsFullShifted[2], paramsFullShifted[3], paramsFullShifted[4], paramsFullShifted[5], 0
+						, valuationDate, discountCurve, equityForwardStructure);
 				try {
-					forwardShiftedValues[j] = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
+					forwardShiftedValues[j] = lnsvqdModelAnalyticalPricerShifted.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
 							.stream()
 							.mapToDouble(VolatilityPoint::getVolatility)
 							.toArray();
@@ -163,17 +175,19 @@ public class LNSVQDModelCalibrator {
 		// Run the optimizer
 		outputParamsOptimizer = levenbergMarquardtOptimizer.optimize(leastSquaresProblem).getPoint().toArray();
 
-		/**
-		 * Get summary
-		 */
+		// Get summary
+
 		// Retrieve the optimal parameters
 		for(int i = 0; i < parameterIndices.length; i++) {
 			calibratedParameters[parameterIndices[i]] = outputParamsOptimizer[i];
 		}
 
 		// Retrieve the optimal value (cost function value)
-		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
-		double[] endX = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
+		lnsvqdModelAnalyticalPricerMain = lnsvqdModelAnalyticalPricer.copyWithNewParameters(
+				spot0, calibratedParameters[0], calibratedParameters[1], calibratedParameters[2]
+				, calibratedParameters[3], calibratedParameters[4], calibratedParameters[5], 0
+				, valuationDate, discountCurve, equityForwardStructure);
+		double[] endX = lnsvqdModelAnalyticalPricerMain.getImpliedVolSurfaceFromVolSurface(volatilitySurface, null).getVolatilityPoints()
 				.stream()
 				.mapToDouble(VolatilityPoint::getVolatility)
 				.toArray();

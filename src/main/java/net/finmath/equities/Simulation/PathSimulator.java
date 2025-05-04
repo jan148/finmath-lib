@@ -4,9 +4,15 @@ import net.finmath.equities.marketdata.YieldCurve;
 import net.finmath.equities.models.EquityForwardStructure;
 import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.functions.NormalDistribution;
-import net.finmath.modelling.descriptor.AssetModelDescriptor;
 import net.finmath.modelling.descriptor.HestonModelDescriptor;
 import net.finmath.modelling.descriptor.LNSVQDModelDescriptor;
+import org.apache.commons.math3.analysis.UnivariateFunction;
+import org.apache.commons.math3.analysis.solvers.BrentSolver;
+import org.apache.commons.math3.optim.MaxEval;
+import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.commons.math3.optim.univariate.BrentOptimizer;
+import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
+import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import org.apache.commons.math3.random.SobolSequenceGenerator;
 
 import java.time.LocalDate;
@@ -43,7 +49,7 @@ public class PathSimulator {
 	}
 
 	public void precalculatePaths(int seed, Boolean saveMemory, int startingIndex, double[] startingValue, Boolean martingaleCorrection
-			, String model, String mcMethod, LNSVQDModelDescriptor lnsvqdModelDescriptor, HestonModelDescriptor hestonModelDescriptor) {
+			, String modelScheme, String mcMethod, LNSVQDModelDescriptor lnsvqdModelDescriptor, HestonModelDescriptor hestonModelDescriptor) {
 		double[] timeGridFromStartingIndex = Arrays.copyOfRange(timeGrid, startingIndex, timeGrid.length);
 		double[] maturitiesFromStartingIndex = Arrays.stream(maturities).filter(x -> x >= timeGridFromStartingIndex[0]).toArray();
 
@@ -111,8 +117,16 @@ public class PathSimulator {
 
 				double[] incsForTimeStep = new double[]{increments[currentIncrementIndex][0], increments[currentIncrementIndex][1]};
 
-				double[] nextVal = model == "Heston" ? hestonGetNextObs(new double[]{asset, vol}, deltaT, incsForTimeStep, hestonModelDescriptor)
-						: lnsvqdGetNextObs(new double[]{asset, vol}, deltaT, incsForTimeStep, lnsvqdModelDescriptor);
+				double[] nextVal;
+				if(modelScheme == "HestonQe"){
+					nextVal = hestonGetNextObs(new double[]{asset, vol}, deltaT, incsForTimeStep, hestonModelDescriptor);
+				} else if(modelScheme == "LnsvqdForwardEuler") {
+					nextVal = lnsvqdGetNextObsForwardEuler(new double[]{asset, vol}, deltaT, incsForTimeStep, lnsvqdModelDescriptor);
+				} else if(modelScheme == "LnsvqdImplicitEuler"){
+					nextVal = lnsvqdGetNextObsImplicitEuler(new double[]{asset, vol}, deltaT, incsForTimeStep, lnsvqdModelDescriptor);
+				} else {
+					throw new RuntimeException("Invalid model or discretization scheme.");
+				}
 
 				asset = nextVal[0];
 				vol = nextVal[1];
@@ -188,7 +202,7 @@ public class PathSimulator {
 		return new double[] {asset, vol};
 	}
 
-	private double[] lnsvqdGetNextObs(double[] currentValue, double deltaT, double[] brownianIncrement, LNSVQDModelDescriptor lnsvqdModelDescriptor){
+	private double[] lnsvqdGetNextObsForwardEuler(double[] currentValue, double deltaT, double[] brownianIncrement, LNSVQDModelDescriptor lnsvqdModelDescriptor){
 		double kappa1 = lnsvqdModelDescriptor.getKappa1();
 		double kappa2 = lnsvqdModelDescriptor.getKappa2();
 		double theta = lnsvqdModelDescriptor.getTheta();
@@ -204,6 +218,50 @@ public class PathSimulator {
 				+ kappa2 * (theta - volPrev) - 0.5 * totalInstVar) * deltaT
 				+ beta * brownianIncrement[0]
 				+ epsilon * brownianIncrement[1];
+		vol = Math.exp(volTransformed);
+
+		// Asset
+		double asset;
+		double assetPrev = currentValue[0];
+		asset = assetPrev + volPrev * volPrev * (-0.5) * deltaT + volPrev * brownianIncrement[0];
+
+		return new double[] {asset, vol};
+	}
+
+	private double[] lnsvqdGetNextObsImplicitEuler(double[] currentValue, double deltaT, double[] brownianIncrement, LNSVQDModelDescriptor lnsvqdModelDescriptor){
+		double kappa1 = lnsvqdModelDescriptor.getKappa1();
+		double kappa2 = lnsvqdModelDescriptor.getKappa2();
+		double theta = lnsvqdModelDescriptor.getTheta();
+		double beta = lnsvqdModelDescriptor.getBeta();
+		double epsilon = lnsvqdModelDescriptor.getEpsilon();
+		double totalInstVar = lnsvqdModelDescriptor.getTotalInstVar();
+
+		BrentSolver brentSolver = new BrentSolver(1e-8, 1e-8);
+		UnivariateFunction zeta = y -> 1 / y * kappa1 * theta - y * kappa2
+				- kappa1 + kappa2 * theta - 0.5 * totalInstVar;
+
+		// Vol
+		double vol;
+		double volPrev = currentValue[1]; // Needed for asset
+		double volPrevTransformed = Math.log(currentValue[1]);
+		UnivariateFunction rootFunction = new UnivariateFunction() {
+			public double value(double l) {
+				return -brownianIncrement[0] * beta - (brownianIncrement[1] * epsilon)
+						- (zeta.value(Math.exp(l)) * deltaT) - volPrevTransformed + l;
+			}
+		};
+		double result = brentSolver.solve(
+				100,
+				rootFunction,
+				-100.,
+				100.,
+				volPrevTransformed
+		);
+		double optVal = rootFunction.value(result);
+		if(Math.abs(optVal) > 1e-4) {
+			throw new ArithmeticException("The point doesn't result in a root.");
+		}
+		double volTransformed = result;
 		vol = Math.exp(volTransformed);
 
 		// Asset

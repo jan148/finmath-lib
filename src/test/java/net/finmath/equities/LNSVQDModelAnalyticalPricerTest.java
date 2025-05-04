@@ -1,8 +1,6 @@
 package net.finmath.equities;
 
 import net.finmath.equities.models.LNSVQDUtils;
-import net.finmath.montecarlo.RandomVariableFactory;
-import net.finmath.montecarlo.RandomVariableFromArrayFactory;
 import org.apache.commons.math3.complex.Complex;
 import org.junit.jupiter.api.Test;
 
@@ -33,7 +31,7 @@ class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 		int index = 3;
 		double ttm = 1;
 		double y = 2;
-		int numStepsForODEIntegration = (int) (ttm * 365 * lnsvqdModelAnalyticalPricer.numStepsForODEIntegrationPerYear);
+		int numStepsForODEIntegration = (int) (ttm * 365 * lnsvqdModelAnalyticalPricer.getNumStepsForODEIntegrationPerYear());
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, numStepsForODEIntegration);
 		final Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 		Complex[][] solutionPath = lnsvqdModelAnalyticalPricer.getSolutionPathForODESystem(timeGrid, charFuncArgs);
@@ -53,7 +51,7 @@ class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 
 		double ttm = 1;
 		double y = -1.085746;
-		int numStepsForODEIntegration = (int) (ttm * lnsvqdModelAnalyticalPricer.numStepsForODEIntegrationPerYear);
+		int numStepsForODEIntegration = (int) (ttm * lnsvqdModelAnalyticalPricer.getNumStepsForODEIntegrationPerYear());
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, numStepsForODEIntegration);
 		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 
@@ -115,7 +113,7 @@ class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 	public void calculateExponentialAffineApproximationFullPathTest() {
 		double ttm = 1;
 		double y = 2.;
-		int numStepsForODEIntegration = (int) (ttm * 365 * lnsvqdModelAnalyticalPricer.numStepsForODEIntegrationPerYear);
+		int numStepsForODEIntegration = (int) (ttm * 365 * lnsvqdModelAnalyticalPricer.getNumStepsForODEIntegrationPerYear());
 		double[] timeGrid = LNSVQDUtils.createTimeGrid(0, ttm, numStepsForODEIntegration);
 		Complex[] charFuncArgs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 
@@ -142,7 +140,7 @@ class LNSVQDModelAnalyticalPricerTest extends TestsSetupForLNSVQD{
 		double[][] impliedVolsPerStepCounter = new double[vals.length][strikeMatPairs.size()];
 		for(int j = 0; j < vals.length; j++) {
 			lnsvqdModelAnalyticalPricer.setUpperBoundForIntegration(vals[j]); // lnsvqdModelAnalyticalPricer.numStepsForODEIntegrationPerYear = vals[j];
-			impliedVolsPerStepCounter[j] = lnsvqdModelAnalyticalPricer.getImpliedVolsStrikeMatList(strikeMatPairs);
+			impliedVolsPerStepCounter[j] = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromStrikeMatList(strikeMatPairs);
 			LNSVQDUtils.printArray(impliedVolsPerStepCounter[j]);
 		}
 		for(int i = 0; i < strikeMatPairs.size(); i++) {

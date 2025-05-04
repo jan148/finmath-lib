@@ -9,6 +9,7 @@ import net.finmath.equities.models.LNSVQDModel;
 import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.equities.models.VolatilityPointsSurface;
 import net.finmath.integration.SimpsonRealIntegrator;
+import net.finmath.modelling.descriptor.LNSVQDModelDescriptor;
 import net.finmath.time.daycount.DayCountConvention;
 import org.apache.commons.math3.complex.Complex;
 import org.apache.commons.math3.util.Pair;
@@ -23,31 +24,30 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
-	/**
-	 * Numerical parameters
-	 */
+/**
+ * Class to calculate the semi-analytical European option price of the LNSVQD.
+ *
+ * @version 1.0
+ */
+public class LNSVQDModelAnalyticalPricer extends LNSVQDModelDescriptor {
 	// 1. For ODE-solution
-	public static int numStepsForODEIntegrationPerYear = 365; // 365;
+	private static int numStepsForODEIntegrationPerYear = 365; // 365;
 
 	// 2. For unbounded integration
 	// Integration bounds params
-	public final double lowerBound = 0;
-	public double upperBound = 100; // 100;
+	private double lowerBound = 0;
+	private double upperBound = 100; // 100;
 	List<Double> yGridForIntegration = new ArrayList<>();
-
-	// finmath integrator
-	int numberOfEvaluationPoints = (int) upperBound * 10;
-	SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, numberOfEvaluationPoints, false);
+	private int numberOfEvaluationPoints = (int) upperBound * 10;
+	private SimpsonRealIntegrator simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, numberOfEvaluationPoints, false);
 
 	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate valuationDate, YieldCurve discountCurve, EquityForwardStructure equityForwardStructure) {
-		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate, discountCurve, equityForwardStructure);
+		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, I0, valuationDate, discountCurve, equityForwardStructure);
 		setYGridForIntegrationSimpson();
 	}
 
-	public LNSVQDModelAnalyticalPricer(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate valuationDate) {
-		super(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, 0, valuationDate);
-		setYGridForIntegrationSimpson();
+	public void setNumStepsForODEIntegrationPerYear(int numStepsForODEIntegrationPerYear) {
+		this.numStepsForODEIntegrationPerYear = numStepsForODEIntegrationPerYear;
 	}
 
 	public void setUpperBoundForIntegration(double upperBoundForIntegration) {
@@ -55,6 +55,42 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		numberOfEvaluationPoints = (int) upperBound * 10;
 		simpsonRealIntegrator = new SimpsonRealIntegrator(lowerBound, upperBound, numberOfEvaluationPoints, false);
 		setYGridForIntegrationSimpson();
+	}
+
+	public int getNumStepsForODEIntegrationPerYear() {
+		return this.numStepsForODEIntegrationPerYear;
+	}
+
+	public void setYGridForIntegrationSimpson() {
+		/**
+		 * Get all the integration points from the integrator, in our case Simpson
+		 */
+		// Next lines adapted from finmath's Simpson implementation
+		final double range = upperBound - lowerBound;
+
+		final int numberOfDoubleSizeIntervals = (int) ((numberOfEvaluationPoints - 1) / 2.0);
+
+		final double doubleInterval = range / numberOfDoubleSizeIntervals;
+		final double singleInterval = 0.5 * doubleInterval;
+
+		IntStream intervals = IntStream.range(1, numberOfDoubleSizeIntervals);
+
+		intervals.forEach(
+				i -> {
+					yGridForIntegration.add(lowerBound + i * doubleInterval);
+					yGridForIntegration.add(lowerBound + i * doubleInterval + singleInterval);
+				}
+		);
+
+		yGridForIntegration.add(lowerBound + singleInterval);
+		yGridForIntegration.add(lowerBound);
+		yGridForIntegration.add(upperBound);
+
+		yGridForIntegration = yGridForIntegration.stream().sorted().distinct().collect(Collectors.toList());
+	}
+
+	public LNSVQDModelAnalyticalPricer copyWithNewParameters(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta, double epsilon, double I0, LocalDate valuationDate, YieldCurve discountCurve, EquityForwardStructure equityForwardStructure) {
+		return new LNSVQDModelAnalyticalPricer(spot0, sigma0, kappa1, kappa2, theta, beta, epsilon, I0, valuationDate, discountCurve, equityForwardStructure);
 	}
 
 	/**
@@ -105,18 +141,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 						complex0 },
 				{ complex0, mixedDeg3.multiply(4), mixedDeg4.multiply(4), complex0, complex0 } };
 
-        /*# fills Ls
-        L = np.zeros((n, n), dtype=np.complex128)
-        L[0, 1], L[0, 2] = lamda - theta2 * beta * vol_backbone_eta * phi, qv2
-        L[1, 1], L[1, 2] = -kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi, 2.0 * (lamda + qv - theta2 * beta * vol_backbone_eta * phi)
-        L[2, 1], L[2, 2] = -kappa2_p - beta * vol_backbone_eta * phi, vartheta2 - 2.0 * kappa_p - 4.0 * theta * beta * vol_backbone_eta * phi
-
-        if expansion_order == ExpansionOrder.SECOND:
-        L[1, 3] = 3.0*qv2
-        L[2, 3], L[2, 4] = 3.0 * (2.0 * qv - theta2 * beta * vol_backbone_eta * phi), 6.0 * qv2
-        L[3, 2], L[3, 3], L[3, 4] = -2.0 * (kappa2_p + beta * vol_backbone_eta * phi), 3.0 * (vartheta2 - kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi), 4.0 * (3.0 * qv - theta2 * beta * vol_backbone_eta * phi)
-        L[4, 3], L[4, 4] = -3.0 * (kappa2_p + beta * vol_backbone_eta * phi), 2.0 * (vartheta2 - 2.0 * kappa_p - 4.0 * theta * beta * vol_backbone_eta * phi)*/
-
 		// 2. Vectors
 		Complex L01 = complex0;
 		Complex L02 = charFuncArgs[0].multiply(-Math.pow(theta, 2) * beta);
@@ -131,7 +155,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		Complex L14 = mixedDeg4.multiply(3);
 		Complex L15 = complex0;
 		Complex[] L1 = { L11, L12, L13, L14, L15 };
-		// L[2, 3], L[2, 4] = 3.0 * (2.0 * qv - theta2 * beta * vol_backbone_eta * phi), 6.0 * qv2
+
 		Complex L21 = complex0;
 		Complex L22 = charFuncArgs[0].multiply(-beta).subtract(kappa2);
 		Complex L23 = totalInstVar.subtract(2 * (kappa1 + kappa2 * theta))
@@ -139,7 +163,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		Complex L24 = mixedDeg3.multiply(2).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(3); // !
 		Complex L25 = mixedDeg4.multiply(6);
 		Complex[] L2 = { L21, L22, L23, L24, L25 };
-		// L[3, 2], L[3, 3], L[3, 4] = -2.0 * (kappa2_p + beta * vol_backbone_eta * phi), 3.0 * (vartheta2 - kappa_p - 2.0 * theta * beta * vol_backbone_eta * phi), 4.0 * (3.0 * qv - theta2 * beta * vol_backbone_eta * phi)
+
 		Complex L31 = complex0;
 		Complex L32 = complex0;
 		Complex L33 = charFuncArgs[0].multiply(beta).add(kappa2).multiply(-2);
@@ -147,8 +171,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 				.subtract(charFuncArgs[0].multiply(2 * theta * beta)).multiply(3);
 		Complex L35 = mixedDeg3.multiply(3).subtract(charFuncArgs[0].multiply(Math.pow(theta, 2) * beta)).multiply(4);
 		Complex[] L3 = { L31, L32, L33, L34, L35 };
-		// L[4, 3], L[4, 4] = -3.0 * (kappa2_p + beta * vol_backbone_eta * phi),
-		// 2.0 * (vartheta2 - 2.0 * kappa_p - 4.0 * theta * beta * vol_backbone_eta * phi)*/
+
 		Complex L41 = complex0;
 		Complex L42 = complex0;
 		Complex L43 = complex0;
@@ -173,8 +196,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 
 			@Override
 			public Complex apply(Double aDouble, Complex[] complexes) {
-                /*Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M0, complexes))
-                        .add(LNSVQDUtils.scalarProduct(L0, complexes)).add(H0);*/
 				Complex result = M0[1][1].multiply(complexes[1]).multiply(complexes[1])
 						.add(L0[1].multiply(complexes[1])).add(L0[2].multiply(complexes[2])).add(H0);
 				return result;
@@ -199,8 +220,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 
 			@Override
 			public Complex apply(Double aDouble, Complex[] complexes) {
-                /*Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M2, complexes))
-                        .add(LNSVQDUtils.scalarProduct(L2, complexes)).add(H2);*/
 				Complex result = M2[1][1].multiply(complexes[1]).multiply(complexes[1])
 						.add(M2[2][2].multiply(complexes[2]).multiply(complexes[2]))
 						.add(M2[1][2].multiply(complexes[1]).multiply(complexes[2]).multiply(2))
@@ -215,8 +234,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 
 			@Override
 			public Complex apply(Double aDouble, Complex[] complexes) {
-                /*Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M3, complexes))
-                        .add(LNSVQDUtils.scalarProduct(L3, complexes)).add(H3);*/
 				Complex result = M3[2][2].multiply(complexes[2]).multiply(complexes[2])
 						.add(M3[1][2].multiply(complexes[1]).multiply(complexes[2]).multiply(2))
 						.add(M3[1][3].multiply(complexes[1]).multiply(complexes[3]).multiply(2))
@@ -232,8 +249,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 
 			@Override
 			public Complex apply(Double aDouble, Complex[] complexes) {
-                /*Complex result = LNSVQDUtils.scalarProduct(complexes, LNSVQDUtils.matrixVectorMult(M4, complexes))
-                        .add(LNSVQDUtils.scalarProduct(L4, complexes)).add(H4);*/
 				Complex result = M4[2][2].multiply(complexes[2]).multiply(complexes[2])
 						.add(M4[3][3].multiply(complexes[3]).multiply(complexes[3]))
 						.add(M4[1][3].multiply(complexes[1]).multiply(complexes[3]).multiply(2))
@@ -468,7 +483,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 	 * SECTION 2: Get implied vol surface
 	 * ***************************************************+
 	 */
-	public double[] getImpliedVolsStrikeMatList(ArrayList<Pair<Double, Double>> strikeMaturityPairs) throws Exception {
+	public double[] getImpliedVolSurfaceFromStrikeMatList(ArrayList<Pair<Double, Double>> strikeMaturityPairs) throws Exception {
 		double[] impliedVols = new double[strikeMaturityPairs.size()];
 
 		// Check if ...
@@ -538,32 +553,17 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModel {
 		return new VolatilityPointsSurface(volatilityPoints, today, dayCountConvention);
 	}
 
-	public void setYGridForIntegrationSimpson() {
-		/**
-		 * Get all the integration points from the integrator, in our case Simpson
-		 */
-		// Next lines adapted from finmath's Simpson implementation
-		final double range = upperBound - lowerBound;
+	public double getImpliedVolFromPrice(double strike, double maturity, double price) throws Exception {
+		double discountFactor = discountCurve.getDiscountFactor(maturity);
+		double forward = equityForwardStructure.getForward(maturity);
 
-		final int numberOfDoubleSizeIntervals = (int) ((numberOfEvaluationPoints - 1) / 2.0);
-
-		final double doubleInterval = range / numberOfDoubleSizeIntervals;
-		final double singleInterval = 0.5 * doubleInterval;
-
-		IntStream intervals = IntStream.range(1, numberOfDoubleSizeIntervals);
-
-		intervals.forEach(
-				i -> {
-					yGridForIntegration.add(lowerBound + i * doubleInterval);
-					yGridForIntegration.add(lowerBound + i * doubleInterval + singleInterval);
-				}
-		);
-
-		yGridForIntegration.add(lowerBound + singleInterval);
-		yGridForIntegration.add(lowerBound);
-		yGridForIntegration.add(upperBound);
-
-		yGridForIntegration = yGridForIntegration.stream().sorted().distinct().collect(Collectors.toList());
+		double impliedVol;
+		if(strike > forward) {
+			impliedVol = Black76Model.optionImpliedVolatility(forward, strike, maturity, price / discountFactor, true);
+		} else {
+			impliedVol = Black76Model.optionImpliedVolatility(forward, strike, maturity, price / discountFactor, false);
+		}
+		return impliedVol;
 	}
 
 }

@@ -35,7 +35,7 @@ public abstract class TestsSetupForLNSVQD {
 	 * Model descriptors
 	 */
 	static LNSVQDModelDescriptor lnsvqdModelDescriptor;
-static HestonModelDescriptor hestonModelDescriptor;
+	static HestonModelDescriptor hestonModelDescriptor;
 	/**
 	 * Other
 	 */
@@ -66,7 +66,7 @@ static HestonModelDescriptor hestonModelDescriptor;
 	/**
 	 * Create simulation model (not finmath)
 	 */
-	static int numberOfPaths = 10000;
+	static int numberOfPaths = 100000;
 
 	/**
 	 * Declare volatility surface; will be insatntiated later
@@ -305,7 +305,7 @@ static HestonModelDescriptor hestonModelDescriptor;
 
 		// Model desciptors
 		lnsvqdModelDescriptor = new LNSVQDModelDescriptor(spot0, selectedParamsLNSVQD[0], selectedParamsLNSVQD[1]
-				, selectedParamsLNSVQD[2], selectedParamsLNSVQD[3], selectedParamsLNSVQD[4], selectedParamsLNSVQD[5],  0);
+				, selectedParamsLNSVQD[2], selectedParamsLNSVQD[3], selectedParamsLNSVQD[4], selectedParamsLNSVQD[5],  0, valuationDate, disountCurve, equityForwardStructure);
 		hestonModelDescriptor = new HestonModelDescriptor(valuationDate, spot0, null
 				, null, selectedParamsHeston[0], selectedParamsHeston[2], selectedParamsHeston[1], selectedParamsHeston[3]
 				, selectedParamsHeston[4]);
@@ -538,7 +538,7 @@ static HestonModelDescriptor hestonModelDescriptor;
 
 		// Model desciptors
 		lnsvqdModelDescriptor = new LNSVQDModelDescriptor(spot0, selectedParamsLNSVQD[0], selectedParamsLNSVQD[1]
-				, selectedParamsLNSVQD[2], selectedParamsLNSVQD[3], selectedParamsLNSVQD[4], selectedParamsLNSVQD[5],  0);
+				, selectedParamsLNSVQD[2], selectedParamsLNSVQD[3], selectedParamsLNSVQD[4], selectedParamsLNSVQD[5],  0, valuationDate, disountCurve, equityForwardStructure);
 		hestonModelDescriptor = new HestonModelDescriptor(valuationDate, spot0, null
 				, null, selectedParamsHeston[0], selectedParamsHeston[2], selectedParamsHeston[1], selectedParamsHeston[3]
 				, selectedParamsHeston[4]);
@@ -769,7 +769,7 @@ static HestonModelDescriptor hestonModelDescriptor;
 
 		// Model desciptors
 		lnsvqdModelDescriptor = new LNSVQDModelDescriptor(spot0, selectedParamsLNSVQD[0], selectedParamsLNSVQD[1]
-				, selectedParamsLNSVQD[2], selectedParamsLNSVQD[3], selectedParamsLNSVQD[4], selectedParamsLNSVQD[5],  0);
+				, selectedParamsLNSVQD[2], selectedParamsLNSVQD[3], selectedParamsLNSVQD[4], selectedParamsLNSVQD[5],  0, valuationDate, disountCurve, equityForwardStructure);
 		hestonModelDescriptor = new HestonModelDescriptor(valuationDate, spot0, null
 				, null, selectedParamsHeston[0], selectedParamsHeston[2], selectedParamsHeston[1], selectedParamsHeston[3]
 				, selectedParamsHeston[4]);

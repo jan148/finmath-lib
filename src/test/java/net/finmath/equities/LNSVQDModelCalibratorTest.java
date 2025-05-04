@@ -4,6 +4,7 @@ import net.finmath.equities.Calibration.LNSVQDModelCalibrator;
 import net.finmath.equities.Simulation.PathSimulator;
 import net.finmath.equities.models.LNSVQDUtils;
 import net.finmath.equities.models.VolatilityPointsSurface;
+import net.finmath.equities.pricer.LNSVQDModelAnalyticalPricer;
 import org.junit.Test;
 
 public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
@@ -32,21 +33,21 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 	public void calibrateTest() throws Exception {
 		loadS20();
 
-		/**
-		 * 1. Calibrate and get cvalibrated paramerters
-		 */
 		double[] calibratedParameters;
 		int[] indicesCalibratedParams = {
 				0
-				/*, 1*/
-				/*, 2*/
+				/*, 1
+				, 2*/
 				, 3
 				, 4
 				, 5
 		};
 		calibratedParameters = LNSVQDModelCalibrator.calibrate(selectedParamsToCalibrate, indicesCalibratedParams, lnsvqdModelAnalyticalPricer, volatilityPointsSurface);
-		lnsvqdModelAnalyticalPricer.setVolatilityParameters(calibratedParameters);
-		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromVolSurface(volatilityPointsSurface, null);
+		LNSVQDModelAnalyticalPricer lnsvqdModelAnalyticalPricerCalib = lnsvqdModelAnalyticalPricer.copyWithNewParameters(
+				lnsvqdModelAnalyticalPricer.getSpot0(), calibratedParameters[0], calibratedParameters[1], calibratedParameters[2], calibratedParameters[3]
+				, calibratedParameters[4], calibratedParameters[5]
+				, lnsvqdModelAnalyticalPricer.getI0(), lnsvqdModelAnalyticalPricer.getSpotDate(), lnsvqdModelAnalyticalPricer.getDiscountCurve(), lnsvqdModelAnalyticalPricer.getEquityForwardStructure());
+		VolatilityPointsSurface impliedVolSurface = lnsvqdModelAnalyticalPricerCalib.getImpliedVolSurfaceFromVolSurface(volatilityPointsSurface, null);
 		impliedVolSurface.printVolSurfaceForOutput();
 	}
 

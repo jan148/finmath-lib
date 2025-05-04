@@ -34,23 +34,30 @@ public class LNSVQDModelDescriptor implements AssetModelDescriptor {
 	/**
 	 * Model parameters under the EMM
 	 */
-	private final double spot0;
-	private final double sigma0;
-	private final double kappa1;
-	private final double kappa2;
-	private final double theta;
-	private final double beta;
-	private final double epsilon;
-	private final double totalInstVar;
+	protected final double spot0;
+	protected final double sigma0;
+	protected final double kappa1;
+	protected final double kappa2;
+	protected final double theta;
+	protected final double beta;
+	protected final double epsilon;
+	protected final double totalInstVar;
 
 	/**
 	 * Transformed initial values
 	 */
-	private final double X0, Y0, I0;
+	protected final double X0, Y0, I0;
+
+	/**
+	 * Market observables
+	 */
+	protected final LocalDate spotDate;
+	protected final YieldCurve discountCurve;
+	protected final EquityForwardStructure equityForwardStructure;
 
 
 	public LNSVQDModelDescriptor(double spot0, double sigma0, double kappa1, double kappa2, double theta, double beta
-			, double epsilon, double I0) {
+			, double epsilon, double I0, LocalDate spotDate, YieldCurve discountCurve, EquityForwardStructure equityForwardStructure) {
 		super();
 
 		this.spot0 = spot0;
@@ -65,6 +72,10 @@ public class LNSVQDModelDescriptor implements AssetModelDescriptor {
 		this.X0 = Math.log(this.spot0);
 		this.Y0 = sigma0 - theta;
 		this.I0 = I0;
+
+		this.spotDate = spotDate;
+		this.discountCurve=discountCurve;
+		this.equityForwardStructure=equityForwardStructure;
 	}
 
 	@Override
@@ -121,4 +132,11 @@ public class LNSVQDModelDescriptor implements AssetModelDescriptor {
 		return I0;
 	}
 
+	public LocalDate getSpotDate() { return spotDate; }
+
+	public YieldCurve getDiscountCurve() { return discountCurve;}
+
+	public EquityForwardStructure getEquityForwardStructure() {
+		return equityForwardStructure;
+	}
 }
