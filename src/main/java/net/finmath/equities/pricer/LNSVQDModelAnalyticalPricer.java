@@ -25,7 +25,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
- * Class to calculate the semi-analytical European option price of the LNSVQD.
+ * Class to calculate the semi-analytical European option price under the LNSVQD.
  *
  * @version 1.0
  */

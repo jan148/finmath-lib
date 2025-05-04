@@ -9,7 +9,7 @@ import org.junit.Test;
 
 public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 
-/*	@Test
+	@Test
 	public void printModelACF() throws Exception {
 		loadS20(); // loadS25();
 
@@ -20,14 +20,14 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(new double[]{},
 						(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
-		lnsvqdModelAnalyticalPricer.setVolatilityParameters(selectedParamsLNSVQD);
 		PathSimulator lnsvqdPathSimulator = new PathSimulator(valuationDate, disountCurve, equityForwardStructure,
-				numberOfPaths, timeGrid, maturityGrid, lnsvqdModelAnalyticalPricer, false);
-		lnsvqdPathSimulator.precalculatePaths(3105, false, startingIndex, startingValueLNSVQD, Boolean.TRUE, "MC");
+				numberOfPaths, timeGrid, maturityGrid);
+		lnsvqdPathSimulator.precalculatePaths(3105, false, startingIndex, startingValueLNSVQD, Boolean.TRUE
+				, "LnsvqdForwardEuler", "MC", lnsvqdModelDescriptor, null);
 		double[][] volaPaths = lnsvqdPathSimulator.path[1];
 		double[] acs = LNSVQDModelCalibrator.getAcfsFromVolPaths(volaPaths, acfAtLags.size(), 10);
 		LNSVQDUtils.printArray(acs);
-	}*/
+	}
 
 	@Test
 	public void calibrateTest() throws Exception {

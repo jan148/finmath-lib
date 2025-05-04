@@ -26,6 +26,9 @@ import java.util.Map;
 import java.util.function.Function;
 
 /**
+ * Model descriptor for the log-normal stcohastic volatility model with quadratic drift,
+ * see https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2522425.
+ *
  * @author Jan Berger
  *
  * @version 1.0

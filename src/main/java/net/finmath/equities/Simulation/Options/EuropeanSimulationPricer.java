@@ -6,6 +6,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Valuation of European options.
+ *
+ * @author Jan Berger
+ */
 public class EuropeanSimulationPricer{
 	PathSimulator pathSimulator;
 

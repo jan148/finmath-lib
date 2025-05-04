@@ -14,6 +14,12 @@ import java.util.List;
 import java.util.function.DoubleUnaryOperator;
 import java.util.stream.Collectors;
 
+
+/**
+ * Utilities for the LNSVQD.
+ *
+ * @author Jan Berger
+ */
 public class LNSVQDUtils {
 	/**
 	 * Matrix operations
@@ -114,22 +120,6 @@ public class LNSVQDUtils {
 			System.out.println(element);
 		}
 	}
-
-	public static void printPricesFromMaturityStrikeGrid(double[] maturities, double[] strikes, double[] prices) {
-		for(int s = 0; s < strikes.length; s++) {
-			System.out.print("\t" + strikes[s]);
-		}
-		System.out.println();
-		for(int m = 0; m < maturities.length; m++) {
-			double maturity = maturities[m];
-			System.out.print(maturity + "\t");
-			for(int s = 0; s < strikes.length; s++) {
-				System.out.print(prices[m * strikes.length + s] + "\t");
-			}
-			System.out.print("\n");
-		}
-	}
-
 
 	public static List<Double> addTimePointsToArray(double[] array, int numberOfInsertionPoints) throws Exception {
 		double from = Arrays.stream(array).min().getAsDouble();

@@ -95,13 +95,15 @@ public class PathSimulator {
 						increments[r][c] = Math.sqrt(deltaT) * NormalDistribution.inverseCumulativeDistribution(mersenneTwister.nextDouble());
 					}
 				}
-			} else {
+			} else if(mcMethod == "QMC"){
 				Random random = new Random(seed);
 				double scrambleNumber = random.nextDouble();
 				assert (0. < scrambleNumber && scrambleNumber < 1.) : "ScrambleNumber is out of bounds!";
 				double[] vec = sobolSequenceGenerator.nextVector();
 				double[] standardNormals = LNSVQDUtils.getStdNormalsFromUnifVec(vec, scrambleNumber);
 				increments = brownianBridge.generateBrownianIncrementsOnePath(standardNormals, mersenneTwister);
+			} else {
+				throw new RuntimeException("Invalid Monte Carlo method.");
 			}
 
 			// Fill Paths

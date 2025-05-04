@@ -5,6 +5,11 @@ import net.finmath.equities.Simulation.PathSimulator;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
+/**
+ * Valuation of Cliquet options.
+ *
+ * @author Jan Berger
+ */
 public class CliquetSimulationPricer{
 	PathSimulator pathSimulator;
 

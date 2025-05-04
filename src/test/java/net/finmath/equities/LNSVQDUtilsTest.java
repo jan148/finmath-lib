@@ -97,7 +97,6 @@ public class LNSVQDUtilsTest {
 			System.out.println(number + "\t" + numberAfterTransition);
 			assertEquals(number, numberAfterTransition, 1E-10);
 		}
-
 	}
 
 }

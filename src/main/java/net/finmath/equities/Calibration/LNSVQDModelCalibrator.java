@@ -22,12 +22,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 /**
- * The exponential-affine approximation to the mgf can be precalculated; For t0 < t1, we would calculate A_t0 twice,
- * once for A_t0 and once for A_t0.
+ * This class calibrates the LNSVQD to a given IVS.
+ *
+ * @author Jan Berger
  */
 
 public class LNSVQDModelCalibrator {
-	static double shiftSize = 1E-8;
+	private static double shiftSize = 1E-8;
 
 	public static double[] getAcfsFromVolPaths(double[][] volaPaths, int numLags, int lagSize) {
 		PearsonsCorrelation pearsonsCorrelation = new PearsonsCorrelation();
@@ -175,13 +176,12 @@ public class LNSVQDModelCalibrator {
 		// Run the optimizer
 		outputParamsOptimizer = levenbergMarquardtOptimizer.optimize(leastSquaresProblem).getPoint().toArray();
 
-		// Get summary
-
 		// Retrieve the optimal parameters
 		for(int i = 0; i < parameterIndices.length; i++) {
 			calibratedParameters[parameterIndices[i]] = outputParamsOptimizer[i];
 		}
 
+		// Summary
 		// Retrieve the optimal value (cost function value)
 		lnsvqdModelAnalyticalPricerMain = lnsvqdModelAnalyticalPricer.copyWithNewParameters(
 				spot0, calibratedParameters[0], calibratedParameters[1], calibratedParameters[2]

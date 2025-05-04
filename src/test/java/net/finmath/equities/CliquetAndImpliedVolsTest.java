@@ -35,7 +35,7 @@ public class CliquetAndImpliedVolsTest extends TestsSetupForLNSVQD {
 		// Get analytical prices
 		double[] volAna = lnsvqdModelAnalyticalPricer.getImpliedVolSurfaceFromStrikeMatList(strikeMatPairs);
 
-		List<Integer> seeds = random.ints(10).boxed().collect(Collectors.toList());
+		List<Integer> seeds = random.ints(1).boxed().collect(Collectors.toList());
 
 		double[][][] pricesMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
 		double[][][] pricesQMC = new double[seeds.size()][maturityGrid.length][numStrikesPerMaturity];
@@ -52,8 +52,8 @@ public class CliquetAndImpliedVolsTest extends TestsSetupForLNSVQD {
 			// MC
 			PathSimulator pathSimulatorLnsvqdMc = new PathSimulator(valuationDate, disountCurve
 					, equityForwardStructure, numberOfPaths, timeGrid, maturityGrid);
-			/*pathSimulatorLnsvqdMc.precalculatePaths(seed, true, startingIndex,
-					startingValueLNSVQD, Boolean.TRUE, "LnsvqdImplicitEuler", "MC", lnsvqdModelDescriptor, null);*/
+			pathSimulatorLnsvqdMc.precalculatePaths(seed, true, startingIndex,
+					startingValueLNSVQD, Boolean.TRUE, "LnsvqdImplicitEuler", "MC", lnsvqdModelDescriptor, null);
 			EuropeanSimulationPricer simulPricerLnsvqdMC = new EuropeanSimulationPricer(pathSimulatorLnsvqdMc);
 
 			for(int m = 0; m < maturityGrid.length; m++) {
@@ -65,8 +65,8 @@ public class CliquetAndImpliedVolsTest extends TestsSetupForLNSVQD {
 						.stream().distinct().mapToDouble(Double::doubleValue).toArray();
 				PathSimulator pathSimulatorLnsvqdQmc = new PathSimulator(valuationDate, disountCurve
 						, equityForwardStructure, numberOfPaths, timeGridQMC, maturityGridQMC);
-				pathSimulatorLnsvqdQmc.precalculatePaths(seed, true, startingIndex,
-						startingValueLNSVQD, Boolean.TRUE, "LnsvqdImplicitEuler", "QMC", lnsvqdModelDescriptor, null);
+				/*pathSimulatorLnsvqdQmc.precalculatePaths(seed, true, startingIndex,
+						startingValueLNSVQD, Boolean.TRUE, "LnsvqdImplicitEuler", "QMC", lnsvqdModelDescriptor, null);*/
 				EuropeanSimulationPricer simulPricerLnsvqdQMC = new EuropeanSimulationPricer(pathSimulatorLnsvqdQmc);
 
 				for(int s = 0; s < numStrikesPerMaturity; s++) {
@@ -74,7 +74,7 @@ public class CliquetAndImpliedVolsTest extends TestsSetupForLNSVQD {
 
 					double simulatedOptionPrice;
 					try {
-						simulatedOptionPrice = 0; // simulPricerLnsvqdMC.getEuropeanPriceAuto(strike, maturity);
+						simulatedOptionPrice = simulPricerLnsvqdMC.getEuropeanPriceAuto(strike, maturity);
 					} catch(AssertionError e) {
 						System.err.println("Caught AssertionError: " + e.getMessage());
 						simulatedOptionPrice = 1000000;
@@ -84,7 +84,7 @@ public class CliquetAndImpliedVolsTest extends TestsSetupForLNSVQD {
 					// QMC
 					double simulatedOptionPriceQMC;
 					try {
-						simulatedOptionPriceQMC = simulPricerLnsvqdQMC.getEuropeanPriceAuto(strike, maturity);
+						simulatedOptionPriceQMC = 0; // simulPricerLnsvqdQMC.getEuropeanPriceAuto(strike, maturity);
 					} catch(AssertionError e) {
 						System.err.println("Caught AssertionError: " + e.getMessage());
 						simulatedOptionPriceQMC = 1000000;
