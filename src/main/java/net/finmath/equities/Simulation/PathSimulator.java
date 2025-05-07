@@ -8,11 +8,6 @@ import net.finmath.modelling.descriptor.HestonModelDescriptor;
 import net.finmath.modelling.descriptor.LNSVQDModelDescriptor;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.solvers.BrentSolver;
-import org.apache.commons.math3.optim.MaxEval;
-import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
-import org.apache.commons.math3.optim.univariate.BrentOptimizer;
-import org.apache.commons.math3.optim.univariate.UnivariateObjectiveFunction;
-import org.apache.commons.math3.optim.univariate.UnivariatePointValuePair;
 import org.apache.commons.math3.random.SobolSequenceGenerator;
 
 import java.time.LocalDate;
@@ -49,27 +44,29 @@ public class PathSimulator {
 	}
 
 	public void precalculatePaths(int seed, Boolean saveMemory, int startingIndex, double[] startingValue, Boolean martingaleCorrection
-			, String modelScheme, String mcMethod, LNSVQDModelDescriptor lnsvqdModelDescriptor, HestonModelDescriptor hestonModelDescriptor) {
+			, String modelScheme, String mcMethod, LNSVQDModelDescriptor lnsvqdModelDescriptor, HestonModelDescriptor hestonModelDescriptor, int[][] schedulingArray) {
 		double[] timeGridFromStartingIndex = Arrays.copyOfRange(timeGrid, startingIndex, timeGrid.length);
 		double[] maturitiesFromStartingIndex = Arrays.stream(maturities).filter(x -> x >= timeGridFromStartingIndex[0]).toArray();
 
 		BrownianBridgeNew brownianBridge = null;
 		SobolSequenceGenerator sobolSequenceGenerator = null;
 		if(mcMethod == "QMC") {
+			int[][] schedulingArrayNew = schedulingArray;
 			ArrayList<Double> timeGridList = Arrays.stream(timeGridFromStartingIndex)
 					.boxed()
 					.collect(Collectors.toCollection(ArrayList::new));
-			int[] prioritizedIndices = new int[maturitiesFromStartingIndex.length - 1];
-			for(int j = 0; j < prioritizedIndices.length; j++) {
-				double maturity = maturitiesFromStartingIndex[j];
-				prioritizedIndices[j] = timeGridList.indexOf(maturity);
+			if(schedulingArray == null) {
+				int[] prioritizedIndices = new int[maturitiesFromStartingIndex.length - 1];
+				for(int j = 0; j < prioritizedIndices.length; j++) {
+					double maturity = maturitiesFromStartingIndex[j];
+					prioritizedIndices[j] = timeGridList.indexOf(maturity);
+				}
+				prioritizedIndices = prioritizedIndices.length > 0 ? prioritizedIndices : null;
+				schedulingArrayNew = LNSVQDUtils.createSchedulingArray(timeGridFromStartingIndex.length, prioritizedIndices);
 			}
-			prioritizedIndices = prioritizedIndices.length > 0 ? prioritizedIndices : null;
-			final int[][] schedulingArray = LNSVQDUtils.createSchedulingArray(timeGridFromStartingIndex.length, prioritizedIndices);
+			brownianBridge = new BrownianBridgeNew(timeGridList, schedulingArrayNew, numberOfPaths);
 
-			brownianBridge = new BrownianBridgeNew(timeGridList, schedulingArray, numberOfPaths);
-
-			int rngDim = 2 * (schedulingArray.length - 1);
+			int rngDim = 2 * (schedulingArrayNew.length - 1);
 			sobolSequenceGenerator = new SobolSequenceGenerator(Math.min(rngDim, 1000));
 			sobolSequenceGenerator.nextVector(); // Skip 0
 		}

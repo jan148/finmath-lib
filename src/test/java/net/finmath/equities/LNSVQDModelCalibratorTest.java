@@ -23,7 +23,7 @@ public class LNSVQDModelCalibratorTest extends TestsSetupForLNSVQD{
 		PathSimulator lnsvqdPathSimulator = new PathSimulator(valuationDate, disountCurve, equityForwardStructure,
 				numberOfPaths, timeGrid, maturityGrid);
 		lnsvqdPathSimulator.precalculatePaths(3105, false, startingIndex, startingValueLNSVQD, Boolean.TRUE
-				, "LnsvqdForwardEuler", "MC", lnsvqdModelDescriptor, null);
+				, "LnsvqdForwardEuler", "MC", lnsvqdModelDescriptor, null, null);
 		double[][] volaPaths = lnsvqdPathSimulator.path[1];
 		double[] acs = LNSVQDModelCalibrator.getAcfsFromVolPaths(volaPaths, acfAtLags.size(), 10);
 		LNSVQDUtils.printArray(acs);

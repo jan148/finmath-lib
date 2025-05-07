@@ -1,13 +1,16 @@
 package net.finmath.equities;
 
+import net.finmath.equities.Simulation.BrownianBridgeNew;
 import net.finmath.equities.Simulation.Options.CliquetSimulationPricer;
 import net.finmath.equities.Simulation.PathSimulator;
 import net.finmath.equities.models.LNSVQDUtils;
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Random;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
@@ -23,18 +26,31 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 		loadS25();
 
 		int[] seeds = IntStream.range(0, 1).toArray();
-		numberOfPaths = 100000;
+		numberOfPaths = 50000;
 
 		// Set Cliquet params
 		double maturity = strikeMatPairs.get(strikeMatPairs.size() - 1).getKey();
 		double floorL = Double.NEGATIVE_INFINITY;
-		double capL = 1.1;
+		double capL = 0.1;
 		double floorG = 0;
 		double capG = Double.POSITIVE_INFINITY;
 
 		double[] timeGrid = LNSVQDUtils.addTimePointsToArray(maturityGrid,
 						(int) (Math.round(maturity * 365.) * 1), 0, maturity, true)
 				.stream().distinct().mapToDouble(Double::doubleValue).toArray();
+		int startingIndex = 93;
+		double[] timeGridFromStartingIndex = Arrays.copyOfRange(timeGrid, startingIndex, timeGrid.length);
+		double[] maturitiesFromStartingIndex = Arrays.stream(maturityGrid).filter(x -> x >= timeGridFromStartingIndex[0]).toArray();
+		ArrayList<Double> timeGridList = Arrays.stream(timeGridFromStartingIndex)
+				.boxed()
+				.collect(Collectors.toCollection(ArrayList::new));
+		int[] prioritizedIndices = new int[maturitiesFromStartingIndex.length - 1];
+		for(int j = 0; j < prioritizedIndices.length; j++) {
+			double maturityCurrent = maturitiesFromStartingIndex[j];
+			prioritizedIndices[j] = timeGridList.indexOf(maturityCurrent);
+		}
+		prioritizedIndices = prioritizedIndices.length > 0 ? prioritizedIndices : null;
+		int[][] schedulingArrayNew = LNSVQDUtils.createSchedulingArray(timeGridFromStartingIndex.length, prioritizedIndices);
 
 		int minPercOfSpot = 50;
 		int maxPercOfSpot = 150;
@@ -71,19 +87,18 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 				double shift = shiftPercs[k];
 
 				Boolean martingaleCorrection = Boolean.FALSE;
-				int startingIndex = 93;
 				double[] startingValueLNSVQD =  new double[]{spot0 * shift, selectedParamsLNSVQD[0]};
 				double[] startingValueHeston =  new double[]{spot0 * shift, selectedParamsHeston[0]};
 
 				// Precalculate paths
 				pathSimulatorLnsvqdMc.precalculatePaths(seed, true, startingIndex,
-						startingValueLNSVQD, Boolean.TRUE, "LNSVQD", "MC", lnsvqdModelDescriptor, null);
+						startingValueLNSVQD, martingaleCorrection, "LnsvqdForwardEuler", "MC", lnsvqdModelDescriptor, null, null);
 				pathSimulatorLnsvqdQmc.precalculatePaths(seed, true, startingIndex,
-						startingValueLNSVQD, Boolean.TRUE, "LNSVQD", "QMC", lnsvqdModelDescriptor, null);
+						startingValueLNSVQD, martingaleCorrection, "LnsvqdForwardEuler", "QMC", lnsvqdModelDescriptor, null, schedulingArrayNew);
 				pathSimulatorHestonMC.precalculatePaths(seed, true, startingIndex,
-						startingValueHeston, Boolean.TRUE, "Heston", "MC", null, hestonModelDescriptor);
+						startingValueHeston, martingaleCorrection, "HestonQe", "MC", null, hestonModelDescriptor, null);
 				pathSimulatorHestonQMC.precalculatePaths(seed, true, startingIndex,
-						startingValueHeston, Boolean.TRUE, "Heston", "QMC", null, hestonModelDescriptor);
+						startingValueHeston, martingaleCorrection, "HestonQe", "QMC", null, hestonModelDescriptor, schedulingArrayNew);
 
 				// MC LNSVQD
 				double simulatedOptionPriceLNSVQDMC;

@@ -662,36 +662,13 @@ public abstract class TestsSetupForLNSVQD {
 		strikeMatPairs = new ArrayList<>();
 
 		// Create and adf volatility points
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 0.60 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 0.80 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.00 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.20 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.40 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 0.60 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 0.80 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.00 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.20 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.40 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 0.60 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 0.80 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.00 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.20 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.40 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 0.60 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 0.80 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.00 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.20 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.40 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 0.60 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 0.80 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.00 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.20 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.40 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 0.60 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 0.80 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.00 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.20 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.40 * forwards[5]));
+		double[] strikeSteps = {0.60, 0.70, 0.80, 0.90, 1.00, 1.10, 1.20, 1.30, 1.40};
+
+		for (int i = 0; i < maturityGrid.length; i++) {
+			for (double strikeFactor : strikeSteps) {
+				strikeMatPairs.add(new Pair<>(maturityGrid[i], strikeFactor * forwards[i]));
+			}
+		}
 
 		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<VolatilityPoint>();
 
