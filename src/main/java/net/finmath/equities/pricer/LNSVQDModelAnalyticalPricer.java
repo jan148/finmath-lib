@@ -34,7 +34,7 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModelDescriptor {
 	private static int numStepsForODEIntegrationPerYear = 365; // 365;
 
 	// 2. For unbounded integration
-	// Integration bounds params
+	// Integration bounds hyperparams
 	private double lowerBound = 0;
 	private double upperBound = 100; // 100;
 	List<Double> yGridForIntegration = new ArrayList<>();
@@ -176,7 +176,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModelDescriptor {
 		Complex L42 = complex0;
 		Complex L43 = complex0;
 		Complex L44 = charFuncArgs[0].multiply(beta).add(kappa2).multiply(-3);
-		// TODO: In next line: Should be mulitplied with 3 instead of one
 		Complex L45 = totalInstVar.multiply(1).subtract(2 * (kappa1 + kappa2 * theta))
 				.subtract(charFuncArgs[0].multiply(4 * theta * beta)).multiply(2);
 		Complex[] L4 = { L41, L42, L43, L44, L45 };
@@ -407,7 +406,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModelDescriptor {
 		Complex[][] expAffApproxMatPathPerCharFuncRealization = new Complex[gridForIntegrationWithMidPoints.size()][maturitiesWithZero.length];
 		// Loop over charFunc args
 		for(int l = 0; l < gridForIntegrationWithMidPoints.size(); l++) {
-			// TODO: expAffApproxPathPerCharFuncRealization[l] should only contain values for maturity-points, not for filler points!
 			double y = gridForIntegrationWithMidPoints.get(l);
 			Complex[] charFuncArs = new Complex[]{new Complex(-0.5, y), Complex.ZERO, Complex.ZERO};
 			Complex[] expAffApproxPathPerCharFuncRealization = calculateExponentialAffineApproximationFullPath(timeGridForMGFApproximationCalculation, charFuncArs);
@@ -437,7 +435,6 @@ public class LNSVQDModelAnalyticalPricer extends LNSVQDModelDescriptor {
 			double logMoneyness = Math.log(forward / strike);
 
 			/**
-			 * TODO: Change factor
 			 * Define the function y -> factor * E2(t, -0.5 + iy)
 			 */
 			DoubleUnaryOperator integrand = new DoubleUnaryOperator() {

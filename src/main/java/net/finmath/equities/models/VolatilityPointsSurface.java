@@ -70,23 +70,6 @@ public class VolatilityPointsSurface implements VolatilitySurface, ShiftedVolati
 		return volShift;
 	}
 
-	public ArrayList<Double> getPrices(double initalStockValue, double riskFreeRate, DayCountConvention dayCountConvention) {
-		ArrayList<Double> prices = new ArrayList<>();
-
-		for(VolatilityPoint volatilityPoint : volatilityPoints) {
-			LocalDate date = volatilityPoint.getDate();
-			double ttm = dayCountConvention.getDaycountFraction(today, date); // TODO: Get the correct denominator
-
-			// Fetch point from the surface
-			double strike = volatilityPoint.getStrike();
-			double empiricalVolatility = volatilityPoint.getVolatility();
-			double price = AnalyticFormulas.blackScholesOptionValue(initalStockValue, riskFreeRate, empiricalVolatility, ttm, strike);
-			prices.add(price);
-		}
-
-		return prices;
-	}
-
 	@Override
 	public ShiftedVolatilitySurface getShiftedSurface(double shift) {
 		assert volShift == 0.0 : "Surface is already shifted";
@@ -156,7 +139,6 @@ public class VolatilityPointsSurface implements VolatilitySurface, ShiftedVolati
 				}
 			}
 		};
-
 		Collections.sort(volatilityPoints, comparator);
 	}
 

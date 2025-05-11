@@ -18,6 +18,9 @@ public class BrownianBridgeNew {
 
 	public BrownianBridgeNew(final ArrayList<Double> timeDiscretization, int[][] schedulingArray, int numberOfPaths) {
 		this.timeDiscretization = timeDiscretization;
+		if(schedulingArray.length < 2) {
+			throw new Error("schedulingArray must contain at least two points!");
+		}
 		this.schedulingArray = schedulingArray;
 		this.numberOfPaths = numberOfPaths;
 	}

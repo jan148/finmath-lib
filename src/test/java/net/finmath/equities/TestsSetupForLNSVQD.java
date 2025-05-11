@@ -66,7 +66,7 @@ public abstract class TestsSetupForLNSVQD {
 	/**
 	 * Create simulation model (not finmath)
 	 */
-	static int numberOfPaths = 100000;
+	static int numberOfPaths = 10000;
 
 	/**
 	 * Declare volatility surface; will be insatntiated later
@@ -177,7 +177,7 @@ public abstract class TestsSetupForLNSVQD {
 
 		affineDividends = new AffineDividend[]{new AffineDividend(valuationDate, 0., 0.)};
 		affineDividendStream = new AffineDividendStream(affineDividends);
-		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, forwardCurve, affineDividendStream, dayCountConvention);
+		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, 1, forwardCurve, affineDividendStream, dayCountConvention);
 
 		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
 				spot0
@@ -197,37 +197,14 @@ public abstract class TestsSetupForLNSVQD {
 		// Initialize volatilityPoints
 		strikeMatPairs = new ArrayList<>();
 
-		// Create and adf volatility points
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 0.60 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 0.80 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.00 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.20 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.40 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 0.60 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 0.80 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.00 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.20 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.40 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 0.60 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 0.80 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.00 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.20 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.40 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 0.60 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 0.80 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.00 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.20 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.40 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 0.60 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 0.80 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.00 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.20 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.40 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 0.60 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 0.80 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.00 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.20 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.40 * forwards[5]));
+		// Create and add volatility points
+		double[] strikeSteps = {0.60, 0.80, 1.00, 1.20, 1.40};
+
+		for (int i = 0; i < maturityGrid.length; i++) {
+			for (double strikeFactor : strikeSteps) {
+				strikeMatPairs.add(new Pair<>(maturityGrid[i], strikeFactor * forwards[i]));
+			}
+		}
 
 		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<VolatilityPoint>();
 
@@ -410,7 +387,7 @@ public abstract class TestsSetupForLNSVQD {
 
 		affineDividends = new AffineDividend[]{new AffineDividend(valuationDate, 0., 0.)};
 		affineDividendStream = new AffineDividendStream(affineDividends);
-		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, forwardCurve, affineDividendStream, dayCountConvention);
+		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, 1, forwardCurve, affineDividendStream, dayCountConvention);
 
 		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
 				spot0
@@ -430,37 +407,14 @@ public abstract class TestsSetupForLNSVQD {
 		// Initialize volatilityPoints
 		strikeMatPairs = new ArrayList<>();
 
-		// Create and adf volatility points
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 0.60 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 0.80 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.00 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.20 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[0], 1.40 * forwards[0]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 0.60 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 0.80 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.00 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.20 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[1], 1.40 * forwards[1]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 0.60 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 0.80 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.00 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.20 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[2], 1.40 * forwards[2]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 0.60 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 0.80 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.00 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.20 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[3], 1.40 * forwards[3]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 0.60 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 0.80 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.00 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.20 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[4], 1.40 * forwards[4]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 0.60 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 0.80 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.00 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.20 * forwards[5]));
-		strikeMatPairs.add(new Pair<>(maturityGrid[5], 1.40 * forwards[5]));
+		// Create and add volatility points
+		double[] strikeSteps = {0.60, 0.80, 1.00, 1.20, 1.40};
+
+		for (int i = 0; i < maturityGrid.length; i++) {
+			for (double strikeFactor : strikeSteps) {
+				strikeMatPairs.add(new Pair<>(maturityGrid[i], strikeFactor * forwards[i]));
+			}
+		}
 
 		ArrayList<VolatilityPoint> volatilityPoints = new ArrayList<VolatilityPoint>();
 
@@ -641,7 +595,7 @@ public abstract class TestsSetupForLNSVQD {
 
 		affineDividends = new AffineDividend[]{new AffineDividend(valuationDate, 0., 0.)};
 		affineDividendStream = new AffineDividendStream(affineDividends);
-		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, forwardCurve, affineDividendStream, dayCountConvention);
+		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, 1, forwardCurve, affineDividendStream, dayCountConvention);
 
 		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
 				spot0
@@ -661,7 +615,7 @@ public abstract class TestsSetupForLNSVQD {
 		// Initialize volatilityPoints
 		strikeMatPairs = new ArrayList<>();
 
-		// Create and adf volatility points
+		// Create and add volatility points
 		double[] strikeSteps = {0.60, 0.70, 0.80, 0.90, 1.00, 1.10, 1.20, 1.30, 1.40};
 
 		for (int i = 0; i < maturityGrid.length; i++) {
@@ -763,7 +717,7 @@ public abstract class TestsSetupForLNSVQD {
 
 		affineDividends = new AffineDividend[]{new AffineDividend(valuationDate, 0., 0.)};
 		affineDividendStream = new AffineDividendStream(affineDividends);
-		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, spot0, forwardCurve, affineDividendStream, dayCountConvention);
+		equityForwardStructure = new BuehlerDividendForwardStructure(valuationDate, 1, forwardCurve, affineDividendStream, dayCountConvention);
 
 		lnsvqdModelAnalyticalPricer = new LNSVQDModelAnalyticalPricer(
 				spot0

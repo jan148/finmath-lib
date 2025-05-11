@@ -4,7 +4,7 @@ import org.apache.commons.math3.random.MersenneTwister;
 import org.apache.commons.math3.random.SobolSequenceGenerator;
 import org.junit.Test;
 
-public class McQmcTest {
+public class McQmcPointsTest {
 
 	@Test
 	public void printMcQMC() {

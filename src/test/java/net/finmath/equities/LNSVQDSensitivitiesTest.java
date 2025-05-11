@@ -23,7 +23,7 @@ public class LNSVQDSensitivitiesTest extends TestsSetupForLNSVQD {
 	@Test
 	public void testCliquetDeltaGamma() throws Exception {
 		// Set the right case
-		loadS25();
+		loadS20();
 
 		int[] seeds = IntStream.range(0, 1).toArray();
 		numberOfPaths = 50000;

@@ -13,8 +13,12 @@ import org.apache.commons.math3.random.SobolSequenceGenerator;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Random;
 import java.util.stream.Collectors;
+
+
+
 
 /**
  * This class is a path simulator. It accomodates the simulation of the Heston model
@@ -50,7 +54,7 @@ public class PathSimulator {
 
 		BrownianBridgeNew brownianBridge = null;
 		SobolSequenceGenerator sobolSequenceGenerator = null;
-		if(mcMethod == "QMC") {
+		if(Objects.equals(mcMethod, "QMC")) {
 			int[][] schedulingArrayNew = schedulingArray;
 			ArrayList<Double> timeGridList = Arrays.stream(timeGridFromStartingIndex)
 					.boxed()
@@ -85,14 +89,14 @@ public class PathSimulator {
 
 		for(int j = 0; j < numberOfPaths; j++) {
 			double[][] increments = new double[timeGridFromStartingIndex.length - 1][2];
-			if(mcMethod == "MC") {
+			if(Objects.equals(mcMethod, "MC")) {
 				for (int r = 0; r < increments.length; r++) {
 					for (int c = 0; c < 2; c++) {
 						double deltaT = timeGridFromStartingIndex[r + 1] - timeGridFromStartingIndex[r];
 						increments[r][c] = Math.sqrt(deltaT) * NormalDistribution.inverseCumulativeDistribution(mersenneTwister.nextDouble());
 					}
 				}
-			} else if(mcMethod == "QMC"){
+			} else if(Objects.equals(mcMethod, "QMC")){
 				Random random = new Random(seed);
 				double scrambleNumber = random.nextDouble();
 				assert (0. < scrambleNumber && scrambleNumber < 1.) : "ScrambleNumber is out of bounds!";
@@ -117,11 +121,11 @@ public class PathSimulator {
 				double[] incsForTimeStep = new double[]{increments[currentIncrementIndex][0], increments[currentIncrementIndex][1]};
 
 				double[] nextVal;
-				if(modelScheme == "HestonQe"){
+				if(Objects.equals(modelScheme, "HestonQe")){
 					nextVal = hestonGetNextObs(new double[]{asset, vol}, deltaT, incsForTimeStep, hestonModelDescriptor);
-				} else if(modelScheme == "LnsvqdForwardEuler") {
+				} else if(Objects.equals(modelScheme, "LnsvqdForwardEuler")) {
 					nextVal = lnsvqdGetNextObsForwardEuler(new double[]{asset, vol}, deltaT, incsForTimeStep, lnsvqdModelDescriptor);
-				} else if(modelScheme == "LnsvqdImplicitEuler"){
+				} else if(Objects.equals(modelScheme, "LnsvqdImplicitEuler")){
 					nextVal = lnsvqdGetNextObsImplicitEuler(new double[]{asset, vol}, deltaT, incsForTimeStep, lnsvqdModelDescriptor);
 				} else {
 					throw new RuntimeException("Invalid model or discretization scheme.");
